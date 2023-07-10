@@ -67,8 +67,11 @@ class CMakeBuild(build_ext):
         )
 
 
-with open("requirements.txt", "r") as f:
-    requires = f.readlines()
+if os.path.exists("requirements.txt"):
+    with open("requirements.txt", "r") as f:
+        requires = f.readlines()
+else:
+    requires = []
 
 for i in range(len(requires)):
     require = requires[i]

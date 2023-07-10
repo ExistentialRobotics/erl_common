@@ -815,11 +815,11 @@ macro(erl_project_setup)
         erl_setup_lapack()
         erl_setup_common_packages()
         erl_setup_python()
-        erl_setup_test()
         if (NOT ROS_ACTIVATED)  # if ROS is activated, there is no PARENT_SCOPE when erl_project_setup is called
             set(ERL_PROJECT_SETUP_DONE TRUE PARENT_SCOPE)
         endif ()
     endif ()
+    erl_setup_test()
 endmacro()
 
 #######################################################################################################################
@@ -888,15 +888,30 @@ macro(erl_add_python_package)
                     COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     COMMENT "Building Python wheel for ${PROJECT_NAME}")
+            if (NOT ROS_ACTIVATED)
+                foreach (pkg ${${PROJECT_NAME}_DEPENDS_PYTHON_PKGS})
+                    add_dependencies(${PROJECT_NAME}_py_wheel ${pkg}_py_wheel)
+                endforeach ()
+            endif ()
             add_custom_target(${PROJECT_NAME}_py_develop
                     COMMAND ${Python3_EXECUTABLE} -m pip install -e . --user
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     DEPENDS ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
                     COMMENT "Installing Python package ${PROJECT_NAME} in develop mode")
+            if (NOT ROS_ACTIVATED)
+                foreach (pkg ${${PROJECT_NAME}_DEPENDS_PYTHON_PKGS})
+                    add_dependencies(${PROJECT_NAME}_py_develop ${pkg}_py_develop)
+                endforeach ()
+            endif ()
             add_custom_target(${PROJECT_NAME}_py_install
                     COMMAND ${Python3_EXECUTABLE} -m pip install . --user
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     COMMENT "Installing Python package ${PROJECT_NAME} in install mode")
+            if (NOT ROS_ACTIVATED)
+                foreach (pkg ${${PROJECT_NAME}_DEPENDS_PYTHON_PKGS})
+                    add_dependencies(${PROJECT_NAME}_py_install ${pkg}_py_install)
+                endforeach ()
+            endif ()
         else ()
             message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR},
                 rules for Python package ${PROJECT_NAME} will not be generated.")
