@@ -1,12 +1,9 @@
 #pragma once
 
-#include "pybind11.hpp"
-#include "grid_map.hpp"
+#include "erl_common/pybind11.hpp"
+#include "erl_common/grid_map.hpp"
 
 namespace py = pybind11;
-
-void
-BindCommon(py::module &m);
 
 namespace erl::common {
     template<int Dim>

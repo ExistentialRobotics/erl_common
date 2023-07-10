@@ -1,4 +1,4 @@
-#include "erl_common/pybind11_erl_common.hpp"
+#include "pybind11_erl_common.hpp"
 #include "erl_common/grid_map_drawer_2d.hpp"
 #include "erl_common/grid_map_info.hpp"
 #include "erl_common/string_utils.hpp"
@@ -130,10 +130,8 @@ BindStorage(py::module &m) {
         .def("show_image", &GridMapDrawer2D::ShowImage, py::arg("title"));
 }
 
-void
-BindCommon(py::module &m) {
-    auto submodule = m.def_submodule("common", "Interface of erl_common");
-
-    BindYaml(submodule);
-    BindStorage(submodule);
+PYBIND11_MODULE(PYBIND_MODULE_NAME, m) {
+    m.doc() = "Python 3 Interface of erl_common";
+    BindYaml(m);
+    BindStorage(m);
 }

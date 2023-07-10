@@ -1,5 +1,10 @@
 #pragma once
-
+// disable warning when using pybind11
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#pragma GCC diagnostic ignored "-Wunused-variable"
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
@@ -32,3 +37,4 @@ namespace py = pybind11;
 
 template<typename T>
 using SupportedByPybindNumpy = py::detail::any_of<py::detail::is_pod_struct<T>, std::is_arithmetic<T>>;
+#pragma GCC diagnostic pop

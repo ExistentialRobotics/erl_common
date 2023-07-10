@@ -13,7 +13,18 @@ sudo apt install -y \
   python3-pip \
   python3-setuptools \
   software-properties-common \
-  lsb-release
+  lsb-release \
+  libgtest-dev \
+  liblapacke-dev \
+  liblapack-dev \
+  libomp-dev \
+  libboost-all-dev \
+  nlohmann-json3-dev \
+  libopencv-dev \
+  libpcl-dev \
+  libyaml-cpp-dev \
+  libnanoflann-dev \
+  pybind11-dev
 
 # Upgrade pip
 python3 -m pip install --upgrade pip --user
@@ -24,9 +35,6 @@ sudo apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) 
 sudo apt update
 sudo apt install kitware-archive-keyring
 sudo apt install cmake
-
-# Install Packages from APT
-sudo apt install libopencv-dev libomp-dev libboost-all-dev libyaml-cpp-dev libnanoflann-dev
 
 # Install Intel Base Toolkit
 wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \ | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null

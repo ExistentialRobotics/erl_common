@@ -1,5 +1,10 @@
 #pragma once
-
+// disable warning when using Eigen
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#pragma GCC diagnostic ignored "-Wunused-variable"
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <fstream>
@@ -236,3 +241,5 @@ namespace erl::common {
     }
 
 }  // namespace erl::common
+
+#pragma GCC diagnostic pop

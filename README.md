@@ -11,9 +11,9 @@ This CMake project provides `erl_common` which is a collection of commonly used 
 - pybind11: Python binding
 - nlohmann_json: JSON parser
 - YAML-CPP: YAML parser
-- Matplot++: C++ version of matplotlib
 
 and some utility functions and data structures like 
+- **adaptive catkin build system**: support both catkin and native CMake build
 - color print / logging
 - assertion, timing, check results 
 - binary IO, csv IO
@@ -28,15 +28,44 @@ and some utility functions and data structures like
 
 # Dependencies
 - CMake >= 3.20
-- [erl_cmake](https://github.com/ExistentialRobotics/erl_cmake)
+- OpenMP
+- Boost
+- Eigen3
+- nlohmann_json
+- OpenCV
+- PCL
+- nanoflann
+- yaml-cpp
+- Intel MKL
+- LAPACK
+- LAPACKE
+
+You do not need to install all of them immediately. `erl_common` will tell you what to do when a dependency is missing.
 
 # Getting Started
-This project should be put together with `erl_cmake` in the same parent directory. e.g. 
+## Use as a standard CMake package
+
 ```bash
-cd <your_workspace>
-git clone https://github.com/ExistentialRobotics/erl_cmake.git
+cd <your_workspace>/src
 git clone https://github.com/ExistentialRobotics/erl_common.git
-cd erl_common
-mkdir build && cd build
-cmake ..
+touch CMakeLists.txt
 ```
+
+Add the following lines to your `CMakeLists.txt`:
+```cmake
+cmake_minimum_required(VERSION 3.20)
+project(<your_project_name>)
+add_subdirectory(erl_common)
+```
+
+## Use as a catkin package
+```bash
+cd <your_workspace>/src
+git clone https://github.com/ExistentialRobotics/erl_common.git
+cd ..
+catkin build
+```
+
+# CMake helper functions and macros
+`erl_common` also provides some helper functions and macros to make other packages support both catkin and native CMake 
+build easily. See [cmake/README.md](cmake/README.md) for more details.

@@ -2,7 +2,7 @@
 
 #include <numeric>
 #include <unordered_set>
-#include "storage_order.hpp"
+#include "erl_common/storage_order.hpp"
 
 namespace erl::common {
 
@@ -20,23 +20,23 @@ namespace erl::common {
         Eigen::Vector<int, Rank> m_shape_;
 
     public:
-        [[deprecated("Use Eigen::Tensor instead.")]] Tensor() = default;
+        Tensor() = default;
 
-        [[deprecated("Use Eigen::Tensor instead.")]] explicit Tensor(Eigen::VectorXi shape)
+        explicit Tensor(Eigen::VectorXi shape)
             : m_shape_(std::move(shape)) {
             CheckShape();
             int total_size = Size();
             if (total_size > 0) { m_data_.resize(total_size); }
         }
 
-        [[deprecated("Use Eigen::Tensor instead.")]] Tensor(Eigen::VectorXi shape, const T &fill_value)
+        Tensor(Eigen::VectorXi shape, const T &fill_value)
             : m_shape_(std::move(shape)) {
             CheckShape();
             int total_size = Size();
             if (total_size > 0) { m_data_.setConstant(total_size, fill_value); }
         }
 
-        [[deprecated("Use Eigen::Tensor instead.")]] Tensor(Eigen::VectorXi shape, Eigen::VectorX<T> data)
+        Tensor(Eigen::VectorXi shape, Eigen::VectorX<T> data)
             : m_shape_(std::move(shape)) {
             CheckShape();
             int total_size = Size();
@@ -44,7 +44,7 @@ namespace erl::common {
             if (total_size > 0) { m_data_ = data; }
         }
 
-        [[deprecated("Use Eigen::Tensor instead.")]] Tensor(Eigen::VectorXi shape, const std::function<T(void)> &data_init_func)
+        Tensor(Eigen::VectorXi shape, const std::function<T(void)> &data_init_func)
             : m_shape_(std::move(shape)) {
             CheckShape();
             int total_size = Size();

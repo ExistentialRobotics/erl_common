@@ -1,4 +1,4 @@
-from @PY_PACKAGE_NAME@.@PYBIND_MODULE_NAME@.common.storage import *
+from .pyerl_common.storage import *
 
 __all__ = [
     "compute_c_strides",

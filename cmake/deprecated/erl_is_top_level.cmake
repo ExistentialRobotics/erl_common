@@ -1,0 +1,8 @@
+if (CMAKE_VERSION VERSION_LESS 3.21)
+    get_property(NOT_TOP_LEVEL DIRECTORY PROPERTY PARENT_DIRECTORY)
+    if (NOT NOT_TOP_LEVEL)
+        set(PROJECT_IS_TOP_LEVEL ON)
+    else ()
+        set(PROJECT_IS_TOP_LEVEL OFF)
+    endif ()
+endif ()

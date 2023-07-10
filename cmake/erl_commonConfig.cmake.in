@@ -1,53 +1,9 @@
 @PACKAGE_INIT@
 
-# options
-# option(USE_INTEL_MKL "Use Intel MKL" @USE_INTEL_MKL@)
-
-# resolve dependencies
-include(${CMAKE_CURRENT_LIST_DIR}/erl_before_find_package.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/erl_find_package.cmake)
-
-erl_find_package(
-        PACKAGE_NAME OpenMP
-        MAC_CMD "run `brew install libomp`"
-        UBUNTU_CMD "run `sudo apt install libomp-dev`"
-        FIND_PACKAGE_ARGS REQUIRED)
-erl_find_package(
-        PACKAGE_NAME Boost
-        MAC_CMD "run `brew install boost`"
-        UBUNTU_CMD "run `sudo apt install libboost-all-dev`"
-        FIND_PACKAGE_ARGS REQUIRED COMPONENTS program_options)
-# There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
-if (@USE_INTEL_MKL@)  # EIGEN_USE_MKL_ALL is defined in erl_cmake/erl_project_setup.cmake
-    erl_find_package(
-            PACKAGE_NAME Eigen3
-            NO_CMD "visit https://gitlab.com/libeigen/eigen to install the required version"
-            FIND_PACKAGE_ARGS 3.4.90 REQUIRED)
-else ()
-    erl_find_package(
-            PACKAGE_NAME Eigen3
-            NO_CMD "visit https://gitlab.com/libeigen/eigen to install the required version"
-            FIND_PACKAGE_ARGS REQUIRED)
-endif ()
-erl_find_package(
-        PACKAGE_NAME nlohmann_json
-        MAC_CMD "run `brew install nlohmann-json`"
-        UBUNTU_CMD "run `sudo apt install nlohmann-json3-dev`"
-        FIND_PACKAGE_ARGS REQUIRED)
-erl_find_package(
-        PACKAGE_NAME OpenCV
-        MAC_CMD "run scripts/install_opencv.bash"
-        UBUNTU_CMD "run `sudo apt install libopencv-dev`"
-        FIND_PACKAGE_ARGS REQUIRED COMPONENTS core imgproc highgui)
-erl_find_package(
-        PACKAGE_NAME YAML-CPP
-        MAC_CMD "run scripts/install_yaml_cpp.bash"
-        UBUNTU_CMD "run `sudo apt install libyaml-cpp-dev`"
-        FIND_PACKAGE_ARGS REQUIRED)
-erl_find_package(
-        PACKAGE_NAME Matplot++
-        NO_CMD "run scripts/install_matplotplusplus.bash"
-        FIND_PACKAGE_ARGS REQUIRED)
+# setup erl project
+set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR})
+include(${ERL_CMAKE_DIR}/erl_common_tools.cmake)
+erl_project_setup()
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 
@@ -57,10 +13,4 @@ include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 check_required_components("@PROJECT_NAME@")
 
 # export variables
-set(@PROJECT_NAME@_FOUND
-        TRUE
-        CACHE INTERNAL "TRUE if @PROJECT_NAME@ and all required components found on the system" FORCE)
-
-message(STATUS "@PROJECT_NAME@ is found")
-message(STATUS "USE_INTEL_MKL: @USE_INTEL_MKL@")
-message(STATUS "USE_LAPACK: @USE_LAPACK@")
+erl_mark_project_found()

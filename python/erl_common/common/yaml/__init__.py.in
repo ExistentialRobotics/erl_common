@@ -1,3 +1,0 @@
-from @PY_PACKAGE_NAME@.@PYBIND_MODULE_NAME@.common.yaml import *
-
-__all__ = ["YamlableBase"]
