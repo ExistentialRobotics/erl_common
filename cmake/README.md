@@ -80,7 +80,24 @@ This is a macro that does the following things:
 
 ## erl_add_test
 This is a macro that automatically detects and adds GoogleTest/PythonNose tests stored in `test/gtest` and 
-`test/pytest` respectively.
+`test/pytest` respectively. e.g.
+```cmake
+erl_add_test(
+        LIBRARIES ${PROJECT_NAME}
+)
+```
+**Notes**:
+- For GoogleTest, when building with ROS1 activated, `catkin` cannot provide `gtest` with `main` entrypoint. So you need
+  to add the main function in your gtest source code:
+   ```c++
+   #if defined(ERL_ROS_VERSION_1)
+   int
+   main(int argc, char **argv) {
+       ::testing::InitGoogleTest(&argc, argv);
+       return RUN_ALL_TESTS();
+   }
+   #endif
+   ```
 
 ## erl_find_package
 This is a macro that prints suggestions for installing a required package on different platforms. e.g.

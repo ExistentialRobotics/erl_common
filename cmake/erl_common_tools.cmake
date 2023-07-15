@@ -8,6 +8,11 @@ set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "ERL CMake directory"
 # erl_add_test
 #######################################################################################################################
 macro(erl_add_tests)
+    set(options)
+    set(oneValueArgs)
+    set(multiValueArgs LIBRARIES)
+    cmake_parse_arguments(${PROJECT_NAME}_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
     if (NOT DEFINED BUILD_TEST_${PROJECT_NAME})
         set(BUILD_TEST_${PROJECT_NAME} ${BUILD_TEST})
     endif ()
@@ -21,10 +26,12 @@ macro(erl_add_tests)
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
                 catkin_add_gtest(${name} ${file})
+                target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
+                target_link_libraries(${name} ${catkin_LIBRARIES} ${${PROJECT_NAME}_TEST_LIBRARIES})
                 message(STATUS "Adding gtest ${name}")
             endforeach ()
         else ()
-            link_libraries(${PROJECT_NAME}::${PROJECT_NAME} GTest::gtest_main)
+            link_libraries(${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main)
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
                 add_executable(${name} ${file})
@@ -357,6 +364,13 @@ macro(erl_detect_ros)
         set(ROS_ACTIVATED ON)
         set(ROS_VERSION "1")
     endif ()
+    if (ROS_VERSION STREQUAL "1")
+        message(STATUS "ROS_VERSION: ${ROS_VERSION}")
+        add_definitions(-DERL_ROS_VERSION_1)
+    elseif (ROS_VERSION STREQUAL "2")
+        message(STATUS "ROS_VERSION: ${ROS_VERSION}")
+        add_definitions(-DERL_ROS_VERSION_2)
+    endif ()
 endmacro()
 
 #######################################################################################################################
@@ -550,7 +564,7 @@ macro(erl_setup_lapack)
                         NAMES mkl.h
                         PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
                         COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
-                        COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html")
+                        COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
                 get_filename_component(MKLROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
                 set(ENV{MKLROOT} ${MKLROOT})
                 set(MKL_DIR ${MKLROOT}/lib/cmake/mkl CACHE PATH "Path to MKL cmake directory" FORCE)
@@ -560,7 +574,7 @@ macro(erl_setup_lapack)
                     PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
                     REQUIRED
                     COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
-                    COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html")
+                    COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
             erl_find_package(   # LAPACK will resolve the full paths of MKL libraries
                     PACKAGE LAPACK
                     REQUIRED
@@ -789,28 +803,38 @@ macro(erl_catkin_package)
         foreach (lib ${catkin_LIBRARIES})
             get_filename_component(lib_dir ${lib} DIRECTORY)
             list(APPEND catkin_LIBRARY_DIRS ${lib_dir})
+            if (TARGET ${lib})
+                get_target_property(lib_type ${lib} TYPE)
+                if (NOT lib_type STREQUAL "MODULE_LIBRARY")  # MODULE_LIBRARY, e.g. pybind11 lib, cannot be linked
+                    list(APPEND filtered_catkin_LIBRARIES ${lib})
+                endif ()
+            else ()
+                list(APPEND filtered_catkin_LIBRARIES ${lib})
+            endif ()
         endforeach ()
+        set(catkin_LIBRARIES ${filtered_catkin_LIBRARIES})
+        unset(filtered_catkin_LIBRARIES)
     endif ()
 
     erl_set_project_paths()
 
     if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
         set(CATKIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
-        set(CATKIN_DEVEL_LIB_DIR ${CATKIN_DEVEL_DIR}/lib)
-
         get_filename_component(CATKIN_WORKSPACE_DIR ${CATKIN_INSTALL_DIR} DIRECTORY)
         set(CATKIN_DEVEL_DIR ${CATKIN_WORKSPACE_DIR}/devel)
+        set(CATKIN_DEVEL_LIB_DIR ${CATKIN_DEVEL_DIR}/lib)
         set(CATKIN_INSTALL_LIB_DIR ${CATKIN_INSTALL_DIR}/lib)
         set(CATKIN_INSTALL_PYTHON_DIR ${CATKIN_INSTALL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
     endif ()
+
 endmacro()
 
 #######################################################################################################################
 # erl_project_setup
 #######################################################################################################################
 macro(erl_project_setup)
-    erl_detect_ros()
     erl_setup_compiler()
+    erl_detect_ros()
     if (NOT ERL_PROJECT_SETUP_DONE OR ROS_ACTIVATED)
         erl_setup_lapack()
         erl_setup_common_packages()
@@ -913,8 +937,7 @@ macro(erl_add_python_package)
                 endforeach ()
             endif ()
         else ()
-            message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR},
-                rules for Python package ${PROJECT_NAME} will not be generated.")
+            message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR}, rules for Python package ${PROJECT_NAME} will not be generated.")
         endif ()
 
     endif ()

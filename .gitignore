@@ -1,11 +1,5 @@
-build_2004
 trash
 trial
-GPisMap*.dat
-GpisMap2D-QuadTree-*.txt
-QuadTree*.txt
-*.bt
-*.ot
 
 ###############################################################################
 # CMake
