@@ -5,46 +5,57 @@
 #include "color_print.hpp"
 #include "string_utils.hpp"
 
-#define ERL_ERROR(...)                                                                                                 \
+#if defined(ERL_ROS_VERSION_1) || defined(ERL_ROS_VERSION_2)
+#include <ros/console.h>
+#include <ros/assert.h>
+#define ERL_FATAL(...)                ROS_FATAL(__VA_ARGS__)
+#define ERL_ERROR(...)                ROS_ERROR(__VA_ARGS__)
+#define ERL_WARN(...)                 ROS_WARN(__VA_ARGS__)
+#define ERL_WARN_ONCE(...)            ROS_WARN_ONCE(__VA_ARGS__)
+#define ERL_WARN_COND(condition, ...) ROS_WARN_COND(condition, __VA_ARGS__)
+#define ERL_INFO(...)                 ROS_INFO(__VA_ARGS__)
+#define ERL_DEBUG(...)                ROS_DEBUG(__VA_ARGS__)
+#define ERL_DEBUG_ASSERT(expr, ...)   ROS_ASSERT(expr, __VA_ARGS__)
+#define ERL_ASSERT(expr)              ROS_ASSERT(expr)
+#define ERL_ASSERTM(expr, ...)        ROS_ASSERT_MSG(expr, __VA_ARGS__)
+#else
+#define ERL_FATAL(...)                                                                                                 \
     do {                                                                                                               \
         std::cout << erl::common::PrintError("[ERROR]: ", __FILE__, ':', __LINE__, ": ", __PRETTY_FUNCTION__) << ": "; \
         printf(__VA_ARGS__);                                                                                           \
         exit(1);                                                                                                       \
     } while (false)
 
-#define ERL_WARNING(...)                                                                                                \
-    do {                                                                                                                \
+#define ERL_ERROR(...)                                                                                                 \
+    do {                                                                                                               \
+        std::cout << erl::common::PrintError("[ERROR]: ", __FILE__, ':', __LINE__, ": ", __PRETTY_FUNCTION__) << ": "; \
+        printf(__VA_ARGS__);                                                                                           \
+    } while (false)
+
+#define ERL_WARN(...)                                                                              \
+    do {                                                                                           \
         std::cout << erl::common::PrintWarning("[WARN]: ", __FILE__, ':', __LINE__, ": ") << ": "; \
-        printf(__VA_ARGS__);                                                                                            \
+        printf(__VA_ARGS__);                                                                       \
     } while (false)
 
-#define ERL_WARNING_ONCE(...)         \
-    do {                              \
-        static bool warned = false;   \
-        if (!warned) {                \
-            warned = true;            \
-            ERL_WARNING(__VA_ARGS__); \
-        }                             \
+#define ERL_WARN_ONCE(...)          \
+    do {                            \
+        static bool warned = false; \
+        if (!warned) {              \
+            warned = true;          \
+            ERL_WARN(__VA_ARGS__);  \
+        }                           \
     } while (false)
 
-#define ERL_WARNING_IF(condition, ...)               \
-    do {                                             \
-        if (condition) { ERL_WARNING(__VA_ARGS__); } \
+#define ERL_WARN_COND(condition, ...)             \
+    do {                                          \
+        if (condition) { ERL_WARN(__VA_ARGS__); } \
     } while (false)
 
-#define ERL_WARNING_ONCE_IF(condition, ...) \
-    do {                                    \
-        static bool warned = false;         \
-        if (!warned && (condition)) {       \
-            warned = true;                  \
-            ERL_WARNING(__VA_ARGS__);       \
-        }                                   \
-    } while (false)
-
-#define ERL_INFO(...)                                                                                                \
-    do {                                                                                                             \
+#define ERL_INFO(...)                                                                           \
+    do {                                                                                        \
         std::cout << erl::common::PrintInfo("[INFO]: ", __FILE__, ':', __LINE__, ": ") << ": "; \
-        printf(__VA_ARGS__);                                                                                         \
+        printf(__VA_ARGS__);                                                                    \
     } while (false)
 
 #ifndef NDEBUG
@@ -53,8 +64,10 @@
         std::cout << erl::common::PrintInfo("[DEBUG]: ", __FILE__, ':', __LINE__, ": ", __PRETTY_FUNCTION__) << ": "; \
         printf(__VA_ARGS__);                                                                                          \
     } while (false)
+#define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
 #else
-#define ERL_DEBUG(...) ((void) 0)
+#define ERL_DEBUG(...)              ((void) 0)
+#define ERL_DEBUG_ASSERT(expr, ...) (void) 0
 #endif
 
 #define ERL_ASSERTM(expr, ...)                   \
@@ -79,8 +92,13 @@
 
 #define ERL_ASSERT(expr) ERL_ASSERTM(expr, "Assertion %s failed.", #expr)
 
-#if !defined(NDEBUG)
-#define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
-#else
-#define ERL_DEBUG_ASSERT(expr, ...) (void) 0
 #endif
+
+#define ERL_WARN_ONCE_COND(condition, ...) \
+    do {                                   \
+        static bool warned = false;        \
+        if (!warned && (condition)) {      \
+            warned = true;                 \
+            ERL_WARN(__VA_ARGS__);         \
+        }                                  \
+    } while (false)

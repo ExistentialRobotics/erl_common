@@ -10,7 +10,7 @@ set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "ERL CMake directory"
 macro(erl_add_tests)
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs LIBRARIES)
+    set(multiValueArgs LIBRARIES )
     cmake_parse_arguments(${PROJECT_NAME}_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (NOT DEFINED BUILD_TEST_${PROJECT_NAME})
@@ -771,6 +771,11 @@ endmacro()
 # erl_setup_ros
 #######################################################################################################################
 macro(erl_setup_ros)
+    set(options)
+    set(oneValueArgs)
+    set(multiValueArgs CATKIN_COMPONENTS MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES)
+    cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
     if (ROS_ACTIVATED)
         if (ROS_VERSION STREQUAL "1")
             if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/package.xml)
@@ -787,6 +792,19 @@ macro(erl_setup_ros)
                 set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP TRUE CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
             else ()
                 set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP FALSE CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
+            endif ()
+
+            if (${PROJECT_NAME}_MSG_FILES)
+                add_message_files(FILES ${${PROJECT_NAME}_MSG_FILES})
+            endif ()
+            if (${PROJECT_NAME}_SRV_FILES)
+                add_service_files(FILES ${${PROJECT_NAME}_SRV_FILES})
+            endif ()
+            if (${PROJECT_NAME}_ACTION_FILES)
+                add_action_files(FILES ${${PROJECT_NAME}_ACTION_FILES})
+            endif ()
+            if (${PROJECT_NAME}_MSG_DEPENDENCIES)
+                generate_messages(DEPENDENCIES ${${PROJECT_NAME}_MSG_DEPENDENCIES})
             endif ()
         else ()
             message(FATAL_ERROR "ROS2 is not supported yet")
@@ -835,6 +853,8 @@ macro(erl_catkin_package)
         endforeach ()
         set(catkin_LIBRARIES ${filtered_catkin_LIBRARIES})
         unset(filtered_catkin_LIBRARIES)
+
+        # detect msg files and generate message headers
     endif ()
 
     erl_set_project_paths()
@@ -847,7 +867,6 @@ macro(erl_catkin_package)
         set(CATKIN_INSTALL_LIB_DIR ${CATKIN_INSTALL_DIR}/lib)
         set(CATKIN_INSTALL_PYTHON_DIR ${CATKIN_INSTALL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
     endif ()
-
 endmacro()
 
 #######################################################################################################################
