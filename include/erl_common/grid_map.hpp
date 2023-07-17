@@ -178,7 +178,7 @@ namespace erl::common {
         GetMutableData(int x_grid, int y_grid) {
             ERL_DEBUG_ASSERT(
                 x_grid >= 0 && y_grid >= 0 && x_grid < m_grid_map_info_->Shape(0) && y_grid < m_grid_map_info_->Shape(1),
-                "The grid coordinates are out of the grid map, auto extend is not working properly.\n");
+                "The grid coordinates are out of the grid map, auto extend is not working properly.");
             auto &data = m_data_(x_grid, y_grid);
             if (IsSmartPtr<T>::value && m_data_init_func_ != nullptr && data == 0) { data = m_data_init_func_(); }
             return data;
@@ -191,7 +191,7 @@ namespace erl::common {
 
         inline T &
         GetMutableData(double x, double y) {
-            ERL_DEBUG_ASSERT(!omp_in_parallel(), "The grid map is not thread safe.\n");
+            ERL_DEBUG_ASSERT(!omp_in_parallel(), "The grid map is not thread safe.");
             int x_grid = m_grid_map_info_->MeterToGridForValue(x, 0);
             int y_grid = m_grid_map_info_->MeterToGridForValue(y, 1);
             while (x_grid < 0 || y_grid < 0 || x_grid >= m_grid_map_info_->Shape(0) || y_grid >= m_grid_map_info_->Shape(1)) {
@@ -358,8 +358,8 @@ namespace erl::common {
                 Eigen::Vector2i(n_rows * 2 + 1, n_cols * 2 + 1),
                 Eigen::Vector2d(new_x_min, new_y_min),
                 Eigen::Vector2d(new_x_max, new_y_max));
-            ERL_ASSERTM(std::abs(new_grid_map_info->Resolution(0) - x_res) < 1.e-10, "x resolution is not equal.\n");
-            ERL_ASSERTM(std::abs(new_grid_map_info->Resolution(1) - y_res) < 1.e-10, "y resolution is not equal.\n");
+            ERL_ASSERTM(std::abs(new_grid_map_info->Resolution(0) - x_res) < 1.e-10, "x resolution is not equal.");
+            ERL_ASSERTM(std::abs(new_grid_map_info->Resolution(1) - y_res) < 1.e-10, "y resolution is not equal.");
 
             Eigen::MatrixX<T> new_data(new_grid_map_info->Shape(0), new_grid_map_info->Shape(1));
             // copy the old data matrix to the new data matrix

@@ -80,8 +80,8 @@ namespace erl::common {
 
     inline cv::Mat
     MergeColoredMask(const std::vector<cv::Mat> &masks, const std::vector<cv::Scalar> &colors) {
-        ERL_ASSERTM(masks.size() == colors.size(), "The number of masks and colors must be the same.\n");
-        ERL_ASSERTM(!masks.empty(), "The number of masks and colors must be greater than 0.\n");
+        ERL_ASSERTM(masks.size() == colors.size(), "The number of masks and colors must be the same.");
+        ERL_ASSERTM(!masks.empty(), "The number of masks and colors must be greater than 0.");
 
         cv::Mat merged_mask = cv::Mat::zeros(masks[0].size(), CV_8UC4);
         for (size_t i = 0; i < masks.size(); ++i) {

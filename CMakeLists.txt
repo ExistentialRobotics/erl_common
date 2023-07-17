@@ -10,10 +10,13 @@ if (NOT COMMAND erl_project_setup)
     include(cmake/erl_common_tools.cmake)
 endif ()
 erl_project_setup()
-erl_setup_ros()
+erl_setup_ros(
+        CATKIN_COMPONENTS roscpp
+)
 erl_catkin_package(
         INCLUDE_DIRS include
         LIBRARIES ${PROJECT_NAME} py${PROJECT_NAME}
+        CATKIN_DEPENDS roscpp
         DEPENDS ${${PROJECT_NAME}_DEPENDS}  # dependencies are collected via erl_find_package
         CFG_EXTRAS erl_common_tools.cmake)
 
@@ -57,7 +60,9 @@ erl_install(
 #######################################################################################################################
 # TEST
 #######################################################################################################################
-erl_add_tests()
+erl_add_tests(
+        LIBRARIES ${PROJECT_NAME}
+)
 
 #######################################################################################################################
 # done

@@ -4,9 +4,9 @@ namespace erl::common {
 
     cv::Mat
     AlphaBlending(const cv::Mat &foreground, const cv::Mat &background) {
-        ERL_ASSERTM(foreground.channels() == 4, "Foreground image must have 4 channels.\n");
-        ERL_ASSERTM(background.channels() == 4, "Background image must have 4 channels.\n");
-        ERL_ASSERTM(foreground.size() == background.size(), "Foreground and background image must have the same size.\n");
+        ERL_ASSERTM(foreground.channels() == 4, "Foreground image must have 4 channels.");
+        ERL_ASSERTM(background.channels() == 4, "Background image must have 4 channels.");
+        ERL_ASSERTM(foreground.size() == background.size(), "Foreground and background image must have the same size.");
 
         cv::Mat channels[4];
         cv::split(foreground, channels);

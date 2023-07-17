@@ -59,8 +59,8 @@ namespace erl::common {
               m_max_(max),
               m_center_((m_min_ + m_max_) / 2),
               m_center_grid_(m_map_shape_.array() / 2) {
-            ERL_DEBUG_ASSERT(m_map_shape_.size() > 0, "0-dim map is not allowed!\n");
-            ERL_DEBUG_ASSERT(Size() > 0, "0-element map is not allowed!\n");
+            ERL_DEBUG_ASSERT(m_map_shape_.size() > 0, "0-dim map is not allowed!");
+            ERL_DEBUG_ASSERT(Size() > 0, "0-element map is not allowed!");
         }
 
         explicit GridMapInfo(const GridMapInfo<Eigen::Dynamic>& info)

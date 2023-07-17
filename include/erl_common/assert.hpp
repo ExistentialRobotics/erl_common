@@ -15,14 +15,18 @@
 #define ERL_WARN_COND(condition, ...) ROS_WARN_COND(condition, __VA_ARGS__)
 #define ERL_INFO(...)                 ROS_INFO(__VA_ARGS__)
 #define ERL_DEBUG(...)                ROS_DEBUG(__VA_ARGS__)
-#define ERL_DEBUG_ASSERT(expr, ...)   ROS_ASSERT(expr, __VA_ARGS__)
-#define ERL_ASSERT(expr)              ROS_ASSERT(expr)
-#define ERL_ASSERTM(expr, ...)        ROS_ASSERT_MSG(expr, __VA_ARGS__)
+#ifdef ROS_ASSERT_ENABLED
+#define ERL_DEBUG_ASSERT(expr, ...) ROS_ASSERT(expr, __VA_ARGS__)
+#define ERL_ASSERT(expr)            ROS_ASSERT(expr)
+#define ERL_ASSERTM(expr, ...) \
+    do { ROS_ASSERT_MSG(expr, __VA_ARGS__) } while (false)
+#endif
 #else
 #define ERL_FATAL(...)                                                                                                 \
     do {                                                                                                               \
         std::cout << erl::common::PrintError("[ERROR]: ", __FILE__, ':', __LINE__, ": ", __PRETTY_FUNCTION__) << ": "; \
         printf(__VA_ARGS__);                                                                                           \
+        std::cout << std::endl;                                                                                        \
         exit(1);                                                                                                       \
     } while (false)
 
@@ -36,6 +40,7 @@
     do {                                                                                           \
         std::cout << erl::common::PrintWarning("[WARN]: ", __FILE__, ':', __LINE__, ": ") << ": "; \
         printf(__VA_ARGS__);                                                                       \
+        std::cout << std::endl;                                                                    \
     } while (false)
 
 #define ERL_WARN_ONCE(...)          \
@@ -56,6 +61,7 @@
     do {                                                                                        \
         std::cout << erl::common::PrintInfo("[INFO]: ", __FILE__, ':', __LINE__, ": ") << ": "; \
         printf(__VA_ARGS__);                                                                    \
+        std::cout << std::endl;                                                                 \
     } while (false)
 
 #ifndef NDEBUG
@@ -63,13 +69,25 @@
     do {                                                                                                              \
         std::cout << erl::common::PrintInfo("[DEBUG]: ", __FILE__, ':', __LINE__, ": ", __PRETTY_FUNCTION__) << ": "; \
         printf(__VA_ARGS__);                                                                                          \
+        std::cout << std::endl;                                                                                       \
     } while (false)
 #define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
 #else
 #define ERL_DEBUG(...)              ((void) 0)
 #define ERL_DEBUG_ASSERT(expr, ...) (void) 0
 #endif
+#endif
 
+#define ERL_WARN_ONCE_COND(condition, ...) \
+    do {                                   \
+        static bool warned = false;        \
+        if (!warned && (condition)) {      \
+            warned = true;                 \
+            ERL_WARN(__VA_ARGS__);         \
+        }                                  \
+    } while (false)
+
+#ifndef ERL_ASSERTM
 #define ERL_ASSERTM(expr, ...)                   \
     do {                                         \
         if (!(expr)) {                           \
@@ -89,16 +107,16 @@
             throw std::runtime_error(ss.str());  \
         }                                        \
     } while (false)
-
-#define ERL_ASSERT(expr) ERL_ASSERTM(expr, "Assertion %s failed.", #expr)
-
 #endif
 
-#define ERL_WARN_ONCE_COND(condition, ...) \
-    do {                                   \
-        static bool warned = false;        \
-        if (!warned && (condition)) {      \
-            warned = true;                 \
-            ERL_WARN(__VA_ARGS__);         \
-        }                                  \
-    } while (false)
+#ifndef ERL_ASSERT
+#define ERL_ASSERT(expr) ERL_ASSERTM(expr, "Assertion %s failed.", #expr)
+#endif
+
+#ifndef ERL_DEBUG_ASSERT
+#ifndef NDEBUG
+#define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
+#else
+#define ERL_DEBUG_ASSERT(expr, ...) (void) 0
+#endif
+#endif
