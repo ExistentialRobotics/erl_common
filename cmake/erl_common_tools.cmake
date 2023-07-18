@@ -712,7 +712,7 @@ macro(erl_setup_common_packages)
             if (YAML_CPP_INCLUDE_DIR OR YAML_CPP_LIBRARIES)
                 set(yaml-cpp_INCLUDE_DIRS ${YAML_CPP_INCLUDE_DIR} CACHE INTERNAL "yaml-cpp include directories" FORCE)
                 set(yaml-cpp_LIBRARIES ${YAML_CPP_LIBRARIES} CACHE INTERNAL "yaml-cpp libraries" FORCE)
-            else ()  # older version of yaml-cpp, e.g. Ubuntu 20.04
+            else ()  # noconfig version of yaml-cpp: yaml-cpp is installed without setting CMAKE_BUILD_TYPE
                 get_target_property(yaml-cpp_LIBRARIES yaml-cpp IMPORTED_LOCATION_NOCONFIG)
                 get_filename_component(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_LIBRARIES} DIRECTORY)
                 get_filename_component(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_INCLUDE_DIRS}/../include ABSOLUTE)
