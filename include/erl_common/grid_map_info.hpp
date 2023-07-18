@@ -75,7 +75,7 @@ namespace erl::common {
         Extend(int size, double min, double max, int dim) const {
 
             int n_dims = Dims();
-            ERL_DEBUG_ASSERT(dim >= 0 && dim <= n_dims, "dim = %d is out of range [%d, %d].\n", dim, 0, n_dims);
+            ERL_DEBUG_ASSERT(dim >= 0 && dim <= n_dims, "dim = %d is out of range [%d, %d].", dim, 0, n_dims);
 
             Eigen::VectorXi new_shape(n_dims + 1);
             Eigen::VectorXd new_min(n_dims + 1);

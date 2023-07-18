@@ -222,7 +222,7 @@ namespace erl::common {
         GetBlock(int x_grid, int y_grid, int height, int width) {
             ERL_DEBUG_ASSERT(
                 x_grid >= 0 && y_grid >= 0 && (x_grid + height <= m_grid_map_info_->Shape(0)) && (y_grid + width <= m_grid_map_info_->Shape(1)),
-                "The grid coordinates (%d, %d) are out of the grid map or the block size (%d, %d) is too large.\n",
+                "The grid coordinates (%d, %d) are out of the grid map or the block size (%d, %d) is too large.",
                 x_grid,
                 y_grid,
                 height,
