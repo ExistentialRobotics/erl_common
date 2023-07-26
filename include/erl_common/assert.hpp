@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <mutex>
+#include <typeinfo>
+#include <cxxabi.h>
+#include <memory>
 
 #include "color_print.hpp"
 #include "string_utils.hpp"
@@ -19,37 +22,36 @@ static std::mutex g_print_mutex;
 #define ERL_INFO(...)                 ROS_INFO(__VA_ARGS__)
 #define ERL_DEBUG(...)                ROS_DEBUG(__VA_ARGS__)
 #ifdef ROS_ASSERT_ENABLED
-#define ERL_DEBUG_ASSERT(expr, ...) ROS_ASSERT(expr, __VA_ARGS__)
-#define ERL_ASSERT(expr)            ROS_ASSERT(expr)
+#define ERL_ASSERT(expr) ROS_ASSERT(expr)
 #define ERL_ASSERTM(expr, ...) \
-    do { ROS_ASSERT_MSG(expr, __VA_ARGS__) } while (false)
+    do { ROS_ASSERT_MSG(expr, __VA_ARGS__); } while (false)
 #endif
 #else
-#define ERL_FATAL(...)                                                                                                 \
-    do {                                                                                                               \
-        g_print_mutex.lock();                                                                                          \
-        std::cout << erl::common::PrintError("[ERROR]: ", __FILE__, ':', __LINE__, ": ", __PRETTY_FUNCTION__) << ": "; \
-        printf(__VA_ARGS__);                                                                                           \
-        std::cout << std::endl;                                                                                        \
-        g_print_mutex.unlock();                                                                                        \
-        exit(1);                                                                                                       \
+#define ERL_FATAL(...)                                                                      \
+    do {                                                                                    \
+        g_print_mutex.lock();                                                               \
+        std::cout << erl::common::PrintError("[ERROR]: ", __FILE__, ':', __LINE__) << ": "; \
+        printf(__VA_ARGS__);                                                                \
+        std::cout << std::endl;                                                             \
+        g_print_mutex.unlock();                                                             \
+        exit(1);                                                                            \
     } while (false)
 
-#define ERL_ERROR(...)                                                                                                 \
-    do {                                                                                                               \
-        g_print_mutex.lock();                                                                                          \
-        std::cout << erl::common::PrintError("[ERROR]: ", __FILE__, ':', __LINE__, ": ", __PRETTY_FUNCTION__) << ": "; \
-        printf(__VA_ARGS__);                                                                                           \
-        g_print_mutex.unlock();                                                                                        \
+#define ERL_ERROR(...)                                                                      \
+    do {                                                                                    \
+        g_print_mutex.lock();                                                               \
+        std::cout << erl::common::PrintError("[ERROR]: ", __FILE__, ':', __LINE__) << ": "; \
+        printf(__VA_ARGS__);                                                                \
+        g_print_mutex.unlock();                                                             \
     } while (false)
 
-#define ERL_WARN(...)                                                                              \
-    do {                                                                                           \
-        g_print_mutex.lock();                                                                      \
-        std::cout << erl::common::PrintWarning("[WARN]: ", __FILE__, ':', __LINE__, ": ") << ": "; \
-        printf(__VA_ARGS__);                                                                       \
-        std::cout << std::endl;                                                                    \
-        g_print_mutex.unlock();                                                                    \
+#define ERL_WARN(...)                                                                        \
+    do {                                                                                     \
+        g_print_mutex.lock();                                                                \
+        std::cout << erl::common::PrintWarning("[WARN]: ", __FILE__, ':', __LINE__) << ": "; \
+        printf(__VA_ARGS__);                                                                 \
+        std::cout << std::endl;                                                              \
+        g_print_mutex.unlock();                                                              \
     } while (false)
 
 #define ERL_WARN_ONCE(...)          \
@@ -66,23 +68,23 @@ static std::mutex g_print_mutex;
         if (condition) { ERL_WARN(__VA_ARGS__); } \
     } while (false)
 
-#define ERL_INFO(...)                                                                           \
-    do {                                                                                        \
-        g_print_mutex.lock();                                                                   \
-        std::cout << erl::common::PrintInfo("[INFO]: ", __FILE__, ':', __LINE__, ": ") << ": "; \
-        printf(__VA_ARGS__);                                                                    \
-        std::cout << std::endl << std::flush;                                                   \
-        g_print_mutex.unlock();                                                                 \
+#define ERL_INFO(...)                                                                     \
+    do {                                                                                  \
+        g_print_mutex.lock();                                                             \
+        std::cout << erl::common::PrintInfo("[INFO]: ", __FILE__, ':', __LINE__) << ": "; \
+        printf(__VA_ARGS__);                                                              \
+        std::cout << std::endl << std::flush;                                             \
+        g_print_mutex.unlock();                                                           \
     } while (false)
 
 #ifndef NDEBUG
-#define ERL_DEBUG(...)                                                                                                \
-    do {                                                                                                              \
-        g_print_mutex.lock();                                                                                         \
-        std::cout << erl::common::PrintInfo("[DEBUG]: ", __FILE__, ':', __LINE__, ": ", __PRETTY_FUNCTION__) << ": "; \
-        printf(__VA_ARGS__);                                                                                          \
-        std::cout << std::endl;                                                                                       \
-        g_print_mutex.unlock();                                                                                       \
+#define ERL_DEBUG(...)                                                                     \
+    do {                                                                                   \
+        g_print_mutex.lock();                                                              \
+        std::cout << erl::common::PrintInfo("[DEBUG]: ", __FILE__, ':', __LINE__) << ": "; \
+        printf(__VA_ARGS__);                                                               \
+        std::cout << std::endl;                                                            \
+        g_print_mutex.unlock();                                                            \
     } while (false)
 #define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
 #else
@@ -101,26 +103,16 @@ static std::mutex g_print_mutex;
     } while (false)
 
 #ifndef ERL_ASSERTM
-#define ERL_ASSERTM(expr, ...)                   \
-    do {                                         \
-        if (!(expr)) {                           \
-            std::stringstream ss;                \
-            ss << erl::common::PrintError(       \
-                "Assertion failed: (",           \
-                #expr,                           \
-                "), file ",                      \
-                __FILE__,                        \
-                ", line ",                       \
-                __LINE__,                        \
-                ": ",                            \
-                __PRETTY_FUNCTION__,             \
-                ":",                             \
-                ERL_FORMAT_STRING(__VA_ARGS__)); \
-            g_print_mutex.lock();                \
-            std::cout << std::flush;             \
-            g_print_mutex.unlock();              \
-            throw std::runtime_error(ss.str());  \
-        }                                        \
+#define ERL_ASSERTM(expr, ...)                                                                                                                   \
+    do {                                                                                                                                         \
+        if (!(expr)) {                                                                                                                           \
+            std::stringstream ss;                                                                                                                \
+            ss << erl::common::PrintError("Assertion failed: (", #expr, ") at ", __FILE__, ":", __LINE__, ": ", ERL_FORMAT_STRING(__VA_ARGS__)); \
+            g_print_mutex.lock();                                                                                                                \
+            std::cout << std::flush;                                                                                                             \
+            g_print_mutex.unlock();                                                                                                              \
+            throw std::runtime_error(ss.str());                                                                                                  \
+        }                                                                                                                                        \
     } while (false)
 #endif
 
@@ -128,10 +120,28 @@ static std::mutex g_print_mutex;
 #define ERL_ASSERT(expr) ERL_ASSERTM(expr, "Assertion %s failed.", #expr)
 #endif
 
-#ifndef ERL_DEBUG_ASSERT
 #ifndef NDEBUG
 #define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
 #else
 #define ERL_DEBUG_ASSERT(expr, ...) (void) 0
 #endif
+
+#ifdef __GNUG__
+inline std::string
+demangle(const char* name) {
+    int status = -4;  // some arbitrary value to eliminate the compiler warning
+    std::unique_ptr<char, void (*)(void*)> res{abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free};
+    return (status == 0) ? res.get() : name;
+}
+#else
+inline std::string
+demangle(const char* name) {
+    return name;
+}
 #endif
+
+template<typename T>
+std::string
+type_name() {
+    return demangle(typeid(T).name());
+}

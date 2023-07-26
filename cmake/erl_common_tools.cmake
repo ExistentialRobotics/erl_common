@@ -651,9 +651,10 @@ macro(erl_setup_common_packages)
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
     # There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
     if (USE_INTEL_MKL)  # option from erl_setup_lapack
+        set(EIGEN3_VERSION_STRING "3.4.90")  # some other packages may read this variable.
         erl_find_package(
                 PACKAGE Eigen3
-                3.4.90 REQUIRED
+                ${EIGEN3_VERSION_STRING} REQUIRED
                 COMMANDS GENERAL "visit https://gitlab.com/libeigen/eigen to install the required version")
     else ()
         erl_find_package(
