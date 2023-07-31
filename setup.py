@@ -81,6 +81,8 @@ for i, require in enumerate(requires):
 if os.path.exists("entry_points.txt"):
     with open("entry_points.txt", "r") as f:
         entry_points = f.readlines()
+else:
+    entry_points = []
 for i, entry_point in enumerate(entry_points):
     entry_points[i] = entry_point.strip()
 
