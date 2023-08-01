@@ -454,7 +454,7 @@ macro(erl_set_project_paths)
         set(${PROJECT_NAME}_INSTALL_ETC_DIR ${CMAKE_INSTALL_SYSCONFDIR}/${PROJECT_NAME}
                 CACHE PATH "Path to ${PROJECT_NAME} etc directory during installation" FORCE)
         # /usr/local/include/PROJECT_NAME
-        set(${PROJECT_NAME}_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+        set(${PROJECT_NAME}_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR}
                 CACHE PATH "Path to ${PROJECT_NAME} include directory during installation" FORCE)
         # /usr/local/lib/PROJECT_NAME
         set(${PROJECT_NAME}_INSTALL_LIBRARY_DIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
@@ -975,30 +975,15 @@ macro(erl_add_python_package)
                     COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     COMMENT "Building Python wheel for ${PROJECT_NAME}")
-            if (NOT ROS_ACTIVATED)
-                foreach (pkg ${${PROJECT_NAME}_DEPENDS_PYTHON_PKGS})
-                    add_dependencies(${PROJECT_NAME}_py_wheel ${pkg}_py_wheel)
-                endforeach ()
-            endif ()
             add_custom_target(${PROJECT_NAME}_py_develop
                     COMMAND ${Python3_EXECUTABLE} -m pip install -e . --user
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     DEPENDS ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
                     COMMENT "Installing Python package ${PROJECT_NAME} in develop mode")
-            if (NOT ROS_ACTIVATED)
-                foreach (pkg ${${PROJECT_NAME}_DEPENDS_PYTHON_PKGS})
-                    add_dependencies(${PROJECT_NAME}_py_develop ${pkg}_py_develop)
-                endforeach ()
-            endif ()
             add_custom_target(${PROJECT_NAME}_py_install
                     COMMAND ${Python3_EXECUTABLE} -m pip install . --user
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     COMMENT "Installing Python package ${PROJECT_NAME} in install mode")
-            if (NOT ROS_ACTIVATED)
-                foreach (pkg ${${PROJECT_NAME}_DEPENDS_PYTHON_PKGS})
-                    add_dependencies(${PROJECT_NAME}_py_install ${pkg}_py_install)
-                endforeach ()
-            endif ()
         else ()
             message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR}, rules for Python package ${PROJECT_NAME} will not be generated.")
         endif ()
@@ -1047,9 +1032,8 @@ macro(erl_install)
 
     # Install the header files
     if (EXISTS ${${PROJECT_NAME}_INCLUDE_DIR}/${PROJECT_NAME})
-        get_filename_component(INSTALL_INCLUDE_DIR ${${PROJECT_NAME}_INSTALL_INCLUDE_DIR} DIRECTORY)
         install(DIRECTORY ${${PROJECT_NAME}_INCLUDE_DIR}/${PROJECT_NAME}
-                DESTINATION ${INSTALL_INCLUDE_DIR})  # ${PROJECT_NAME} is added automatically
+                DESTINATION ${${PROJECT_NAME}_INSTALL_INCLUDE_DIR})  # ${PROJECT_NAME} is added automatically
     endif ()
     # Install other files
     if (${PROJECT_NAME}_INSTALL_OTHER_FILES)
@@ -1114,7 +1098,6 @@ macro(erl_install)
         # Other CMake targets can refer to it using ${PROJECT_NAME}::${PROJECT_NAME}
         install(EXPORT ${PROJECT_NAME}_Targets
                 FILE ${PROJECT_NAME}Targets.cmake
-                NAMESPACE ${PROJECT_NAME}::
                 DESTINATION ${${PROJECT_NAME}_INSTALL_CMAKE_DIR})
 
         # reference: https://gitlab.com/libeigen/eigen/-/blob/master/CMakeLists.txt#L662
@@ -1124,14 +1107,6 @@ macro(erl_install)
         install(FILES "${${PROJECT_NAME}_BUILD_DIR}/${PROJECT_NAME}Config.cmake"
                 "${${PROJECT_NAME}_BUILD_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
                 DESTINATION ${${PROJECT_NAME}_INSTALL_CMAKE_DIR})
-
-        # # Install .py and .pyi files
-        # if (BUILD_PYTHON AND DEFINED ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR)
-        #     install(DIRECTORY ${${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR}
-        #             DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/python)
-        #     install(DIRECTORY ${${PROJECT_NAME}_PY_MODULE_DIRS}
-        #             DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/python)
-        # endif ()
     endif ()
 
 endmacro()
