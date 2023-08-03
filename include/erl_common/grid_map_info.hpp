@@ -373,8 +373,19 @@ namespace erl::common {
 
         [[nodiscard]] inline bool
         InGrids(const Eigen::Ref<const Eigen::Vector<int, Dim>>& grid_point) const {
-            ERL_DEBUG_ASSERT(grid_point.size() == m_map_shape_.size(), "grid_point is %td-dim but the map is %td-dim.", grid_point.size(), m_map_shape_.size());
-            for (int i = 0; i < grid_point.size(); ++i) {
+            // clang-format off
+            if (Dim == 2) {
+                return grid_point[0] >= 0 && grid_point[0] < m_map_shape_[0] &&
+                       grid_point[1] >= 0 && grid_point[1] < m_map_shape_[1];
+            }
+            if (Dim == 3) {
+                return grid_point[0] >= 0 && grid_point[0] < m_map_shape_[0] &&
+                       grid_point[1] >= 0 && grid_point[1] < m_map_shape_[1] &&
+                       grid_point[2] >= 0 && grid_point[2] < m_map_shape_[2];
+            }
+            // clang-format on
+
+            for (int i = 0; i < Dim; ++i) {
                 if (grid_point[i] < 0 || grid_point[i] >= m_map_shape_[i]) { return false; }
             }
             return true;

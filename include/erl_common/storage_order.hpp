@@ -45,15 +45,8 @@ namespace erl::common {
 
     template<int Dim>
     [[nodiscard]] inline int
-    CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape, Eigen::Vector<int, Dim> coords, bool c_stride) {
+    CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape, const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords, bool c_stride) {
         auto ndim = int(shape.size());
-
-        // ERL_DEBUG_ASSERT(coords.size() == ndim, "coords is %td-dim but the map is %d-dim.", coords.size(), ndim);
-        // for (int i = 0; i < ndim; ++i) {
-        //     ERL_DEBUG_ASSERT(shape[i] > 0, "%d-dim of shape is not positive: %d", i, shape[i]);
-        //     ERL_DEBUG_ASSERT(coords[i] < shape[i] && coords[i] >= -shape[i], "%d-dim of coords is %d, out of bound %d", i, coords[i], shape[i]);
-        //     if (coords[i] < 0) { coords[i] += shape[i]; }
-        // }
 
         if (Dim == 2) {
             if (c_stride) {
