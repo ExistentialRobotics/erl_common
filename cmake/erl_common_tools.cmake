@@ -655,6 +655,7 @@ macro(erl_setup_common_packages)
         erl_find_package(
                 PACKAGE Eigen3
                 ${EIGEN3_VERSION_STRING} REQUIRED
+                COMMANDS ARCH_LINUX "try `paru -S eigen-git`"
                 COMMANDS GENERAL "visit https://gitlab.com/libeigen/eigen to install the required version")
     else ()
         erl_find_package(
@@ -678,16 +679,21 @@ macro(erl_setup_common_packages)
             COMMANDS APPLE "run scripts/install_opencv.bash"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libopencv-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S opencv`")
+    if (EXISTS /usr/lib/libOpenGL.so)
+        set(OpenGL_GL_PREFERENCE "GLVND")
+    else ()
+        set(OpenGL_GL_PREFERENCE "LEGACY")
+    endif ()
     erl_find_package(
             PACKAGE PCL
             REQUIRED
             COMMANDS UBUNTU_LINUX "try `sudo apt install libpcl-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S pcl`")
+            COMMANDS ARCH_LINUX "try `paru -S pcl` or install from https://github.com/daizhirui/pcl-git.git")
     erl_find_package(
             PACKAGE nanoflann
             REQUIRED
             COMMANDS UBUNTU_LINUX "try `sudo apt install libnanoflann-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S nanoflann`")
+            COMMANDS ARCH_LINUX "try `paru -S nanoflann`")
     erl_find_package(
             PACKAGE yaml-cpp
             REQUIRED
@@ -882,6 +888,20 @@ endmacro()
 # erl_project_setup
 #######################################################################################################################
 macro(erl_project_setup)
+    set(options)
+    set(oneValueArgs)
+    set(multiValueArgs ERL_PACKAGES CATKIN_COMPONENTS CATKIN_DEPENDS)
+    cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    foreach (erl_package IN LISTS ${PROJECT_NAME}_ERL_PACKAGES)
+        if (NOT TARGET ${erl_package})
+            erl_find_package(
+                    PACKAGE ${erl_package}
+                    REQUIRED
+                    COMMANDS GENERAL "build and install ${erl_package} at first")
+        endif ()
+    endforeach ()
+
     # check if is top-level
     if (CMAKE_VERSION VERSION_LESS 3.21)
         get_property(NOT_TOP_LEVEL DIRECTORY PROPERTY PARENT_DIRECTORY)
@@ -894,6 +914,16 @@ macro(erl_project_setup)
 
     erl_setup_compiler()
     erl_detect_ros()
+
+    if (ROS_ACTIVATED)
+        if (ROS_VERSION STREQUAL "1")
+            list(APPEND ${PROJECT_NAME}_CATKIN_COMPONENTS ${${PROJECT_NAME}_ERL_PACKAGES})
+            list(REMOVE_DUPLICATES ${PROJECT_NAME}_CATKIN_COMPONENTS)
+            list(APPEND ${PROJECT_NAME}_CATKIN_DEPENDS ${${PROJECT_NAME}_ERL_PACKAGES})
+            list(REMOVE_DUPLICATES ${PROJECT_NAME}_CATKIN_DEPENDS)
+        endif ()
+    endif ()
+
     if (NOT ERL_PROJECT_SETUP_DONE OR ROS_ACTIVATED)
         erl_setup_lapack()
         erl_setup_common_packages()
