@@ -887,13 +887,17 @@ endmacro()
 #######################################################################################################################
 # erl_project_setup
 #######################################################################################################################
-macro(erl_project_setup)
+macro(erl_project_setup _name)
     set(options)
     set(oneValueArgs)
     set(multiValueArgs ERL_PACKAGES CATKIN_COMPONENTS CATKIN_DEPENDS)
-    cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    cmake_parse_arguments(${_name} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    foreach (erl_package IN LISTS ${PROJECT_NAME}_ERL_PACKAGES)
+    if (${_name}_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Some arguments are not recognized by erl_project_setup")
+    endif ()
+
+    foreach (erl_package ${${_name}_ERL_PACKAGES})
         if (NOT TARGET ${erl_package})
             erl_find_package(
                     PACKAGE ${erl_package}
@@ -917,10 +921,10 @@ macro(erl_project_setup)
 
     if (ROS_ACTIVATED)
         if (ROS_VERSION STREQUAL "1")
-            list(APPEND ${PROJECT_NAME}_CATKIN_COMPONENTS ${${PROJECT_NAME}_ERL_PACKAGES})
-            list(REMOVE_DUPLICATES ${PROJECT_NAME}_CATKIN_COMPONENTS)
-            list(APPEND ${PROJECT_NAME}_CATKIN_DEPENDS ${${PROJECT_NAME}_ERL_PACKAGES})
-            list(REMOVE_DUPLICATES ${PROJECT_NAME}_CATKIN_DEPENDS)
+            list(APPEND ${_name}_CATKIN_COMPONENTS ${${PROJECT_NAME}_ERL_PACKAGES})
+            list(REMOVE_DUPLICATES ${_name}_CATKIN_COMPONENTS)
+            list(APPEND ${_name}_CATKIN_DEPENDS ${${PROJECT_NAME}_ERL_PACKAGES})
+            list(REMOVE_DUPLICATES ${_name}_CATKIN_DEPENDS)
         endif ()
     endif ()
 
@@ -1144,9 +1148,9 @@ endmacro()
 #######################################################################################################################
 # erl_mark_project_found
 #######################################################################################################################
-macro(erl_mark_project_found)
-    set(${PROJECT_NAME}_FOUND
+macro(erl_mark_project_found _name)
+    set(${_name}_FOUND
             TRUE
-            CACHE BOOL "TRUE if ${PROJECT_NAME} and all required components found on the system" FORCE)
-    message(STATUS "${PROJECT_NAME} is found")
+            CACHE BOOL "TRUE if ${_name} and all required components found on the system" FORCE)
+    message(STATUS "${_name} is found")
 endmacro()

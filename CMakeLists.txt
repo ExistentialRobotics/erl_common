@@ -9,10 +9,8 @@ message(STATUS "Configuring ${PROJECT_NAME} ${PROJECT_VERSION}")
 if (NOT COMMAND erl_project_setup)
     include(cmake/erl_common_tools.cmake)
 endif ()
-erl_project_setup()
-erl_setup_ros(
-        CATKIN_COMPONENTS roscpp
-)
+erl_project_setup(${PROJECT_NAME})
+erl_setup_ros(CATKIN_COMPONENTS roscpp)
 erl_catkin_package(
         INCLUDE_DIRS include
         LIBRARIES ${PROJECT_NAME} py${PROJECT_NAME}
@@ -67,4 +65,4 @@ erl_add_tests(
 #######################################################################################################################
 # done
 #######################################################################################################################
-erl_mark_project_found()
+erl_mark_project_found(${PROJECT_NAME})
