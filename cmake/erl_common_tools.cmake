@@ -984,8 +984,8 @@ macro(erl_add_python_package)
             target_include_directories(${${PROJECT_NAME}_PYBIND_MODULE_NAME} SYSTEM PRIVATE ${Python3_INCLUDE_DIRS})
             target_link_libraries(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PRIVATE ${PROJECT_NAME})
             # put the library in the source python package directory, such that setup.py can find it
-            set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
-                    LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_PYTHON_PKG_DIR})
+            # set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
+            #         LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_PYTHON_PKG_DIR})
             if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
                 # copy file to a regular library name so that catkin does not throw an error, but this file may not
                 # work with Python3 because the filename is lib<name>.so, which does not match the module name.
