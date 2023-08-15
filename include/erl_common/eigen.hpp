@@ -22,6 +22,7 @@ mkl_serv_intel_cpu_true();
 namespace Eigen {
     // MATRIX
     using MatrixXl = MatrixX<long>;
+    using MatrixXb = MatrixX<bool>;
     using MatrixX8U = MatrixX<uint8_t>;
     using Matrix2Xl = Matrix<long, 2, Eigen::Dynamic>;
     using Matrix23d = Matrix<double, 2, 3>;

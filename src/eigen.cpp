@@ -14,12 +14,12 @@ namespace erl::common {
             Eigen::IOFormat(),         // kDefaultFmt
             Eigen::IOFormat(           // kCommaInitFmt
                 Eigen::FullPrecision,  // precision
-                Eigen::DontAlignCols,  // flags
+                0,                     // flags
                 ", ",                  // coeffSeparator
-                ", ",                  // rowSeparator
+                ",\n",                 // rowSeparator
                 "",                    // rowPrefix
                 "",                    // rowSuffix
-                " << ",                // matPrefix
+                "<<\n ",               // matPrefix
                 ";"                    // matSuffix
                 ),
             Eigen::IOFormat(           // kCleanFmt

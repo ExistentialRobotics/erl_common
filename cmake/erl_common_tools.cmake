@@ -35,7 +35,10 @@ macro(erl_add_tests)
                 get_filename_component(name ${file} NAME_WE)
                 add_executable(${name} ${file})
                 target_link_libraries(${name} ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main)
-                gtest_discover_tests(${name})
+                gtest_discover_tests(
+                        ${name}
+                        WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                )
                 message(STATUS "Adding gtest ${name}")
             endforeach ()
         endif ()

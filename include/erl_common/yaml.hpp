@@ -98,6 +98,7 @@ namespace YAML {
 
         inline static bool
         decode(const Node& node, Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
+            if (node.IsNull() && (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic)) { return true; }
             if (!node.IsSequence()) { return false; }
             if (!node[0].IsSequence()) { return false; }
 
@@ -351,11 +352,13 @@ namespace YAML {
     struct convert<std::shared_ptr<T>> {
         inline static Node
         encode(const std::shared_ptr<T>& rhs) {
+            if (rhs == nullptr) { return Node(NodeType::Null); }
             return convert<T>::encode(*rhs);
         }
 
         inline static bool
         decode(const Node& node, std::shared_ptr<T>& rhs) {
+            ERL_DEBUG_ASSERT(rhs == nullptr, "rhs is not nullptr");
             auto value = std::make_shared<T>();
             if (convert<T>::decode(node, *value)) {
                 rhs = value;
@@ -377,11 +380,13 @@ namespace YAML {
     struct convert<std::unique_ptr<T>> {
         inline static Node
         encode(const std::unique_ptr<T>& rhs) {
+            if (rhs == nullptr) { return Node(NodeType::Null); }
             return convert<T>::encode(*rhs);
         }
 
         inline static bool
         decode(const Node& node, std::unique_ptr<T>& rhs) {
+            ERL_DEBUG_ASSERT(rhs == nullptr, "rhs is not nullptr");
             auto value = std::make_unique<T>();
             if (convert<T>::decode(node, *value)) {
                 rhs = std::move(value);
