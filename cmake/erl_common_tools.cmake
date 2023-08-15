@@ -283,24 +283,46 @@ endfunction()
 #######################################################################################################################
 macro(erl_find_package)
     set(options NO_RECORD)
-    set(oneValueArgs PACKAGE)
+    set(oneValueArgs PACKAGE PKGCONFIG)
     set(multiValueArgs COMMANDS)
     cmake_parse_arguments(ERL "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    message(STATUS "=================================================================================================")
-    erl_platform_based_message(
-            MSG_TYPE STATUS
-            MSG_PREFIX "Finding package ${ERL_PACKAGE}, if not found"
-            MESSAGES ${ERL_COMMANDS})
+    if (QUIET IN_LIST ERL_UNPARSED_ARGUMENTS)
+        set(ERL_QUIET ON)
+    else ()
+        if (NOT DEFINED ${ERL_PACKAGE}_VERBOSE_ONCE)  # avoid printing multiple times
+            set(ERL_QUIET OFF)
+            set(${ERL_PACKAGE}_VERBOSE_ONCE ON CACHE INTERNAL "" FORCE)
+        else ()
+            set(ERL_QUIET ON)
+        endif ()
+    endif ()
 
-    find_package(${ERL_PACKAGE} ${ERL_UNPARSED_ARGUMENTS})
+    if (NOT ERL_QUIET)
+        message(STATUS "=================================================================================================")
+        if (ERL_PACKAGE STREQUAL "Python3")
+            message(STATUS "To specify python interpreter, run `cmake -DPython3_ROOT_DIR=/path/to/python3_bin_folder ..`")
+        endif ()
+        erl_platform_based_message(
+                MSG_TYPE STATUS
+                MSG_PREFIX "Finding package ${ERL_PACKAGE}, if not found"
+                MESSAGES ${ERL_COMMANDS})
+    endif ()
+
+    if (ERL_PKGCONFIG)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(${ERL_PACKAGE} ${ERL_UNPARSED_ARGUMENTS})
+    else ()
+        find_package(${ERL_PACKAGE} ${ERL_UNPARSED_ARGUMENTS})
+    endif ()
+
     if (REQUIRED IN_LIST ERL_UNPARSED_ARGUMENTS)
         set(MSG_TYPE "FATAL_ERROR")
     else ()
         set(MSG_TYPE "WARNING")
     endif ()
 
-    if (${ERL_PACKAGE}_FOUND)
+    if (${ERL_PACKAGE}_FOUND AND NOT ERL_QUIET)
         foreach (item IN ITEMS FOUND INCLUDE_DIR INCLUDE_DIRS LIBRARY LIBRARIES LIBS DEFINITIONS)
             if (DEFINED ${ERL_PACKAGE}_${item})
                 message(STATUS "${ERL_PACKAGE}_${item}: ${${ERL_PACKAGE}_${item}}")
@@ -309,11 +331,14 @@ macro(erl_find_package)
     endif ()
 
     if (ERL_NO_RECORD)
-        message(STATUS "${ERL_PACKAGE} is not added to ${PROJECT_NAME}_DEPENDS")
+        if (NOT ERL_QUIET)
+            message(STATUS "${ERL_PACKAGE} is not added to ${PROJECT_NAME}_DEPENDS")
+        endif ()
     else ()
         list(APPEND ${PROJECT_NAME}_DEPENDS ${ERL_PACKAGE})
     endif ()
 
+    unset(ERL_PKGCONFIG)
     unset(ERL_NO_RECORD)
     unset(ERL_PACKAGE)
     unset(ERL_COMMANDS)
@@ -657,13 +682,13 @@ macro(erl_setup_common_packages)
         set(EIGEN3_VERSION_STRING "3.4.90")  # some other packages may read this variable.
         erl_find_package(
                 PACKAGE Eigen3
-                ${EIGEN3_VERSION_STRING} REQUIRED
+                ${EIGEN3_VERSION_STRING} REQUIRED CONFIG  # in case some other packages define FindEigen3.cmake
                 COMMANDS ARCH_LINUX "try `paru -S eigen-git`"
                 COMMANDS GENERAL "visit https://gitlab.com/libeigen/eigen to install the required version")
     else ()
         erl_find_package(
                 PACKAGE Eigen3
-                REQUIRED
+                REQUIRED CONFIG  # in case some other packages define FindEigen3.cmake
                 COMMANDS APPLE "try `brew install eigen`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install libeigen3-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S eigen`")
@@ -745,17 +770,16 @@ endmacro()
 macro(erl_setup_python)
     option(BUILD_PYTHON "Build Python binding" ON)
     if (BUILD_PYTHON)
-        message(STATUS "To specify python interpreter, run `cmake -DPython3_ROOT_DIR=/path/to/python3_bin_folder ..`")
         erl_find_package(
                 PACKAGE Python3
-                REQUIRED COMPONENTS Interpreter Development
+                QUIET REQUIRED COMPONENTS Interpreter Development
                 COMMANDS APPLE "try `brew install python3`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install python3-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S python`")
         set_target_properties(Python3::Python PROPERTIES SYSTEM ON)
         erl_find_package(
                 PACKAGE pybind11
-                REQUIRED
+                QUIET REQUIRED
                 COMMANDS APPLE "try `brew install pybind11`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install pybind11-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S pybind11`")
@@ -871,8 +895,23 @@ macro(erl_catkin_package)
         endforeach ()
         set(catkin_LIBRARIES ${filtered_catkin_LIBRARIES})
         unset(filtered_catkin_LIBRARIES)
-
-        # detect msg files and generate message headers
+        #    else ()
+        #        unset(catkin_INCLUDE_DIRS)
+        #        unset(catkin_LIBRARIES)
+        #        foreach (dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+        #            set(dep_added FALSE)
+        #            if (${dep}_INCLUDE_DIRS)
+        #                list(APPEND catkin_INCLUDE_DIRS ${${dep}_INCLUDE_DIRS})
+        #                set(dep_added TRUE)
+        #            endif ()
+        #            if (${dep}_LIBRARIES)
+        #                list(APPEND catkin_LIBRARIES ${${dep}_LIBRARIES})
+        #                set(dep_added TRUE)
+        #            endif ()
+        #            if (NOT dep_added)
+        #                message(WARNING "Cannot find include directories or libraries of ${dep}")
+        #            endif ()
+        #        endforeach ()
     endif ()
 
     erl_set_project_paths()
