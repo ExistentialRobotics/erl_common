@@ -31,10 +31,8 @@ namespace erl::common {
         [[nodiscard]] virtual YAML::Node
         AsYamlNode() const = 0;
 
-        [[nodiscard]] std::string
-        AsYamlString() const {
-            return YAML::Dump(AsYamlNode());
-        }
+        [[nodiscard]] virtual std::string
+        AsYamlString() const = 0;
 
         inline void
         FromYamlFile(const std::string& yaml_file) {
@@ -64,6 +62,14 @@ namespace erl::common {
         [[nodiscard]] inline YAML::Node
         AsYamlNode() const override {
             return YAML::convert<T>::encode(*static_cast<const T*>(this));
+        }
+
+        [[nodiscard]] inline std::string
+        AsYamlString() const override {
+            YAML::Emitter emitter;
+            // this triggers YAML::Emitter& operator<<(YAML::Emitter& out, const T& rhs)
+            emitter << *static_cast<const T*>(this);  // allow YAML style manipulation, e.g., emitter.SetIndent(4);
+            return emitter.c_str();
         }
     };
 
@@ -263,7 +269,7 @@ namespace YAML {
     template<typename T, int Size>
     inline Emitter&
     operator<<(Emitter& out, const Eigen::Vector<T, Size>& rhs) {
-        out << BeginSeq;
+        out << BeginSeq << Flow;
         if (Size == Eigen::Dynamic) {
             for (int i = 0; i < rhs.size(); ++i) { out << rhs[i]; }
         } else {
@@ -433,3 +439,9 @@ namespace YAML {
         return out;
     }
 }  // namespace YAML
+
+inline std::ostream&
+operator<<(std::ostream& out, const erl::common::YamlableBase& yaml) {
+    out << yaml.AsYamlString();
+    return out;
+}

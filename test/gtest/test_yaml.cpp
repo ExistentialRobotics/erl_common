@@ -86,8 +86,7 @@ TEST(YamlTest, FromYamlString) {
     ASSERT_EQ(setting.b, 3.0);
     ASSERT_EQ(setting.sub_setting.c, 0);
     ASSERT_EQ(setting.sub_setting.d, 1);
-
-    std::cout << setting.AsYamlString() << std::endl;
+    std::cout << setting << std::endl;
 
     setting.FromYamlString(R"(
 a: 10
@@ -96,7 +95,7 @@ sub_setting:
     c: 2
     d: 3)");
 
-    std::cout << setting.AsYamlString() << std::endl;
+    std::cout << setting << std::endl;
     ASSERT_EQ(setting.a, 10);
     ASSERT_EQ(setting.b, 1.0);
     ASSERT_EQ(setting.sub_setting.c, 2);
