@@ -174,6 +174,16 @@ namespace erl::common {
         }
 
         [[nodiscard]] inline int
+        Rows() const {
+            return m_map_shape_[0];
+        }
+
+        [[nodiscard]] inline int
+        Cols() const {
+            return m_map_shape_[1];
+        }
+
+        [[nodiscard]] inline int
         Width() const {
             return m_map_shape_[0];
         }
@@ -393,7 +403,7 @@ namespace erl::common {
 
         [[nodiscard]] inline int
         GridToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>>& grid, bool c_stride) const {
-            ERL_DEBUG_ASSERT(InGrids(grid), "%s is out of map.\n", EigenToNumPyFmtString(grid).c_str());
+            ERL_DEBUG_ASSERT(InGrids(grid), "%s is out of map.\n", EigenToNumPyFmtString(grid.transpose()).c_str());
             return CoordsToIndex<Dim>(m_map_shape_, grid, c_stride);
         }
 
