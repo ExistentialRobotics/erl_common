@@ -5,6 +5,13 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "ERL CMake directory")
 
 #######################################################################################################################
+# erl_set_gtest_args
+#######################################################################################################################
+macro(erl_set_gtest_args _gtest_name _gtest_args)
+    set(${_gtest_name}_GTEST_ARGS ${_gtest_args} CACHE STRING "GTest arguments for ${_gtest_name}" FORCE)
+endmacro()
+
+#######################################################################################################################
 # erl_add_test
 #######################################################################################################################
 macro(erl_add_tests)
@@ -25,7 +32,11 @@ macro(erl_add_tests)
         if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1" AND CATKIN_ENABLE_TESTING)
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
-                catkin_add_gtest(${name} ${file})
+                if (DEFINED ${name}_GTEST_ARGS)
+                    catkin_add_gtest(${name} ${file} ${${name}_GTEST_ARGS})
+                else ()
+                    catkin_add_gtest(${name} ${file})
+                endif ()
                 target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
                 target_link_libraries(${name} ${catkin_LIBRARIES} ${${PROJECT_NAME}_TEST_LIBRARIES})
                 message(STATUS "Adding gtest ${name}")
@@ -35,10 +46,18 @@ macro(erl_add_tests)
                 get_filename_component(name ${file} NAME_WE)
                 add_executable(${name} ${file})
                 target_link_libraries(${name} ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main)
-                gtest_discover_tests(
-                        ${name}
-                        WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                )
+                if (DEFINED ${name}_GTEST_ARGS)
+                    gtest_discover_tests(
+                            ${name}
+                            EXTRA_ARGS ${${name}_GTEST_ARGS}
+                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                    )
+                else ()
+                    gtest_discover_tests(
+                            ${name}
+                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                    )
+                endif ()
                 message(STATUS "Adding gtest ${name}")
             endforeach ()
         endif ()
@@ -530,7 +549,7 @@ macro(erl_setup_compiler)
     endif ()
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra -flto=auto")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -mavx2 -mfma -march=core-avx2")
     if (NOT CMAKE_OSX_DEPLOYMENT_TARGET)
@@ -667,13 +686,13 @@ endmacro()
 macro(erl_setup_common_packages)
     erl_find_package(
             PACKAGE OpenMP
-            REQUIRED
+            REQUIRED GLOBAL
             COMMANDS APPLE "try `brew install libomp`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libomp-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S openmp`")
     erl_find_package(
             PACKAGE Boost
-            REQUIRED COMPONENTS program_options
+            REQUIRED GLOBAL COMPONENTS program_options
             COMMANDS APPLE "try `brew install boost`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
@@ -682,13 +701,13 @@ macro(erl_setup_common_packages)
         set(EIGEN3_VERSION_STRING "3.4.90")  # some other packages may read this variable.
         erl_find_package(
                 PACKAGE Eigen3
-                ${EIGEN3_VERSION_STRING} REQUIRED CONFIG  # in case some other packages define FindEigen3.cmake
+                ${EIGEN3_VERSION_STRING} REQUIRED CONFIG GLOBAL  # in case some other packages define FindEigen3.cmake
                 COMMANDS ARCH_LINUX "try `paru -S eigen-git`"
                 COMMANDS GENERAL "visit https://gitlab.com/libeigen/eigen to install the required version")
     else ()
         erl_find_package(
                 PACKAGE Eigen3
-                REQUIRED CONFIG  # in case some other packages define FindEigen3.cmake
+                REQUIRED CONFIG GLOBAL  # in case some other packages define FindEigen3.cmake
                 COMMANDS APPLE "try `brew install eigen`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install libeigen3-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S eigen`")
@@ -697,13 +716,13 @@ macro(erl_setup_common_packages)
 
     erl_find_package(
             PACKAGE nlohmann_json
-            REQUIRED
+            REQUIRED GLOBAL
             COMMANDS APPLE "try `brew install nlohmann-json`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install nlohmann-json3-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S nlohmann-json`")
     erl_find_package(
             PACKAGE OpenCV
-            REQUIRED COMPONENTS core imgproc highgui
+            REQUIRED GLOBAL COMPONENTS core imgproc highgui
             COMMANDS APPLE "run scripts/install_opencv.bash"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libopencv-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S opencv`")
@@ -714,17 +733,17 @@ macro(erl_setup_common_packages)
     endif ()
     erl_find_package(
             PACKAGE PCL
-            REQUIRED
+            REQUIRED GLOBAL
             COMMANDS UBUNTU_LINUX "try `sudo apt install libpcl-dev`"
             COMMANDS ARCH_LINUX "try `paru -S pcl` or install from https://github.com/daizhirui/pcl-git.git")
     erl_find_package(
             PACKAGE nanoflann
-            REQUIRED
+            REQUIRED GLOBAL
             COMMANDS UBUNTU_LINUX "try `sudo apt install libnanoflann-dev`"
             COMMANDS ARCH_LINUX "try `paru -S nanoflann`")
     erl_find_package(
             PACKAGE yaml-cpp
-            REQUIRED
+            REQUIRED GLOBAL
             COMMANDS UBUNTU_LINUX "try `sudo apt install libyaml-cpp-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S yaml-cpp`")
     # erl_find_package(

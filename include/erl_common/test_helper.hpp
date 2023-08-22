@@ -11,19 +11,16 @@
 #include "color_print.hpp"
 #include "eigen.hpp"
 
-constexpr double kAbsTol = 1.e-6;
-constexpr double kRelTol = 1.e-6;
-
 namespace erl::common {
 
     template<bool is_integral, typename T>
     bool
-    CheckValue(const char *question_str, T ans, T gt, bool assert_diff = true) {
+    CheckValue(const char *question_str, T ans, T gt, double abs_tol = 1.e-6, double rel_tol = 1.e-6, bool assert_diff = true) {
         if (is_integral && ans == gt) {
             std::cout << question_str << ": " << ans << ", " << PrintSuccess("[PASSED]") << std::endl;
             return true;
         } else {
-            auto diff = std::fabs(ans - gt) - (kAbsTol + kRelTol * std::fabs(gt));
+            auto diff = std::fabs(ans - gt) - (abs_tol + rel_tol * std::fabs(gt));
             if (diff > 0) {
                 std::cout << question_str << ": " << ans << " and " << gt << ", diff = " << ans - gt << PrintError("[FAILED]") << std::endl;
                 if (assert_diff) { throw std::runtime_error(std::string(question_str) + " failed."); }
@@ -36,18 +33,20 @@ namespace erl::common {
     }
 
     template<typename T>
-    bool CheckIntegralValue(const char *question_str, T ans, T gt, bool assert_diff = true) {
+    bool
+    CheckIntegralValue(const char *question_str, T ans, T gt, bool assert_diff = true) {
         return CheckValue<true>(question_str, ans, gt, assert_diff);
     }
 
     template<typename T>
-    bool CheckFloatingValue(const char *question_str, T ans, T gt, bool assert_diff = true) {
+    bool
+    CheckFloatingValue(const char *question_str, T ans, T gt, bool assert_diff = true) {
         return CheckValue<false>(question_str, ans, gt, assert_diff);
     }
 
     template<typename T1, typename T2>
     bool
-    CheckAnswers(const char *question_str, T1 ans, T2 gt, bool assert_diff = true) {
+    CheckAnswers(const char *question_str, T1 ans, T2 gt, double abs_tol = 1.e-6, double rel_tol = 1.e-6, bool assert_diff = true) {
 
         if ((size_t) ans.size() != (size_t) gt.size()) {
             std::cout << question_str << ": GetSize is different, " << ans.size() << " and " << gt.size() << PrintError(" [FAILED]") << std::endl;
@@ -57,7 +56,7 @@ namespace erl::common {
         auto ans_ptr = ans.data();
         auto gt_ptr = gt.data();
         for (decltype(ans.size()) i = 0; i < ans.size(); ++i) {
-            auto diff = std::fabs(ans_ptr[i] - gt_ptr[i]) - (kAbsTol + kRelTol * std::fabs(gt_ptr[i]));
+            auto diff = std::fabs(ans_ptr[i] - gt_ptr[i]) - (abs_tol + rel_tol * std::fabs(gt_ptr[i]));
             if (diff > 0) {
                 std::cout << "element " << i << " is different: " << ans_ptr[i] << " and " << gt_ptr[i] << ", diff = " << std::scientific
                           << std::setprecision(4) << std::fabs(ans_ptr[i] - gt_ptr[i]) << std::endl
@@ -78,21 +77,45 @@ namespace erl::common {
         }
     }
 
-    template<typename T1, typename T2>
-    void
-    GtestAssertSequenceEqual(T1 ans, T2 gt) {
-        auto ans_ptr = ans.data();
-        auto gt_ptr = gt.data();
-        for (decltype(ans.size()) i = 0; i < ans.size(); ++i) { ASSERT_EQ(ans_ptr[i], gt_ptr[i]); }
-    }
+#define ASSERT_EIGEN_MATRIX_EQUAL(question, ans, gt)                                                                        \
+    do {                                                                                                                    \
+        { ASSERT_EQ(ans.rows(), gt.rows()); }                                                                               \
+        { ASSERT_EQ(ans.cols(), gt.cols()); }                                                                               \
+        for (int _i = 0; _i < ans.rows(); ++_i) {                                                                           \
+            for (int _j = 0; _j < ans.cols(); ++_j) {                                                                       \
+                ASSERT_EQ(ans(_i, _j), gt(_i, _j)) << (question) << ": element (" << _i << ", " << _j << ") is different."; \
+            }                                                                                                               \
+        }                                                                                                                   \
+    } while (false)
 
-    template<typename T1, typename T2>
-    void
-    GTestAssertSequenceNear(T1 ans, T2 gt) {
-        auto ans_ptr = ans.data();
-        auto gt_ptr = gt.data();
-        for (decltype(ans.size()) i = 0; i < ans.size(); ++i) { ASSERT_NEAR(ans_ptr[i], gt_ptr[i], kAbsTol + kRelTol * std::fabs(gt_ptr[i])); }
-    }
+#define ASSERT_EIGEN_MATRIX_NEAR(question, ans, gt, error)                                                                           \
+    do {                                                                                                                             \
+        { ASSERT_EQ(ans.rows(), gt.rows()); }                                                                                        \
+        { ASSERT_EQ(ans.cols(), gt.cols()); }                                                                                        \
+        for (int _i = 0; _i < ans.rows(); ++_i) {                                                                                    \
+            for (int _j = 0; _j < ans.cols(); ++_j) {                                                                                \
+                ASSERT_NEAR(ans(_i, _j), gt(_i, _j), error) << (question) << ": element (" << _i << ", " << _j << ") is different."; \
+            }                                                                                                                        \
+        }                                                                                                                            \
+    } while (false)
+
+#define ASSERT_EIGEN_VECTOR_EQUAL(question, ans, gt)                                                                                      \
+    do {                                                                                                                                  \
+        { ASSERT_EQ(ans.size(), gt.size()); }                                                                                             \
+        for (int _i = 0; _i < ans.size(); ++_i) { ASSERT_EQ(ans[_i], gt[_i]) << (question) << ": element [" << _i << "] is different."; } \
+    } while (false)
+
+#define ASSERT_EIGEN_VECTOR_NEAR(question, ans, gt, error)                                                                                         \
+    do {                                                                                                                                           \
+        { ASSERT_EQ(ans.size(), gt.size()); }                                                                                                      \
+        for (int _i = 0; _i < ans.size(); ++_i) { ASSERT_NEAR(ans[_i], gt[_i], error) << (question) << ": element [" << _i << "] is different."; } \
+    } while (false)
+
+#define ASSERT_STD_VECTOR_EQUAL(question, ans, gt)                                                                                                \
+    do {                                                                                                                                          \
+        { ASSERT_EQ(ans.size(), gt.size()); }                                                                                                     \
+        for (std::size_t _i = 0; _i < ans.size(); ++_i) { ASSERT_EQ(ans[_i], gt[_i]) << (question) << ": element [" << _i << "] is different."; } \
+    } while (false)
 
     template<typename duration, typename F, typename... Args>
     long
