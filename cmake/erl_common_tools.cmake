@@ -32,11 +32,7 @@ macro(erl_add_tests)
         if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1" AND CATKIN_ENABLE_TESTING)
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
-                if (DEFINED ${name}_GTEST_ARGS)
-                    catkin_add_gtest(${name} ${file} ${${name}_GTEST_ARGS})
-                else ()
-                    catkin_add_gtest(${name} ${file})
-                endif ()
+                catkin_add_gtest(${name} ${file})
                 target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
                 target_link_libraries(${name} ${catkin_LIBRARIES} ${${PROJECT_NAME}_TEST_LIBRARIES})
                 message(STATUS "Adding gtest ${name}")
@@ -733,7 +729,7 @@ macro(erl_setup_common_packages)
     endif ()
     erl_find_package(
             PACKAGE PCL
-            REQUIRED GLOBAL
+            REQUIRED
             COMMANDS UBUNTU_LINUX "try `sudo apt install libpcl-dev`"
             COMMANDS ARCH_LINUX "try `paru -S pcl` or install from https://github.com/daizhirui/pcl-git.git")
     erl_find_package(
