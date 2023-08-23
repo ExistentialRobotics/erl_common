@@ -2,7 +2,7 @@
 # Add this cmake module path to the cmake module path
 #######################################################################################################################
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
-set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "ERL CMake directory")
+set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "ERL CMake directory")
 
 #######################################################################################################################
 # erl_set_gtest_args
@@ -307,7 +307,7 @@ macro(erl_find_package)
     else ()
         if (NOT DEFINED ${ERL_PACKAGE}_VERBOSE_ONCE)  # avoid printing multiple times
             set(ERL_QUIET OFF)
-            set(${ERL_PACKAGE}_VERBOSE_ONCE ON CACHE INTERNAL "" FORCE)
+            set(${ERL_PACKAGE}_VERBOSE_ONCE ON CACHE BOOL "Flag of whether print detailed logs for ${ERL_PACKAGE}" FORCE)
         else ()
             set(ERL_QUIET ON)
         endif ()
@@ -624,8 +624,9 @@ macro(erl_setup_lapack)
                     COMMANDS APPLE "try `brew install lapack`"
                     COMMANDS UBUNTU_LINUX "try `sudo apt install liblapack-dev`"
                     COMMANDS ARCH_LINUX "try `sudo pacman -S lapack`")
-            set(MKL_INCLUDE_DIRS ${MKL_H} CACHE PATH "Path to MKL include directory" FORCE)
-            set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE PATH "Path to MKL libraries" FORCE)
+            set(MKL_INCLUDE_DIRS ${MKL_INCLUDE} CACHE PATH "Path to MKL include directory" FORCE)
+            unset(MKL_LIBRARIES)
+            set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE STRING "Path to MKL libraries" FORCE)
         elseif (USE_AOCL)
             message(STATUS "Use AMD Optimizing CPU Library")
             add_definitions(-DEIGEN_USE_BLAS)
@@ -760,14 +761,14 @@ macro(erl_setup_common_packages)
             get_target_property(nanoflann_INCLUDE_DIRS nanoflann::nanoflann INTERFACE_INCLUDE_DIRECTORIES)
             message(STATUS "nanoflann_INCLUDE_DIRS: ${nanoflann_INCLUDE_DIRS}")
             if (YAML_CPP_INCLUDE_DIR OR YAML_CPP_LIBRARIES)
-                set(yaml-cpp_INCLUDE_DIRS ${YAML_CPP_INCLUDE_DIR} CACHE INTERNAL "yaml-cpp include directories" FORCE)
-                set(yaml-cpp_LIBRARIES ${YAML_CPP_LIBRARIES} CACHE INTERNAL "yaml-cpp libraries" FORCE)
+                set(yaml-cpp_INCLUDE_DIRS ${YAML_CPP_INCLUDE_DIR} CACHE PATH "yaml-cpp include directories" FORCE)
+                set(yaml-cpp_LIBRARIES ${YAML_CPP_LIBRARIES} CACHE STRING "yaml-cpp libraries" FORCE)
             else ()  # noconfig version of yaml-cpp: yaml-cpp is installed without setting CMAKE_BUILD_TYPE
                 get_target_property(yaml-cpp_LIBRARIES yaml-cpp IMPORTED_LOCATION_NOCONFIG)
                 get_filename_component(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_LIBRARIES} DIRECTORY)
                 get_filename_component(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_INCLUDE_DIRS}/../include ABSOLUTE)
-                set(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_INCLUDE_DIRS} CACHE INTERNAL "yaml-cpp include directories" FORCE)
-                set(yaml-cpp_LIBRARIES ${yaml-cpp_LIBRARIES} CACHE INTERNAL "yaml-cpp libraries" FORCE)
+                set(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_INCLUDE_DIRS} CACHE PATH "yaml-cpp include directories" FORCE)
+                set(yaml-cpp_LIBRARIES ${yaml-cpp_LIBRARIES} CACHE STRING "yaml-cpp libraries" FORCE)
             endif ()
             message(STATUS "yaml-cpp_INCLUDE_DIRS: ${yaml-cpp_INCLUDE_DIRS}")
             message(STATUS "yaml-cpp_LIBRARIES: ${yaml-cpp_LIBRARIES}")
