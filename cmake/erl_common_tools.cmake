@@ -600,6 +600,7 @@ macro(erl_setup_lapack)
                 set(BLA_VENDOR Intel10_64lp)
             endif ()
             if (NOT DEFINED ENV{MKLROOT})
+                unset(MKL_INCLUDE_DIRS)
                 erl_find_path(
                         OUTPUT MKL_INCLUDE_DIRS
                         PACKAGE MKL
@@ -615,16 +616,16 @@ macro(erl_setup_lapack)
             endif ()
             erl_find_package(   # We need to find MKL to get MKL_H
                     PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
-                    REQUIRED
+                    REQUIRED GLOBAL
                     COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
                     COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
             erl_find_package(   # LAPACK will resolve the full paths of MKL libraries
                     PACKAGE LAPACK
-                    REQUIRED
+                    REQUIRED GLOBAL
                     COMMANDS APPLE "try `brew install lapack`"
                     COMMANDS UBUNTU_LINUX "try `sudo apt install liblapack-dev`"
                     COMMANDS ARCH_LINUX "try `sudo pacman -S lapack`")
-            set(MKL_INCLUDE_DIRS ${MKL_INCLUDE} CACHE PATH "Path to MKL include directory" FORCE)
+            set(MKL_INCLUDE_DIRS ${MKL_H} CACHE PATH "Path to MKL include directory" FORCE)
             unset(MKL_LIBRARIES)
             set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE STRING "Path to MKL libraries" FORCE)
         elseif (USE_AOCL)
@@ -1034,7 +1035,7 @@ macro(erl_add_python_package)
         endif ()
 
         # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
-        # set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${${PROJECT_NAME}_BUILD_PYTHON_DIR}/${${PROJECT_NAME}_PY_PACKAGE_NAME})
+         set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${${PROJECT_NAME}_BUILD_PYTHON_DIR}/${${PROJECT_NAME}_PY_PACKAGE_NAME})
 
         # add a binding library for this package
         file(GLOB_RECURSE SRC_FILES "${${PROJECT_NAME}_PYTHON_BINDING_DIR}/*.cpp")
@@ -1058,7 +1059,8 @@ macro(erl_add_python_package)
                 add_custom_command(TARGET ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
                         POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${DEVEL_LIB_PATH}
-                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${INSTALL_LIB_PATH})
+                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${INSTALL_LIB_PATH}
+                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${${PROJECT_NAME}_PYTHON_PKG_DIR})
             endif ()
         endif ()
 
