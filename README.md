@@ -27,7 +27,7 @@ and some utility functions and data structures like
 - grid map and visualization
 
 # Dependencies
-- CMake >= 3.20
+- CMake >= 3.24
 - OpenMP
 - Boost
 - Eigen3
@@ -39,6 +39,8 @@ and some utility functions and data structures like
 - Intel MKL
 - LAPACK
 - LAPACKE
+
+[Scripts for installing dependencies on Ubuntu 22.04](scripts/setup_ubuntu_22.04.bash)
 
 You do not need to install all of them immediately. `erl_common` will tell you what to do when a dependency is missing.
 
@@ -53,7 +55,7 @@ touch CMakeLists.txt
 
 Add the following lines to your `CMakeLists.txt`:
 ```cmake
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.24)
 project(<your_project_name>)
 add_subdirectory(erl_common)
 ```

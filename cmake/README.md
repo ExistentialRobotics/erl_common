@@ -29,7 +29,7 @@ This is a CMake module that provides some utilities for configuring C++ projects
     ```
 3. Then, you can use the utilities provided by `erl_common_tools.cmake` in other `CMakeLists.txt`. For example:
     ```cmake
-    cmake_minimum_required(VERSION 3.20)
+    cmake_minimum_required(VERSION 3.24)
     
     project(erl_covariance
             LANGUAGES CXX
