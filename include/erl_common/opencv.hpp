@@ -9,6 +9,22 @@
 #include "grid_map_info.hpp"
 
 namespace erl::common {
+    void
+    ColorGrayToJet(const cv::Mat &gray, cv::Mat &jet, bool normalize = true) {
+        cv::Mat gray_uint8;
+
+        if (normalize) {
+            cv::Mat gray_float;
+            gray.convertTo(gray_float, CV_32FC1);
+            cv::normalize(gray_float, gray_float, 0, 1, cv::NORM_MINMAX);
+            gray_float.convertTo(gray_uint8, CV_8UC1, 255.0);
+        } else {
+            gray.convertTo(gray_uint8, CV_8UC1);
+        }
+
+        cv::applyColorMap(gray_uint8, jet, cv::COLORMAP_JET);
+    }
+
     cv::Mat
     AlphaBlending(const cv::Mat &foreground, const cv::Mat &background);
 

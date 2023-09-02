@@ -36,7 +36,6 @@ namespace erl::common {
 
         inline void
         FromYamlFile(const std::string& yaml_file) {
-            std::cout << std::filesystem::current_path() << std::endl;
             auto node = YAML::LoadFile(yaml_file);
             FromYamlNode(node);
         }
@@ -364,7 +363,7 @@ namespace YAML {
 
         inline static bool
         decode(const Node& node, std::shared_ptr<T>& rhs) {
-            ERL_DEBUG_ASSERT(rhs == nullptr, "rhs is not nullptr");
+            ERL_DEBUG_ASSERT(rhs == nullptr, "rhs should not be nullptr.");
             auto value = std::make_shared<T>();
             if (convert<T>::decode(node, *value)) {
                 rhs = value;
@@ -378,7 +377,11 @@ namespace YAML {
     template<typename T>
     inline Emitter&
     operator<<(Emitter& out, const std::shared_ptr<T>& rhs) {
-        out << *rhs;
+        if (rhs == nullptr) {
+            out << Null;
+        } else {
+            out << *rhs;
+        }
         return out;
     }
 
@@ -392,7 +395,7 @@ namespace YAML {
 
         inline static bool
         decode(const Node& node, std::unique_ptr<T>& rhs) {
-            ERL_DEBUG_ASSERT(rhs == nullptr, "rhs is not nullptr");
+            ERL_DEBUG_ASSERT(rhs == nullptr, "rhs should not be nullptr.");
             auto value = std::make_unique<T>();
             if (convert<T>::decode(node, *value)) {
                 rhs = std::move(value);
@@ -406,7 +409,54 @@ namespace YAML {
     template<typename T>
     inline Emitter&
     operator<<(Emitter& out, const std::unique_ptr<T>& rhs) {
-        out << *rhs;
+        if (rhs == nullptr) {
+            out << Null;
+        } else {
+            out << *rhs;
+        }
+        return out;
+    }
+
+    template<typename KeyType, typename ValueType>
+    struct convert<std::unordered_map<KeyType, ValueType>> {
+        inline static Node
+        encode(const std::unordered_map<KeyType, ValueType>& rhs) {
+            Node node(NodeType::Map);
+            for (const auto& [key, value]: rhs) { node[convert<KeyType>::encode(key)] = convert<ValueType>::encode(value); }
+            return node;
+        }
+
+        inline static bool
+        decode(const Node& node, std::unordered_map<KeyType, ValueType>& rhs) {
+            if (!node.IsMap()) { return false; }
+            for (auto it = node.begin(); it != node.end(); ++it) {
+                KeyType key;
+                ValueType value;
+                if (convert<KeyType>::decode(it->first, key) && convert<ValueType>::decode(it->second, value)) {
+                    rhs[key] = value;
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        }
+    };
+
+    template<typename KeyType, typename ValueType>
+    inline Emitter&
+    operator<<(Emitter& out, const std::unordered_map<KeyType, ValueType>& rhs) {
+        out << BeginMap;
+        for (const auto& [key, value]: rhs) { out << Key << key << Value << value; }
+        out << EndMap;
+        return out;
+    }
+
+    template<typename T, std::size_t N>
+    inline Emitter&
+    operator<<(Emitter& out, const std::array<T, N>& rhs) {
+        out << BeginSeq;
+        for (const auto& value: rhs) { out << value; }
+        out << EndSeq;
         return out;
     }
 
