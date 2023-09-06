@@ -1,6 +1,83 @@
 #include "erl_common/opencv.hpp"
 
 namespace erl::common {
+//    cv::Mat
+//    ShowEigenMatrix(const Eigen::Ref<const Eigen::MatrixXd> &mat, double nan_value, double inf_value, const std::string &window_name, int delay_ms) {
+//        Eigen::MatrixXd normalized_mat = mat;
+//        double min = std::numeric_limits<double>::infinity();
+//        double max = -std::numeric_limits<double>::infinity();
+//        long rows = normalized_mat.rows();
+//        long cols = normalized_mat.cols();
+//        for (long r = 0; r < rows; ++r) {
+//            for (long c = 0; c < cols; ++c) {
+//                const double &value = mat(r, c);
+//                if (std::isnan(value) || std::isinf(value)) { continue; }
+//                if (value < min) { min = value; }
+//                if (value > max) { max = value; }
+//            }
+//        }
+//        double value_range = (max - min) / 255.;
+//        nan_value = (nan_value - min) / value_range;
+//        inf_value = (inf_value - min) / value_range;
+//
+//        for (long r = 0; r < rows; ++r) {
+//            for (long c = 0; c < cols; ++c) {
+//                double &value = normalized_mat(r, c);
+//                if (std::isnan(value)) {
+//                    value = nan_value;
+//                } else if (std::isinf(value)) {
+//                    value = inf_value;
+//                } else {
+//                    value = (value - min) / value_range;
+//                }
+//            }
+//        }
+//        Eigen::MatrixXi normalized_mat_int = normalized_mat.cast<int>();
+//        cv::Mat cv_mat;
+//        cv::eigen2cv(normalized_mat_int, cv_mat);
+//        cv_mat = ColorGrayCustom(cv_mat);
+//        ShowCvMat(cv_mat, window_name, delay_ms);
+//        return cv_mat;
+//    }
+
+    void
+    ColorGrayCustom(const cv::Mat &gray, cv::Mat &custom) {
+        // gray must be CV_32SC1
+        ERL_ASSERTM(gray.type() == CV_32SC1, "gray must be CV_32SC1.");
+        ERL_ASSERTM(gray.channels() == 1, "gray must have 1 channel.");
+        std::unordered_set<int> unique_values;
+        for (int row = 0; row < gray.rows; ++row) {
+            for (int col = 0; col < gray.cols; ++col) { unique_values.insert(gray.at<int>(row, col)); }
+        }
+        std::vector<int> unique_values_vec(unique_values.begin(), unique_values.end());
+        std::sort(unique_values_vec.begin(), unique_values_vec.end());  // ascending order
+        std::unordered_map<int, std::size_t> value_to_index;
+        for (std::size_t i = 0; i < unique_values_vec.size(); ++i) { value_to_index[unique_values_vec[i]] = i; }
+        custom = cv::Mat::zeros(gray.rows, gray.cols, CV_8UC3);
+        for (int row = 0; row < gray.rows; ++row) {
+            for (int col = 0; col < gray.cols; ++col) {
+                int value = gray.at<int>(row, col);
+                std::size_t index = value_to_index[value];
+                custom.at<cv::Vec3b>(row, col) = kCustomColorMap[index];
+            }
+        }
+    }
+
+    void
+    ColorGrayToJet(const cv::Mat &gray, cv::Mat &jet, bool normalize) {
+        cv::Mat gray_uint8;
+
+        if (normalize) {
+            cv::Mat gray_float;
+            gray.convertTo(gray_float, CV_32FC1);
+            cv::normalize(gray_float, gray_float, 0, 1, cv::NORM_MINMAX);
+            gray_float.convertTo(gray_uint8, CV_8UC1, 255.0);
+        } else {
+            gray.convertTo(gray_uint8, CV_8UC1);
+        }
+
+        cv::applyColorMap(gray_uint8, jet, cv::COLORMAP_JET);
+    }
 
     cv::Mat
     AlphaBlending(const cv::Mat &foreground, const cv::Mat &background) {
