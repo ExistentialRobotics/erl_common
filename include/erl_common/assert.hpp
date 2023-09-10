@@ -103,16 +103,16 @@ static std::mutex g_print_mutex;
     } while (false)
 
 #ifndef ERL_ASSERTM
-#define ERL_ASSERTM(expr, ...)                                                                                                                   \
-    do {                                                                                                                                         \
-        if (!(expr)) {                                                                                                                           \
-            std::stringstream ss;                                                                                                                \
-            ss << erl::common::PrintError("Assertion failed: (", #expr, ") at ", __FILE__, ":", __LINE__, ": ", ERL_FORMAT_STRING(__VA_ARGS__)); \
-            g_print_mutex.lock();                                                                                                                \
-            std::cout << std::flush;                                                                                                             \
-            g_print_mutex.unlock();                                                                                                              \
-            throw std::runtime_error(ss.str());                                                                                                  \
-        }                                                                                                                                        \
+#define ERL_ASSERTM(expr, ...)                                                                                                                    \
+    do {                                                                                                                                          \
+        if (!(expr)) {                                                                                                                            \
+            std::stringstream _ss;                                                                                                                \
+            _ss << erl::common::PrintError("Assertion failed: (", #expr, ") at ", __FILE__, ":", __LINE__, ": ", ERL_FORMAT_STRING(__VA_ARGS__)); \
+            g_print_mutex.lock();                                                                                                                 \
+            std::cout << std::flush;                                                                                                              \
+            g_print_mutex.unlock();                                                                                                               \
+            throw std::runtime_error(_ss.str());                                                                                                  \
+        }                                                                                                                                         \
     } while (false)
 #endif
 

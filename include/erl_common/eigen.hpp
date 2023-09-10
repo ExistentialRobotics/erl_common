@@ -9,6 +9,7 @@
 #include <Eigen/Geometry>
 #include <fstream>
 #include <unsupported/Eigen/CXX11/Tensor>
+#include <bitset>
 
 #include "string_utils.hpp"
 

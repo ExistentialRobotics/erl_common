@@ -690,7 +690,7 @@ macro(erl_setup_common_packages)
             COMMANDS ARCH_LINUX "try `sudo pacman -S openmp`")
     erl_find_package(
             PACKAGE Boost
-            REQUIRED GLOBAL COMPONENTS program_options
+            REQUIRED GLOBAL COMPONENTS program_options graph
             COMMANDS APPLE "try `brew install boost`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")

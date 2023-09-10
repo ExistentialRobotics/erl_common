@@ -379,16 +379,20 @@ namespace erl::common {
      * @param delay_ms in ms
      */
     inline void
-    ShowCvMat(const cv::Mat &mat, const std::string &window_name = "cv_mat", int delay_ms = 0) {
+    ShowCvMat(
+        const cv::Mat &mat,
+        const std::string &window_name = "cv_mat",
+        int delay_ms = 0,
+        void (*mouse_callback)(int event, int x, int y, int flags, void *userdata) = nullptr,
+        void *userdata = nullptr) {
         bool window_exists;
         try {
             window_exists = cv::getWindowProperty(window_name, cv::WND_PROP_VISIBLE) > 0;
-        } catch (const std::exception &e) {
-            window_exists = false;
-        }
+        } catch (const std::exception &e) { window_exists = false; }
         if (!window_exists) { cv::namedWindow(window_name, cv::WINDOW_NORMAL); }
         cv::imshow(window_name, mat);
         if (!window_exists) { cv::resizeWindow(window_name, 1000, 800); }  // only resize when first show
+        if (mouse_callback) { cv::setMouseCallback(window_name, mouse_callback, userdata); }
         cv::waitKey(delay_ms);
     }
 
@@ -414,7 +418,7 @@ namespace erl::common {
      */
     template<typename T>
     cv::Mat
-    ShowEigenMatrix(const Eigen::Ref<const Eigen::MatrixX<T>> &mat, double nan_value, double inf_value, const std::string &window_name, int delay_ms = 0) {
+    ShowEigenMatrix(const Eigen::MatrixX<T> &mat, double nan_value, double inf_value, const std::string &window_name, int delay_ms = 0) {
         Eigen::MatrixXd normalized_mat = mat.template cast<double>();
         double min = std::numeric_limits<double>::infinity();
         double max = -std::numeric_limits<double>::infinity();
@@ -453,7 +457,13 @@ namespace erl::common {
         cv::Mat cv_mat;
         cv::eigen2cv(normalized_mat_int, cv_mat);
         cv_mat = ColorGrayCustom(cv_mat);
-        ShowCvMat(cv_mat, window_name, delay_ms);
+        // connect mouse callback
+        auto callback = [](int event, int x, int y, int flags, void *userdata) {
+            (void) flags;
+            auto &matrix = *static_cast<const Eigen::MatrixX<T> *>(userdata);
+            if (event == cv::EVENT_LBUTTONDOWN) { std::cout << "x: " << x << ", y: " << y << ", mat(x, y): " << double(matrix(y, x)) << std::endl; }
+        };
+        ShowCvMat(cv_mat, window_name, delay_ms, callback, const_cast<Eigen::MatrixX<T>*>(&mat));
         return cv_mat;
     }
 

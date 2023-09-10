@@ -51,7 +51,7 @@ namespace erl::common {
     };
 
     template<typename T>
-    struct Yamlable : virtual public YamlableBase {
+    struct Yamlable : public YamlableBase {
 
         inline void
         FromYamlNode(const YAML::Node& node) override {
@@ -72,6 +72,33 @@ namespace erl::common {
         }
     };
 
+    /**
+     * @brief Override the Yamlable interface when the class is derived from a Yamlable class.
+     * @tparam Base The base class that is derived from Yamlable<Base>.
+     * @tparam T The derived class that is derived from Base.
+     */
+    template<typename Base, typename T>
+    struct OverrideYamlable : public Base {
+        static_assert(std::is_base_of_v<Yamlable<Base>, Base>, "Base must be derived from Yamlable<Base>.");
+
+        inline void
+        FromYamlNode(const YAML::Node& node) override {
+            YAML::convert<T>::decode(node, *static_cast<T*>(this));
+        }
+
+        [[nodiscard]] inline YAML::Node
+        AsYamlNode() const override {
+            return YAML::convert<T>::encode(*static_cast<const T*>(this));
+        }
+
+        [[nodiscard]] inline std::string
+        AsYamlString() const override {
+            YAML::Emitter emitter;
+            // this triggers YAML::Emitter& operator<<(YAML::Emitter& out, const T& rhs)
+            emitter << *static_cast<const T*>(this);  // allow YAML style manipulation, e.g., emitter.SetIndent(4);
+            return emitter.c_str();
+        }
+    };
 }  // namespace erl::common
 
 namespace YAML {
