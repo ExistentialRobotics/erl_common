@@ -559,6 +559,8 @@ macro(erl_setup_compiler)
     endif ()
     if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_definitions(-DNDEBUG)
+    else ()
+        set(CMAKE_VERBOSE_MAKEFILE ON)
     endif ()
 endmacro()
 
@@ -1035,7 +1037,7 @@ macro(erl_add_python_package)
         endif ()
 
         # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
-         set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${${PROJECT_NAME}_BUILD_PYTHON_DIR}/${${PROJECT_NAME}_PY_PACKAGE_NAME})
+        set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${${PROJECT_NAME}_BUILD_PYTHON_DIR}/${${PROJECT_NAME}_PY_PACKAGE_NAME})
 
         # add a binding library for this package
         file(GLOB_RECURSE SRC_FILES "${${PROJECT_NAME}_PYTHON_BINDING_DIR}/*.cpp")
@@ -1060,7 +1062,7 @@ macro(erl_add_python_package)
                         POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${DEVEL_LIB_PATH}
                         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${INSTALL_LIB_PATH}
-                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${${PROJECT_NAME}_PYTHON_PKG_DIR})
+                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${${PROJECT_NAME}_PYTHON_PKG_DIR})  # copy to source directory for devel
             endif ()
         endif ()
 

@@ -1,1 +1,0 @@
-configure_file(${ERL_CONFIG_FILE_INPUT} ${ERL_CONFIG_FILE_OUTPUT})
