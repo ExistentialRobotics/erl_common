@@ -536,6 +536,11 @@ endfunction()
 # erl_setup_compiler
 #######################################################################################################################
 macro(erl_setup_compiler)
+    option(IGNORE_CONDA_LIBRARIES "Ignore conda libraries" ON)
+    if (NOT $ENV{CONDA_PREFIX} STREQUAL ""  AND IGNORE_CONDA_LIBRARIES)
+        list(APPEND CMAKE_IGNORE_PREFIX_PATH $ENV{CONDA_PREFIX})  # ignore conda libraries
+    endif ()
+
     if (NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE Release)
     endif ()
@@ -726,6 +731,11 @@ macro(erl_setup_common_packages)
             COMMANDS APPLE "run scripts/install_opencv.bash"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libopencv-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S opencv`")
+    erl_find_package(
+            PACKAGE libdeflate
+            REQUIRED GLOBAL
+            COMMANDS UBUNTU_LINUX "try `sudo apt install libdeflate-dev`"
+            COMMANDS ARCH_LINUX "try `sudo pacman -S libdeflate`")
     if (EXISTS /usr/lib/libOpenGL.so)
         set(OpenGL_GL_PREFERENCE "GLVND")
     else ()
