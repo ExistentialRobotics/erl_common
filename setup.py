@@ -2,7 +2,11 @@ import importlib
 import os
 import subprocess
 import sys
-import tomllib
+
+if sys.version_info.major == 3 and sys.version_info.minor < 11:
+    import toml as tomllib
+else:
+    import tomllib
 
 from setuptools import Extension
 from setuptools import find_packages
