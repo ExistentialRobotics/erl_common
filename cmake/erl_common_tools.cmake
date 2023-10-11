@@ -20,13 +20,13 @@ macro(erl_add_tests)
     set(multiValueArgs LIBRARIES)
     cmake_parse_arguments(${PROJECT_NAME}_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT DEFINED BUILD_TEST_${PROJECT_NAME})
-        set(BUILD_TEST_${PROJECT_NAME} ${BUILD_TEST})
+    if (NOT DEFINED ERL_BUILD_TEST_${PROJECT_NAME})
+        set(ERL_BUILD_TEST_${PROJECT_NAME} ${ERL_BUILD_TEST})
     endif ()
-    if (NOT BUILD_TEST)
-        set(BUILD_TEST_${PROJECT_NAME} OFF)
+    if (NOT ERL_BUILD_TEST)
+        set(ERL_BUILD_TEST_${PROJECT_NAME} OFF)
     endif ()
-    if (BUILD_TEST_${PROJECT_NAME})
+    if (ERL_BUILD_TEST_${PROJECT_NAME})
         # add gtest
         file(GLOB_RECURSE GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/*.cpp)
         if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1" AND CATKIN_ENABLE_TESTING)
@@ -536,8 +536,8 @@ endfunction()
 # erl_setup_compiler
 #######################################################################################################################
 macro(erl_setup_compiler)
-    option(IGNORE_CONDA_LIBRARIES "Ignore conda libraries" ON)
-    if (NOT $ENV{CONDA_PREFIX} STREQUAL ""  AND IGNORE_CONDA_LIBRARIES)
+    option(ERL_IGNORE_CONDA_LIBRARIES "Ignore conda libraries" ON)
+    if (NOT $ENV{CONDA_PREFIX} STREQUAL ""  AND ERL_IGNORE_CONDA_LIBRARIES)
         list(APPEND CMAKE_IGNORE_PREFIX_PATH $ENV{CONDA_PREFIX})  # ignore conda libraries
     endif ()
 
@@ -573,20 +573,21 @@ endmacro()
 # erl_setup_lapack
 #######################################################################################################################
 macro(erl_setup_lapack)
-    option(USE_LAPACK "Use LAPACK" ON)
-    option(USE_INTEL_MKL "Use Intel MKL (Math Kernel Library)" ON)
-    option(USE_AOCL "Use AMD Optimizing CPU Library" OFF)
-    option(USE_SINGLE_THREADED_BLAS "Use single-threaded BLAS" ON)
+    option(ERL_USE_LAPACK "Use LAPACK" ON)
+    option(ERL_USE_LAPACK_STRICT "Use robust LAPACK algorithms only" ON)
+    option(ERL_USE_INTEL_MKL "Use Intel MKL (Math Kernel Library)" ON)
+    option(ERL_USE_AOCL "Use AMD Optimizing CPU Library" OFF)
+    option(ERL_USE_SINGLE_THREADED_BLAS "Use single-threaded BLAS" ON)
 
-    if (USE_INTEL_MKL AND USE_AOCL)
-        message(FATAL_ERROR "USE_INTEL_MKL and USE_AOCL cannot be both ON")
+    if (ERL_USE_INTEL_MKL AND ERL_USE_AOCL)
+        message(FATAL_ERROR "ERL_USE_INTEL_MKL and ERL_USE_AOCL cannot be both ON")
     endif ()
 
-    if (USE_INTEL_MKL OR USE_AOCL)
-        set(USE_LAPACK ON)
+    if (ERL_USE_INTEL_MKL OR ERL_USE_AOCL)
+        set(ERL_USE_LAPACK ON)
     endif ()
 
-    if (USE_LAPACK)
+    if (ERL_USE_LAPACK)
         erl_find_path(
                 OUTPUT LAPACKE_INCLUDE_DIR
                 PACKAGE LAPACKE
@@ -596,10 +597,13 @@ macro(erl_setup_lapack)
                 COMMANDS UBUNTU_LINUX "try `sudo apt install liblapacke-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S lapacke`")
 
-        if (USE_INTEL_MKL)
+        if (ERL_USE_INTEL_MKL)
             message(STATUS "Use Intel Math Kernel Library")
-            add_definitions(-DEIGEN_USE_MKL_ALL)
-            if (USE_SINGLE_THREADED_BLAS)
+#            add_definitions(-DEIGEN_USE_MKL_ALL)
+            add_definitions(-DEIGEN_USE_BLAS)
+            add_definitions(-DEIGEN_USE_LAPACKE_STRICT)
+            add_definitions(-DEIGEN_USE_MKL_VML)
+            if (ERL_USE_SINGLE_THREADED_BLAS)
                 # we use MKL inside our OpenMP for loop or threaded code, so we need sequential BLAS
                 set(BLA_VENDOR Intel10_64lp_seq)
             else ()
@@ -635,10 +639,10 @@ macro(erl_setup_lapack)
             set(MKL_INCLUDE_DIRS ${MKL_H} CACHE PATH "Path to MKL include directory" FORCE)
             unset(MKL_LIBRARIES)
             set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE STRING "Path to MKL libraries" FORCE)
-        elseif (USE_AOCL)
+        elseif (ERL_USE_AOCL)
             message(STATUS "Use AMD Optimizing CPU Library")
             add_definitions(-DEIGEN_USE_BLAS)
-            add_definitions(-DEIGEN_USE_LAPACKE)
+            add_definitions(-DEIGEN_ERL_USE_LAPACKE)
             set(BLA_VENDOR AOCL)
             erl_find_path(
                     OUTPUT AOCL_LIB_DIR
@@ -649,7 +653,7 @@ macro(erl_setup_lapack)
                     COMMANDS GENERAL "visit https://www.amd.com/en/developer/aocl.html"
                     COMMANDS ARCH_LINUX "try `paru -Ss blas-aocl-gcc`")
             get_filename_component(AOCL_ROOT ${AOCL_LIB_DIR} DIRECTORY)
-            if (USE_SINGLE_THREADED_BLAS)
+            if (ERL_USE_SINGLE_THREADED_BLAS)
                 set(BLAS_LIBRARIES ${AOCL_ROOT}/lib/libblis.so ${AOCL_ROOT}/lib/libalm.so -lm)  # single-threaded BLAS
             else ()
                 set(BLAS_LIBRARIES ${AOCL_ROOT}/lib/libblis-mt.so ${AOCL_ROOT}/lib/libalm.so -lm)  # multi-threaded BLAS
@@ -658,9 +662,9 @@ macro(erl_setup_lapack)
         else ()
             message(STATUS "Use OpenBLAS")
             add_definitions(-DEIGEN_USE_BLAS)
-            add_definitions(-DEIGEN_USE_LAPACKE)
+            add_definitions(-DEIGEN_ERL_USE_LAPACKE)
             set(BLA_VENDOR OpenBLAS)
-            if (USE_SINGLE_THREADED_BLAS)
+            if (ERL_USE_SINGLE_THREADED_BLAS)
                 erl_find_path(
                         OUTPUT BLAS_LIB_DIR
                         PACKAGE OpenBLAS
@@ -702,7 +706,7 @@ macro(erl_setup_common_packages)
             COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
     # There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
-    if (USE_INTEL_MKL)  # option from erl_setup_lapack
+    if (ERL_USE_INTEL_MKL)  # option from erl_setup_lapack
         set(EIGEN3_VERSION_STRING "3.4.90")  # some other packages may read this variable.
         erl_find_package(
                 PACKAGE Eigen3
@@ -797,8 +801,8 @@ endmacro()
 # erl_setup_python
 #######################################################################################################################
 macro(erl_setup_python)
-    option(BUILD_PYTHON "Build Python binding" ON)
-    if (BUILD_PYTHON)
+    option(ERL_BUILD_PYTHON "Build Python binding" ON)
+    if (ERL_BUILD_PYTHON)
         erl_find_package(
                 PACKAGE Python3
                 QUIET REQUIRED COMPONENTS Interpreter Development
@@ -822,9 +826,9 @@ endmacro()
 # erl_setup_test
 #######################################################################################################################
 macro(erl_setup_test)
-    option(BUILD_TEST "Build executables for test" ON)
-    if (BUILD_TEST)
-        add_definitions(-DBUILD_TEST)
+    option(ERL_BUILD_TEST "Build executables for test" ON)
+    if (ERL_BUILD_TEST)
+        add_definitions(-DERL_BUILD_TEST)
         enable_testing()
         if (NOT ROS_ACTIVATED)  # GTest is configured by ROS if ROS is activated
             # we need to use GTest::GTest and GTest::Main in other subprojects
@@ -1023,11 +1027,11 @@ macro(erl_add_python_package)
     set(multiValueArgs DEPENDS_PYTHON_PKGS)
     cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT DEFINED BUILD_PYTHON_${PROJECT_NAME})
-        set(BUILD_PYTHON_${PROJECT_NAME} ${BUILD_PYTHON})
+    if (NOT DEFINED ERL_BUILD_PYTHON_${PROJECT_NAME})
+        set(ERL_BUILD_PYTHON_${PROJECT_NAME} ${ERL_BUILD_PYTHON})
     endif ()
-    if (NOT BUILD_PYTHON)
-        set(BUILD_PYTHON_${PROJECT_NAME} OFF)
+    if (NOT ERL_BUILD_PYTHON)
+        set(ERL_BUILD_PYTHON_${PROJECT_NAME} OFF)
     endif ()
 
     # ${PROJECT_NAME}_PYTHON_DIR: <project_dir>/python
@@ -1037,7 +1041,7 @@ macro(erl_add_python_package)
     # ${PROJECT_NAME}_BUILD_PYTHON_DIR: <project_build_dir>/python
     # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
 
-    if (BUILD_PYTHON_${PROJECT_NAME})
+    if (ERL_BUILD_PYTHON_${PROJECT_NAME})
         erl_setup_python()
         # get package name
         get_filename_component(${PROJECT_NAME}_PY_PACKAGE_NAME ${${PROJECT_NAME}_PYTHON_PKG_DIR} NAME)
@@ -1077,19 +1081,25 @@ macro(erl_add_python_package)
         endif ()
 
         if (EXISTS ${${PROJECT_NAME}_ROOT_DIR}/setup.py)
+            option(ERL_PYTHON_INSTALL_USER "Install Python package to user directory" OFF)
+            set(erl_pip_install_args "")
+            if (ERL_PYTHON_INSTALL_USER)
+                list(APPEND erl_pip_install_args "--user")
+            endif ()
             add_custom_target(${PROJECT_NAME}_py_wheel
                     COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     COMMENT "Building Python wheel for ${PROJECT_NAME}")
             add_custom_target(${PROJECT_NAME}_py_develop
-                    COMMAND ${Python3_EXECUTABLE} -m pip install -e . --user
+                    COMMAND ${Python3_EXECUTABLE} -m pip install -e . ${erl_pip_install_args}
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     DEPENDS ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
                     COMMENT "Installing Python package ${PROJECT_NAME} in develop mode")
             add_custom_target(${PROJECT_NAME}_py_install
-                    COMMAND ${Python3_EXECUTABLE} -m pip install . --user
+                    COMMAND ${Python3_EXECUTABLE} -m pip install . ${erl_pip_install_args}
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     COMMENT "Installing Python package ${PROJECT_NAME} in install mode")
+            unset(erl_pip_install_args)
         else ()
             message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR}, rules for Python package ${PROJECT_NAME} will not be generated.")
         endif ()
