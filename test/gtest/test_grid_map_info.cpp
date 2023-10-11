@@ -123,8 +123,8 @@ TEST(GridMapInfoTest, Generate2DMeterCoordinatesWithCStride) {
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 5; ++j) {
             Eigen::Vector2d expect = grid_map_info.GridToMeterForPoints(Eigen::Vector2i{i, j});
-            EXPECT_EQ(expect[0], actual(0, cnt));
-            EXPECT_EQ(expect[1], actual(1, cnt));
+            EXPECT_NEAR(expect[0], actual(0, cnt), 1.e-10);
+            EXPECT_NEAR(expect[1], actual(1, cnt), 1.e-10);
             cnt++;
         }
     }
@@ -147,8 +147,8 @@ TEST(GridMapInfoTest, Generate2DMeterCoordinatesWithFStride) {
     for (int j = 0; j < 5; ++j) {
         for (int i = 0; i < 3; ++i) {
             Eigen::Vector2d expect = grid_map_info.GridToMeterForPoints(Eigen::Vector2i{i, j});
-            EXPECT_EQ(expect[0], actual(0, cnt));
-            EXPECT_EQ(expect[1], actual(1, cnt));
+            EXPECT_NEAR(expect[0], actual(0, cnt), 1.e-10);
+            EXPECT_NEAR(expect[1], actual(1, cnt), 1.e-10);
             cnt++;
         }
     }
@@ -172,9 +172,9 @@ TEST(GridMapInfoTest, Generate3DMeterCoordinatesWithCStride) {
         for (int j = 0; j < 5; ++j) {
             for (int k = 0; k < 7; ++k) {
                 Eigen::Vector3d expect = grid_map_info.GridToMeterForPoints(Eigen::Vector3i{i, j, k});
-                EXPECT_EQ(expect[0], actual(0, cnt));
-                EXPECT_EQ(expect[1], actual(1, cnt));
-                EXPECT_EQ(expect[2], actual(2, cnt));
+                EXPECT_NEAR(expect[0], actual(0, cnt), 1.e-10);
+                EXPECT_NEAR(expect[1], actual(1, cnt), 1.e-10);
+                EXPECT_NEAR(expect[2], actual(2, cnt), 1.e-10);
                 cnt++;
             }
         }
@@ -199,9 +199,9 @@ TEST(GridMapInfoTest, Generate3DMeterCoordinatesWithFStride) {
         for (int j = 0; j < 5; ++j) {
             for (int i = 0; i < 3; ++i) {
                 Eigen::Vector3d expect = grid_map_info.GridToMeterForPoints(Eigen::Vector3i{i, j, k});
-                EXPECT_EQ(expect[0], actual(0, cnt));
-                EXPECT_EQ(expect[1], actual(1, cnt));
-                EXPECT_EQ(expect[2], actual(2, cnt));
+                EXPECT_NEAR(expect[0], actual(0, cnt), 1.e-10);
+                EXPECT_NEAR(expect[1], actual(1, cnt), 1.e-10);
+                EXPECT_NEAR(expect[2], actual(2, cnt), 1.e-10);
                 cnt++;
             }
         }

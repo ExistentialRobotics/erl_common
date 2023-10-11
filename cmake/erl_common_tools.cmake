@@ -735,11 +735,6 @@ macro(erl_setup_common_packages)
             COMMANDS APPLE "run scripts/install_opencv.bash"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libopencv-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S opencv`")
-    erl_find_package(
-            PACKAGE libdeflate
-            REQUIRED GLOBAL
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libdeflate-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S libdeflate`")
     if (EXISTS /usr/lib/libOpenGL.so)
         set(OpenGL_GL_PREFERENCE "GLVND")
     else ()

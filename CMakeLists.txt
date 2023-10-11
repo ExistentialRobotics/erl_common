@@ -36,7 +36,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM
         PUBLIC ${MKL_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 # https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
 target_link_libraries(${PROJECT_NAME}
-        PUBLIC ${OpenCV_LIBRARIES} libdeflate::libdeflate_shared
+        PUBLIC ${OpenCV_LIBRARIES}
         PUBLIC Eigen3::Eigen yaml-cpp nlohmann_json::nlohmann_json Boost::program_options Boost::graph
         PUBLIC pthread OpenMP::OpenMP_CXX Boost::boost
         PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
