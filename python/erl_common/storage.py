@@ -1,4 +1,5 @@
 from .pyerl_common.storage import *
+import numpy as np
 
 __all__ = [
     "compute_c_strides",
@@ -26,3 +27,12 @@ __all__ = [
     "GridMapUnsignedXd",
     "GridMapDrawer2D",
 ]
+
+
+def save_numpy_as_eigen_binary(arr: np.ndarray, filename: str):
+    if arr.ndim == 1:
+        arr = arr.reshape(-1, 1)
+    assert arr.ndim == 2, "Only support 1D or 2D array"
+    with open(filename, "wb") as f:
+        f.write(np.array(arr.shape).astype(np.int64).tobytes())
+        f.write(arr.tobytes("F"))

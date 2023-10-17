@@ -181,7 +181,7 @@ namespace erl::common {
         }
 
         Eigen::MatrixX<T> matrix(matrix_shape[0], matrix_shape[1]);
-        ifs.read(reinterpret_cast<char *>(matrix.data()), long(file_size));
+        ifs.read(reinterpret_cast<char *>(matrix.data()), long(num_elements * sizeof(T)));
         ifs.close();
         return matrix;
     }

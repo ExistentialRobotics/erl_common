@@ -741,6 +741,11 @@ macro(erl_setup_common_packages)
         set(OpenGL_GL_PREFERENCE "LEGACY")
     endif ()
     erl_find_package(
+            PACKAGE Pangolin
+            REQUIRED
+            COMMANDS UBUNTU_LINUX "try install from https://github.com/stevenlovegrove/Pangolin.git"
+            COMMANDS ARCH_LINUX "try `paru -S pangolin-git`")
+    erl_find_package(
             PACKAGE PCL
             REQUIRED
             COMMANDS UBUNTU_LINUX "try `sudo apt install libpcl-dev`"
