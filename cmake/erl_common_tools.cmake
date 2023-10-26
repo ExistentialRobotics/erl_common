@@ -537,7 +537,7 @@ endfunction()
 #######################################################################################################################
 macro(erl_setup_compiler)
     option(ERL_IGNORE_CONDA_LIBRARIES "Ignore conda libraries" ON)
-    if (NOT $ENV{CONDA_PREFIX} STREQUAL ""  AND ERL_IGNORE_CONDA_LIBRARIES)
+    if (NOT $ENV{CONDA_PREFIX} STREQUAL "" AND ERL_IGNORE_CONDA_LIBRARIES)
         list(APPEND CMAKE_IGNORE_PREFIX_PATH $ENV{CONDA_PREFIX})  # ignore conda libraries
     endif ()
 
@@ -599,7 +599,8 @@ macro(erl_setup_lapack)
 
         if (ERL_USE_INTEL_MKL)
             message(STATUS "Use Intel Math Kernel Library")
-#            add_definitions(-DEIGEN_USE_MKL_ALL)
+            # add_definitions(-DEIGEN_USE_MKL_ALL)
+            # We don't turn on some unstable MKL routines: https://eigen.tuxfamily.org/dox/TopicUsingIntelMKL.html
             add_definitions(-DEIGEN_USE_BLAS)
             add_definitions(-DEIGEN_USE_LAPACKE_STRICT)
             add_definitions(-DEIGEN_USE_MKL_VML)
@@ -745,6 +746,9 @@ macro(erl_setup_common_packages)
             REQUIRED
             COMMANDS UBUNTU_LINUX "try install from https://github.com/stevenlovegrove/Pangolin.git"
             COMMANDS ARCH_LINUX "try `paru -S pangolin-git`")
+    # remove pango_python as it is not needed and causes error when loading other python modules
+    list(REMOVE_ITEM Pangolin_LIBRARIES "pango_python")
+    list(REMOVE_ITEM Pangolin_LIBRARY "pango_python")
     erl_find_package(
             PACKAGE PCL
             REQUIRED
