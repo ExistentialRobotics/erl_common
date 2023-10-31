@@ -574,7 +574,7 @@ endmacro()
 #######################################################################################################################
 macro(erl_setup_lapack)
     option(ERL_USE_LAPACK "Use LAPACK" ON)
-    option(ERL_USE_LAPACK_STRICT "Use robust LAPACK algorithms only" ON)
+    option(ERL_USE_LAPACK_STRICT "Use robust LAPACK algorithms only" OFF)
     option(ERL_USE_INTEL_MKL "Use Intel MKL (Math Kernel Library)" ON)
     option(ERL_USE_AOCL "Use AMD Optimizing CPU Library" OFF)
     option(ERL_USE_SINGLE_THREADED_BLAS "Use single-threaded BLAS" ON)
@@ -588,6 +588,11 @@ macro(erl_setup_lapack)
     endif ()
 
     if (ERL_USE_LAPACK)
+        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+            set(ERL_USE_LAPACK_STRICT ON)
+        else ()
+            add_compile_options("-march=native" "-mfma")
+        endif ()
         erl_find_path(
                 OUTPUT LAPACKE_INCLUDE_DIR
                 PACKAGE LAPACKE
@@ -599,11 +604,14 @@ macro(erl_setup_lapack)
 
         if (ERL_USE_INTEL_MKL)
             message(STATUS "Use Intel Math Kernel Library")
-            # add_definitions(-DEIGEN_USE_MKL_ALL)
-            # We don't turn on some unstable MKL routines: https://eigen.tuxfamily.org/dox/TopicUsingIntelMKL.html
-            add_definitions(-DEIGEN_USE_BLAS)
-            add_definitions(-DEIGEN_USE_LAPACKE_STRICT)
-            add_definitions(-DEIGEN_USE_MKL_VML)
+            if (ERL_USE_LAPACK_STRICT)
+                # We don't turn on some unstable MKL routines: https://eigen.tuxfamily.org/dox/TopicUsingIntelMKL.html
+                add_definitions(-DEIGEN_USE_BLAS)
+                add_definitions(-DEIGEN_USE_LAPACKE_STRICT)
+                add_definitions(-DEIGEN_USE_MKL_VML)
+            else ()
+                add_definitions(-DEIGEN_USE_MKL_ALL)
+            endif ()
             if (ERL_USE_SINGLE_THREADED_BLAS)
                 # we use MKL inside our OpenMP for loop or threaded code, so we need sequential BLAS
                 set(BLA_VENDOR Intel10_64lp_seq)
