@@ -757,11 +757,11 @@ macro(erl_setup_common_packages)
     # remove pango_python as it is not needed and causes error when loading other python modules
     list(REMOVE_ITEM Pangolin_LIBRARIES "pango_python")
     list(REMOVE_ITEM Pangolin_LIBRARY "pango_python")
-    erl_find_package(
-            PACKAGE PCL
-            REQUIRED
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libpcl-dev`"
-            COMMANDS ARCH_LINUX "try `paru -S pcl` or install from https://github.com/daizhirui/pcl-git.git")
+    # erl_find_package(
+    #         PACKAGE PCL
+    #         REQUIRED
+    #         COMMANDS UBUNTU_LINUX "try `sudo apt install libpcl-dev`"
+    #         COMMANDS ARCH_LINUX "try `paru -S pcl` or install from https://github.com/daizhirui/pcl-git.git")
     erl_find_package(
             PACKAGE nanoflann
             REQUIRED GLOBAL
@@ -860,7 +860,7 @@ endmacro()
 macro(erl_setup_ros)
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs CATKIN_COMPONENTS MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES)
+    set(multiValueArgs MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES)
     cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (ROS_ACTIVATED)
@@ -940,23 +940,6 @@ macro(erl_catkin_package)
         endforeach ()
         set(catkin_LIBRARIES ${filtered_catkin_LIBRARIES})
         unset(filtered_catkin_LIBRARIES)
-        #    else ()
-        #        unset(catkin_INCLUDE_DIRS)
-        #        unset(catkin_LIBRARIES)
-        #        foreach (dep IN LISTS ${PROJECT_NAME}_DEPENDS)
-        #            set(dep_added FALSE)
-        #            if (${dep}_INCLUDE_DIRS)
-        #                list(APPEND catkin_INCLUDE_DIRS ${${dep}_INCLUDE_DIRS})
-        #                set(dep_added TRUE)
-        #            endif ()
-        #            if (${dep}_LIBRARIES)
-        #                list(APPEND catkin_LIBRARIES ${${dep}_LIBRARIES})
-        #                set(dep_added TRUE)
-        #            endif ()
-        #            if (NOT dep_added)
-        #                message(WARNING "Cannot find include directories or libraries of ${dep}")
-        #            endif ()
-        #        endforeach ()
     endif ()
 
     erl_set_project_paths()
