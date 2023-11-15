@@ -26,4 +26,14 @@ namespace erl::common {
         for (long i = 0; i < size; ++i) { noise[i] = distribution(common::g_random_engine); }
         return noise;
     }
+
+    inline Eigen::MatrixXd
+    GenerateGaussianNoise(long rows, long cols, double mean, double scale) {
+        Eigen::MatrixXd noise(rows, cols);
+        std::normal_distribution<double> distribution(mean, scale);
+        for (long i = 0; i < rows; ++i) {
+            for (long j = 0; j < cols; ++j) { noise(i, j) = distribution(common::g_random_engine); }
+        }
+        return noise;
+    }
 }  // namespace erl::common

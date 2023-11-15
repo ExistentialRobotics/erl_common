@@ -26,6 +26,7 @@ namespace Eigen {
     using MatrixXb = MatrixX<bool>;
     using MatrixX8U = MatrixX<uint8_t>;
     using Matrix2Xl = Matrix<long, 2, Eigen::Dynamic>;
+    using Matrix3Xl = Matrix<long, 3, Eigen::Dynamic>;
     using Matrix23d = Matrix<double, 2, 3>;
     using Matrix24d = Matrix<double, 2, 4>;
 
