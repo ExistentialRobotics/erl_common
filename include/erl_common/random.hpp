@@ -61,4 +61,9 @@ namespace erl::common {
         }
         return noise;
     }
+
+    inline void
+    ManuallySetSeed(unsigned int seed) {
+        g_random_engine.seed(seed);
+    }
 }  // namespace erl::common

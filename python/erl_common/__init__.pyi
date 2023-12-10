@@ -8,4 +8,7 @@ __all__ = [
     "vedo_ext",
     "dict_ext",
     "yaml",
+    "manually_set_seed",
 ]
+
+def manually_set_seed(seed: int) -> None: ...

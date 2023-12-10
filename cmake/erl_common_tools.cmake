@@ -550,6 +550,7 @@ macro(erl_setup_compiler)
     endif ()
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra -flto=auto")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -mavx2 -mfma -march=core-avx2")
@@ -822,6 +823,7 @@ macro(erl_setup_python)
                 COMMANDS UBUNTU_LINUX "try `sudo apt install python3-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S python`")
         set_target_properties(Python3::Python PROPERTIES SYSTEM ON)
+        message(STATUS "Python3_EXECUTABLE: ${Python3_EXECUTABLE}")
         erl_find_package(
                 PACKAGE pybind11
                 QUIET REQUIRED
@@ -1077,9 +1079,9 @@ macro(erl_add_python_package)
 
         if (EXISTS ${${PROJECT_NAME}_ROOT_DIR}/setup.py)
             option(ERL_PYTHON_INSTALL_USER "Install Python package to user directory" OFF)
-            set(erl_pip_install_args "")
+            set(erl_pip_install_args "--verbose")
             if (ERL_PYTHON_INSTALL_USER)
-                list(APPEND erl_pip_install_args "--user")
+                set(erl_pip_install_args "${erl_pip_install_args} --user")
             endif ()
             add_custom_target(${PROJECT_NAME}_py_wheel
                     COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel
@@ -1094,6 +1096,15 @@ macro(erl_add_python_package)
                     COMMAND ${Python3_EXECUTABLE} -m pip install . ${erl_pip_install_args}
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
                     COMMENT "Installing Python package ${PROJECT_NAME} in install mode")
+            get_filename_component(stubgen_path ${Python3_EXECUTABLE} DIRECTORY)
+            set(stubgen_path ${stubgen_path}/stubgen)
+            if (EXISTS ${stubgen_path})
+                add_custom_target(${PROJECT_NAME}_py_stub
+                        COMMAND ${stubgen_path} -o ${CMAKE_CURRENT_BINARY_DIR}/python/stubs -p ${${PROJECT_NAME}_PY_PACKAGE_NAME}.${${PROJECT_NAME}_PYBIND_MODULE_NAME} --verbose
+                        DEPENDS ${PROJECT_NAME}_py_install
+                        WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
+                        COMMENT "Generating stub files for Python package ${PROJECT_NAME}")
+            endif ()
             unset(erl_pip_install_args)
         else ()
             message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR}, rules for Python package ${PROJECT_NAME} will not be generated.")
