@@ -616,9 +616,11 @@ macro(erl_setup_lapack)
             if (ERL_USE_SINGLE_THREADED_BLAS)
                 # we use MKL inside our OpenMP for loop or threaded code, so we need sequential BLAS
                 set(BLA_VENDOR Intel10_64lp_seq)
+                set(MKL_THREADING "sequential")
             else ()
                 # MKL is used outside OpenMP for loop or threaded code, so we can use threaded BLAS
                 set(BLA_VENDOR Intel10_64lp)
+                set(MKL_THREADING "intel_thread")
             endif ()
             if (NOT DEFINED ENV{MKLROOT})
                 unset(MKL_INCLUDE_DIRS)
@@ -635,6 +637,9 @@ macro(erl_setup_lapack)
                 set(MKL_DIR ${MKLROOT}/lib/cmake/mkl CACHE PATH "Path to MKL cmake directory" FORCE)
                 message(STATUS "MKLROOT is set to ${MKLROOT}")
             endif ()
+            set(MKL_ARCH "intel64")
+            set(MKL_LINK "dynamic")
+            set(MKL_INTERFACE_FULL "intel_lp64")  # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
             erl_find_package(   # We need to find MKL to get MKL_H
                     PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
                     REQUIRED GLOBAL
