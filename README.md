@@ -26,7 +26,7 @@ and some utility functions and data structures like
 - OpenCV extension
 - grid map and visualization
 
-# Dependencies
+# Install Dependencies
 - CMake >= 3.24
 - OpenMP
 - Boost
@@ -40,9 +40,10 @@ and some utility functions and data structures like
 - LAPACK
 - LAPACKE
 
+
 [Scripts for installing dependencies on Ubuntu 22.04](scripts/setup_ubuntu_22.04.bash)
 
-You do not need to install all of them immediately. `erl_common` will tell you what to do when a dependency is missing.
+[Scripts for installing dependencies on Arch Linux](scripts/setup_archlinux.bash)
 
 # Getting Started
 ## Use as a standard CMake package
@@ -66,6 +67,14 @@ cd <your_workspace>/src
 git clone https://github.com/ExistentialRobotics/erl_common.git
 cd ..
 catkin build
+```
+
+## Install as a Python package
+- Make sure you have installed all dependencies.
+- Make sure you have the correct Python environment activated, `pipenv` is recommended.
+```bash
+cd erl_common
+pip install . --verbose
 ```
 
 # CMake helper functions and macros

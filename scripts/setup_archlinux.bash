@@ -8,5 +8,4 @@ sudo pacman -S lapacke \
     gtest
 
 paru -S eigen-git \
-    pangolin-git \
     nanoflann
