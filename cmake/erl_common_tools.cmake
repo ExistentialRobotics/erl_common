@@ -389,6 +389,7 @@ function(erl_find_path)
             ${ERL_OUTPUT}
             ${ERL_UNPARSED_ARGUMENTS}
     )
+    get_filename_component(${ERL_OUTPUT} ${${ERL_OUTPUT}} REALPATH)
     message(STATUS "${ERL_OUTPUT}: ${${ERL_OUTPUT}}")
     set(${ERL_OUTPUT} ${${ERL_OUTPUT}} PARENT_SCOPE)
 endfunction()
@@ -623,16 +624,17 @@ macro(erl_setup_lapack)
                 set(MKL_THREADING "intel_thread")
             endif ()
             if (NOT DEFINED ENV{MKLROOT})
-                unset(MKL_INCLUDE_DIRS)
+                unset(MKL_INCLUDE_DIRS CACHE)
                 erl_find_path(
                         OUTPUT MKL_INCLUDE_DIRS
                         PACKAGE MKL
-                        REQUIRED
-                        NAMES mkl.h
+                        mkl.h
                         PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
+                        REQUIRED
                         COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
                         COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
                 get_filename_component(MKLROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
+                get_filename_component(MKLROOT ${MKLROOT} REALPATH)
                 set(ENV{MKLROOT} ${MKLROOT})
                 set(MKL_DIR ${MKLROOT}/lib/cmake/mkl CACHE PATH "Path to MKL cmake directory" FORCE)
                 message(STATUS "MKLROOT is set to ${MKLROOT}")
@@ -652,7 +654,7 @@ macro(erl_setup_lapack)
                     COMMANDS UBUNTU_LINUX "try `sudo apt install liblapack-dev`"
                     COMMANDS ARCH_LINUX "try `sudo pacman -S lapack`")
             set(MKL_INCLUDE_DIRS ${MKL_H} CACHE PATH "Path to MKL include directory" FORCE)
-            unset(MKL_LIBRARIES)
+            unset(MKL_LIBRARIES CACHE)
             set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE STRING "Path to MKL libraries" FORCE)
         elseif (ERL_USE_AOCL)
             message(STATUS "Use AMD Optimizing CPU Library")
