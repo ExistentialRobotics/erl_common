@@ -29,7 +29,7 @@ erl_catkin_package(
 # define the libraries #
 ########################
 file(GLOB_RECURSE SRC_FILES src/*.cpp)
-add_library(${PROJECT_NAME} ${SRC_FILES})
+add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME}) # this allows namespace style, erl_common::erl_common
 target_include_directories(${PROJECT_NAME}
         PUBLIC

@@ -550,7 +550,7 @@ macro(erl_setup_compiler)
         set(CMAKE_CXX_STANDARD 17)
     endif ()
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra -flto=auto")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra -flto=auto")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
@@ -1062,6 +1062,31 @@ macro(erl_add_python_package)
         if (SRC_FILES)  # if there is any pybind11_*.cpp file
             # pybind runtime lib
             pybind11_add_module(${${PROJECT_NAME}_PYBIND_MODULE_NAME} ${SRC_FILES})
+            ## ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+            ## Use separate rpaths during build and install phases
+            # set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+            ## Don't use the install-rpath during the build phase
+            # set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+            # set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+            ## Automatically add all linked folders that are NOT in the build directory to the rpath (per library?)
+            # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+            if (APPLE)
+                set(CMAKE_MACOSX_RPATH ON)
+                set(_rpath_portable_origin "@loader_path")
+            else ()
+                set(_rpath_portable_origin $ORIGIN)
+            endif ()
+            set(_rpath "${_rpath_portable_origin}:${_rpath_portable_origin}/lib/${PROJECT_NAME}")
+            # how to check rpath of a library file:
+            # objdump -x <library_name>.so | grep 'R.*PATH'
+            # output: RUNPATH     $ORIGIN:$ORIGIN/lib/<project_name>
+            # how to check shared library dependencies of a library file:
+            # ldd <library_name>.so
+            set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
+                    SKIP_BUILD_RPATH FALSE # Use separate rpaths during build and install phases
+                    BUILD_WITH_INSTALL_RPATH FALSE # Don't use the install-rpath during the build phase
+                    INSTALL_RPATH "${_rpath}" # search in the same directory, or in lib/<project_name>
+                    INSTALL_RPATH_USE_LINK_PATH TRUE)
             target_compile_definitions(${${PROJECT_NAME}_PYBIND_MODULE_NAME}
                     PRIVATE PYBIND_MODULE_NAME=${${PROJECT_NAME}_PYBIND_MODULE_NAME})
             target_include_directories(${${PROJECT_NAME}_PYBIND_MODULE_NAME} SYSTEM PRIVATE ${Python3_INCLUDE_DIRS})
@@ -1207,6 +1232,17 @@ macro(erl_install)
     elseif (BUILD_FOR_ROS2)
         message(FATAL_ERROR "Not implemented yet")
     else ()
+        # Install the pybind module if pip install is used
+        if (${PROJECT_NAME}_INSTALL_PYBIND_MODULES AND DEFINED PIP_LIB_DIR)
+            foreach (module ${${PROJECT_NAME}_INSTALL_PYBIND_MODULES})
+                message(STATUS "Generate install rule for pybind module ${module}")
+            endforeach ()
+            install(TARGETS ${${PROJECT_NAME}_INSTALL_PYBIND_MODULES}
+                    ARCHIVE DESTINATION ${PIP_LIB_DIR}
+                    LIBRARY DESTINATION ${PIP_LIB_DIR}
+                    RUNTIME DESTINATION ${PIP_LIB_DIR})
+        endif ()
+
         foreach (TARGET IN LISTS ${PROJECT_NAME}_Targets)
             message(STATUS "Generate the rule to export ${TARGET} from ${PROJECT_NAME}")
         endforeach ()
