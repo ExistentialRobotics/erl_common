@@ -67,7 +67,8 @@ namespace erl::common {
             .def("grid_to_index", &Self::GridToIndex, py::arg("grid"), py::arg("c_stride"))
             .def("index_to_grid", &Self::IndexToGrid, py::arg("index"), py::arg("c_stride"))
             .def("generate_grid_coordinates", &Self::GenerateGridCoordinates, py::arg("c_stride"))
-            .def("generate_meter_coordinates", &Self::GenerateMeterCoordinates, py::arg("c_stride"));
+            .def("generate_meter_coordinates", &Self::GenerateMeterCoordinates, py::arg("c_stride"))
+            .def("ray_casting", &Self::RayCasting, py::arg("start"), py::arg("end"));
     }
 
     // T must be POD or arithmetic type, which is required by pybind11's NumPy interface

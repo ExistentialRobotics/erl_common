@@ -556,6 +556,194 @@ namespace erl::common {
         }
 
         // TODO: add GetPixelCoordinatesOfFilledMetricMesh for 3D with Open3D C++ API
+
+        // template<int D = Dim>
+        // [[nodiscard]] inline typename std::enable_if<D == 2, Eigen::Matrix2Xi>::type
+        // RayCasting(const Eigen::Ref<const Eigen::Vector2d>& start, const Eigen::Ref<const Eigen::Vector2d>& end) const {
+        //     if (!InMap(start)) {
+        //         ERL_WARN("start point (%f, %f) is out of map.", start[0], start[1]);
+        //         return {};
+        //     }
+        //     if (!InMap(end)) {
+        //         ERL_WARN("end point (%f, %f) is out of map.", end[0], end[1]);
+        //         return {};
+        //     }
+        //
+        //     Eigen::Vector2i cur_grid = MeterToGridForPoints(start);
+        //     Eigen::Vector2i end_grid = MeterToGridForPoints(end);
+        //     if (cur_grid == end_grid) { return Eigen::Matrix2Xi(cur_grid); }
+        //
+        //     // initialize
+        //     double direction[2];
+        //     double& dx = direction[0];
+        //     double& dy = direction[1];
+        //     dx = end[0] - start[0];
+        //     dy = end[1] - start[1];
+        //     double length = std::sqrt(dx * dx + dy * dy);
+        //     dx /= length;
+        //     dy /= length;
+        //
+        //     // compute step direction
+        //     int step[2];
+        //     if (dx > 0) {
+        //         step[0] = 1;
+        //     } else if (dx < 0) {
+        //         step[0] = -1;
+        //     } else {
+        //         step[0] = 0;
+        //     }
+        //     if (dy > 0) {
+        //         step[1] = 1;
+        //     } else if (dy < 0) {
+        //         step[1] = -1;
+        //     } else {
+        //         step[1] = 0;
+        //     }
+        //     if (step[0] == 0 && step[1] == 0) {
+        //         ERL_WARN("Ray casting in direction (0, 0) is impossible!");
+        //         return {};
+        //     }
+        //
+        //     // compute t_max and t_delta
+        //     double t_max[2];
+        //     double t_delta[2];
+        //     if (step[0] == 0) {
+        //         t_max[0] = std::numeric_limits<double>::infinity();
+        //         t_delta[0] = std::numeric_limits<double>::infinity();
+        //     } else {
+        //         double voxel_border = GridToMeterForValue(cur_grid[0], 0) + step[0] * 0.5 * m_resolution_[0];
+        //         t_max[0] = (voxel_border - start[0]) / dx;
+        //         t_delta[0] = m_resolution_[0] / std::abs(dx);
+        //     }
+        //     if (step[1] == 0) {
+        //         t_max[1] = std::numeric_limits<double>::infinity();
+        //         t_delta[1] = std::numeric_limits<double>::infinity();
+        //     } else {
+        //         double voxel_border = GridToMeterForValue(cur_grid[1], 1) + step[1] * 0.5 * m_resolution_[1];
+        //         t_max[1] = (voxel_border - start[1]) / dy;
+        //         t_delta[1] = m_resolution_[1] / std::abs(dy);
+        //     }
+        //
+        //     // incremental phase
+        //     Eigen::Matrix2Xi points(2, 3 * std::max(std::abs(end_grid[0] - cur_grid[0]), std::abs(end_grid[1] - cur_grid[1])) + 3);
+        //     int cnt = 0;
+        //     points.col(cnt++) = cur_grid;
+        //     while (true) {
+        //         if (t_max[0] < t_max[1]) {
+        //             t_max[0] += t_delta[0];
+        //             cur_grid[0] += step[0];
+        //             ERL_DEBUG_ASSERT(
+        //                 cur_grid[0] >= 0 && cur_grid[0] < m_map_shape_[0],
+        //                 "cur_grid[0] = %d is out of range [0, %d)",
+        //                 cur_grid[0],
+        //                 m_map_shape_[0]);
+        //         } else {
+        //             t_max[1] += t_delta[1];
+        //             cur_grid[1] += step[1];
+        //             ERL_DEBUG_ASSERT(
+        //                 cur_grid[1] >= 0 && cur_grid[1] < m_map_shape_[1],
+        //                 "cur_grid[1] = %d is out of range [0, %d)",
+        //                 cur_grid[1],
+        //                 m_map_shape_[1]);
+        //         }
+        //
+        //         if (cur_grid == end_grid) {
+        //             points.col(cnt++) = cur_grid;
+        //             break;
+        //         }
+        //         // this seems to be unlikely to happen
+        //         double dist_from_origin = std::min(t_max[0], t_max[1]);
+        //         if (dist_from_origin > length) { break; }  // this happens due to numerical error
+        //         points.col(cnt++) = cur_grid;
+        //         ERL_ASSERTM(cnt < points.cols() - 1, "Pre-allocated points are not enough.");
+        //     }
+        //     points.conservativeResize(Eigen::NoChange, cnt);
+        //     return points;
+        // }
+
+        [[nodiscard]] inline Eigen::MatrixXi
+        RayCasting(const Eigen::Ref<const Eigen::VectorXd>& start, const Eigen::Ref<const Eigen::VectorXd>& end) const {
+            if (!InMap(start)) {
+                ERL_WARN("start point (%f, %f, %f) is out of map.", start[0], start[1], start[2]);
+                return {};
+            }
+            if (!InMap(end)) {
+                ERL_WARN("end point (%f, %f, %f) is out of map.", end[0], end[1], end[2]);
+                return {};
+            }
+            Eigen::VectorXi cur_grid = MeterToGridForPoints(start);
+            Eigen::VectorXi end_grid = MeterToGridForPoints(end);
+            if (cur_grid == end_grid) { return Eigen::MatrixXi(cur_grid); }
+
+            // initialize
+            int dim = Dims();
+            Eigen::VectorXd direction = end - start;
+            double length = direction.norm();
+            direction /= length;
+
+            // compute step direction
+            Eigen::VectorXi step(dim);
+            for (int i = 0; i < dim; ++i) {
+                if (direction[i] > 0) {
+                    step[i] = 1;
+                } else if (direction[i] < 0) {
+                    step[i] = -1;
+                } else {
+                    step[i] = 0;
+                }
+            }
+            if (step.isZero()) {
+                ERL_WARN("Ray casting in direction (0, 0, 0) is impossible!");
+                return {};
+            }
+
+            // compute t_max and t_delta
+            Eigen::VectorXd t_max(dim);
+            Eigen::VectorXd t_delta(dim);
+            for (int i = 0; i < dim; ++i) {
+                if (step[i] == 0) {
+                    t_max[i] = std::numeric_limits<double>::infinity();
+                    t_delta[i] = std::numeric_limits<double>::infinity();
+                } else {
+                    double voxel_border = GridToMeterForValue(cur_grid[i], i) + double(step[i]) * 0.5 * m_resolution_[i];
+                    t_max[i] = (voxel_border - start[i]) / direction[i];
+                    t_delta[i] = m_resolution_[i] / std::abs(direction[i]);
+                }
+            }
+
+            // incremental phase
+            Eigen::MatrixXi points(dim, (3 + dim) * (end_grid - cur_grid).cwiseAbs().maxCoeff());
+            int cnt = 0;
+            points.col(cnt++) = cur_grid;
+            while (true) {
+                int min_dim = 0;
+                for (int i = 1; i < dim; ++i) {
+                    if (t_max[i] < t_max[min_dim]) { min_dim = i; }
+                }
+
+                t_max[min_dim] += t_delta[min_dim];
+                cur_grid[min_dim] += step[min_dim];
+                ERL_DEBUG_ASSERT(
+                    cur_grid[min_dim] >= 0 && cur_grid[min_dim] < m_map_shape_[min_dim],
+                    "cur_grid[%d] = %d is out of range [0, %d)",
+                    min_dim,
+                    cur_grid[min_dim],
+                    m_map_shape_[min_dim]);
+
+                if (cur_grid == end_grid) {
+                    points.col(cnt++) = cur_grid;
+                    break;
+                }
+
+                // this seems to be unlikely to happen
+                double dist_from_origin = t_max.minCoeff();
+                if (dist_from_origin > length) { break; }  // this happens due to numerical error
+                points.col(cnt++) = cur_grid;
+                ERL_ASSERTM(cnt < points.cols() - 1, "Pre-allocated points are not enough.");
+            }
+            points.conservativeResize(Eigen::NoChange, cnt);
+            return points;
+        }
     };
 
     typedef GridMapInfo<2> GridMapInfo2D;

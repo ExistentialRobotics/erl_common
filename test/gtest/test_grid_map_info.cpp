@@ -2,7 +2,7 @@
 
 #include "erl_common/grid_map_info.hpp"
 
-TEST(GridMapInfoTest, Generate2DCellCoordinatesWithCStride) {
+TEST(ERL_COMMON, GridMapInfo_Generate2DCellCoordinatesWithCStride) {
 
     using namespace erl::common;
 
@@ -27,7 +27,7 @@ TEST(GridMapInfoTest, Generate2DCellCoordinatesWithCStride) {
     }
 }
 
-TEST(GridMapInfoTest, Generate2DCellCoordinatesWithFStride) {
+TEST(ERL_COMMON, GridMapInfo_Generate2DCellCoordinatesWithFStride) {
 
     using namespace erl::common;
 
@@ -52,7 +52,7 @@ TEST(GridMapInfoTest, Generate2DCellCoordinatesWithFStride) {
     }
 }
 
-TEST(GridMapInfoTest, Generate3DCellCoordinatesWithCStride) {
+TEST(ERL_COMMON, GridMapInfo_Generate3DCellCoordinatesWithCStride) {
 
     using namespace erl::common;
 
@@ -79,7 +79,7 @@ TEST(GridMapInfoTest, Generate3DCellCoordinatesWithCStride) {
     }
 }
 
-TEST(GridMapInfoTest, Generate3DCellCoordinatesWithFStride) {
+TEST(ERL_COMMON, GridMapInfo_Generate3DCellCoordinatesWithFStride) {
 
     using namespace erl::common;
 
@@ -106,7 +106,7 @@ TEST(GridMapInfoTest, Generate3DCellCoordinatesWithFStride) {
     }
 }
 
-TEST(GridMapInfoTest, Generate2DMeterCoordinatesWithCStride) {
+TEST(ERL_COMMON, GridMapInfo_Generate2DMeterCoordinatesWithCStride) {
 
     using namespace erl::common;
 
@@ -130,7 +130,7 @@ TEST(GridMapInfoTest, Generate2DMeterCoordinatesWithCStride) {
     }
 }
 
-TEST(GridMapInfoTest, Generate2DMeterCoordinatesWithFStride) {
+TEST(ERL_COMMON, GridMapInfo_Generate2DMeterCoordinatesWithFStride) {
 
     using namespace erl::common;
 
@@ -154,7 +154,7 @@ TEST(GridMapInfoTest, Generate2DMeterCoordinatesWithFStride) {
     }
 }
 
-TEST(GridMapInfoTest, Generate3DMeterCoordinatesWithCStride) {
+TEST(ERL_COMMON, GridMapInfo_Generate3DMeterCoordinatesWithCStride) {
 
     using namespace erl::common;
 
@@ -181,7 +181,7 @@ TEST(GridMapInfoTest, Generate3DMeterCoordinatesWithCStride) {
     }
 }
 
-TEST(GridMapInfoTest, Generate3DMeterCoordinatesWithFStride) {
+TEST(ERL_COMMON, GridMapInfo_Generate3DMeterCoordinatesWithFStride) {
 
     using namespace erl::common;
 
@@ -204,6 +204,39 @@ TEST(GridMapInfoTest, Generate3DMeterCoordinatesWithFStride) {
                 EXPECT_NEAR(expect[2], actual(2, cnt), 1.e-10);
                 cnt++;
             }
+        }
+    }
+}
+
+TEST(ERL_COMMON, GridMapInfo_RayCasting2D) {
+    using namespace erl::common;
+
+    Eigen::Vector2i map_shape;
+    map_shape << 11, 11;
+
+    Eigen::Vector2d min = Eigen::Vector2d::Zero();
+    Eigen::Vector2d max = Eigen::Vector2d::Ones();
+
+    GridMapInfo2D grid_map_info(map_shape, min, max);
+    {
+        auto points = grid_map_info.RayCasting(Eigen::Vector2d{0.5, 0.5}, Eigen::Vector2d{0.5, 0.5});
+        ASSERT_EQ(points.cols(), 1);
+        EXPECT_EQ(points(0, 0), 5);
+        EXPECT_EQ(points(1, 0), 5);
+    }
+    {
+        Eigen::Vector2d start{0.1, 0.2};
+        Eigen::Vector2d end{0.9, 0.7};
+        auto points = grid_map_info.RayCasting(start, end);
+        EXPECT_EQ(points.cols(), 14);
+        Eigen::Matrix2Xi expect(2, 14);
+        // clang-format off
+        expect << 1, 2, 2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 8, 9,
+                  2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7;
+        // clang-format on
+        for (int i = 0; i < 14; ++i) {
+            EXPECT_EQ(points(0, i), expect(0, i));
+            EXPECT_EQ(points(1, i), expect(1, i));
         }
     }
 }

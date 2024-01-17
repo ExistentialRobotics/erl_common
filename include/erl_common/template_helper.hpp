@@ -25,3 +25,11 @@ using IsWeakPtr = is_instantiation<std::weak_ptr, T>;
 /// Check if T is smart pointer (std::shared_ptr, std::unique_ptr, std::weak_ptr)
 template<typename T>
 using IsSmartPtr = std::disjunction<IsSharedPtr<T>, IsUniquePtr<T>, IsWeakPtr<T>>;
+
+#define ERL_SMART_PTR_TYPEDEFS(T) \
+    using Ptr = std::shared_ptr<T>; \
+    using ConstPtr = std::shared_ptr<const T>; \
+    using WeakPtr = std::weak_ptr<T>; \
+    using ConstWeakPtr = std::weak_ptr<const T>; \
+    using UniquePtr = std::unique_ptr<T>; \
+    using ConstUniquePtr = std::unique_ptr<const T>
