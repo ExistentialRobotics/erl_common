@@ -2,7 +2,7 @@
 
 #include "erl_common/grid_map_info.hpp"
 
-TEST(ERL_COMMON, GridMapInfo_Generate2DCellCoordinatesWithCStride) {
+TEST(GridMapInfo, Generate2DCellCoordinatesWithCStride) {
 
     using namespace erl::common;
 
@@ -27,7 +27,7 @@ TEST(ERL_COMMON, GridMapInfo_Generate2DCellCoordinatesWithCStride) {
     }
 }
 
-TEST(ERL_COMMON, GridMapInfo_Generate2DCellCoordinatesWithFStride) {
+TEST(GridMapInfo, Generate2DCellCoordinatesWithFStride) {
 
     using namespace erl::common;
 
@@ -52,7 +52,7 @@ TEST(ERL_COMMON, GridMapInfo_Generate2DCellCoordinatesWithFStride) {
     }
 }
 
-TEST(ERL_COMMON, GridMapInfo_Generate3DCellCoordinatesWithCStride) {
+TEST(GridMapInfo, Generate3DCellCoordinatesWithCStride) {
 
     using namespace erl::common;
 
@@ -79,7 +79,7 @@ TEST(ERL_COMMON, GridMapInfo_Generate3DCellCoordinatesWithCStride) {
     }
 }
 
-TEST(ERL_COMMON, GridMapInfo_Generate3DCellCoordinatesWithFStride) {
+TEST(GridMapInfo, Generate3DCellCoordinatesWithFStride) {
 
     using namespace erl::common;
 
@@ -106,7 +106,7 @@ TEST(ERL_COMMON, GridMapInfo_Generate3DCellCoordinatesWithFStride) {
     }
 }
 
-TEST(ERL_COMMON, GridMapInfo_Generate2DMeterCoordinatesWithCStride) {
+TEST(GridMapInfo, Generate2DMeterCoordinatesWithCStride) {
 
     using namespace erl::common;
 
@@ -130,7 +130,7 @@ TEST(ERL_COMMON, GridMapInfo_Generate2DMeterCoordinatesWithCStride) {
     }
 }
 
-TEST(ERL_COMMON, GridMapInfo_Generate2DMeterCoordinatesWithFStride) {
+TEST(GridMapInfo, Generate2DMeterCoordinatesWithFStride) {
 
     using namespace erl::common;
 
@@ -154,7 +154,7 @@ TEST(ERL_COMMON, GridMapInfo_Generate2DMeterCoordinatesWithFStride) {
     }
 }
 
-TEST(ERL_COMMON, GridMapInfo_Generate3DMeterCoordinatesWithCStride) {
+TEST(GridMapInfo, Generate3DMeterCoordinatesWithCStride) {
 
     using namespace erl::common;
 
@@ -181,7 +181,7 @@ TEST(ERL_COMMON, GridMapInfo_Generate3DMeterCoordinatesWithCStride) {
     }
 }
 
-TEST(ERL_COMMON, GridMapInfo_Generate3DMeterCoordinatesWithFStride) {
+TEST(GridMapInfo, Generate3DMeterCoordinatesWithFStride) {
 
     using namespace erl::common;
 
@@ -208,7 +208,7 @@ TEST(ERL_COMMON, GridMapInfo_Generate3DMeterCoordinatesWithFStride) {
     }
 }
 
-TEST(ERL_COMMON, GridMapInfo_RayCasting2D) {
+TEST(GridMapInfo, RayCasting2D) {
     using namespace erl::common;
 
     Eigen::Vector2i map_shape;

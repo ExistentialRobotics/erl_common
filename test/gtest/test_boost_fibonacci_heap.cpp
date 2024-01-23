@@ -1,0 +1,145 @@
+#include "erl_common/test_helper.hpp"
+#include "erl_common/random.hpp"
+#include <vector>
+#include <boost/heap/fibonacci_heap.hpp>
+
+TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
+    using namespace erl::common;
+    using Heap = boost::heap::fibonacci_heap<int, boost::heap::mutable_<true>, boost::heap::compare<std::greater<int>>>;
+
+    int num_of_nodes = 100000;
+    std::vector<int> keys(num_of_nodes);
+    std::iota(keys.begin(), keys.end(), num_of_nodes);
+    std::shuffle(keys.begin(), keys.end(), g_random_engine);
+    // test constructor
+    Heap heap;
+    // test insert
+    std::vector<Heap::handle_type> handles;
+    handles.reserve(num_of_nodes);
+    auto t0 = std::chrono::high_resolution_clock::now();
+    for (int &key: keys) { handles.push_back(heap.push(key)); }
+    auto t1 = std::chrono::high_resolution_clock::now();
+    double dt = std::chrono::duration<double, std::micro>(t1 - t0).count() / double(num_of_nodes);
+    std::cout << "insert: " << dt << " us per operation." << std::endl;
+    // test decrease key
+    std::shuffle(handles.begin(), handles.end(), g_random_engine);
+    t0 = std::chrono::high_resolution_clock::now();
+    for (auto &handle: handles) {
+        *handle -= num_of_nodes;
+        heap.decrease(handle);
+    }
+    t1 = std::chrono::high_resolution_clock::now();
+    dt = std::chrono::duration<double, std::micro>(t1 - t0).count() / double(num_of_nodes);
+    std::cout << "decrease key: " << dt << " us per operation" << std::endl;
+    // test extract min
+    int cnt = 0;
+    double t = 0;
+    while (!heap.empty()) {
+        t0 = std::chrono::high_resolution_clock::now();
+        int min_key = heap.top();
+        heap.pop();
+        t1 = std::chrono::high_resolution_clock::now();
+        t += std::chrono::duration<double, std::micro>(t1 - t0).count();
+        std::cout << std::setw(8) << std::setfill(' ') << min_key << std::flush;
+        cnt++;
+        if (cnt % 10 == 0) { std::cout << std::endl; }
+    }
+    dt = t / double(num_of_nodes);
+    std::cout << "extract min: " << dt << " us per operation" << std::endl;
+}
+
+TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
+    using namespace erl::common;
+
+    constexpr int kMaxInsertionsPerIter = 10;
+    constexpr int kMaxDecreaseKeysPerIter = 5;
+    constexpr int kNumIters = 20000;
+    constexpr int kMaxKeyVal = 1000000;
+
+    double t_insert = 0;
+    double t_extract_min = 0;
+    double t_decrease_key = 0;
+    long n_insert = 0;
+    long n_extract_min = 0;
+    long n_decrease_key = 0;
+
+    std::uniform_int_distribution<int> num_insertions_rng(0, kMaxInsertionsPerIter);
+    std::uniform_int_distribution<int> num_decrease_keys_rng(0, kMaxDecreaseKeysPerIter);
+    std::uniform_int_distribution<int> key_val_rng(0, kMaxKeyVal);
+
+    struct Greater {
+        inline bool
+        operator()(const std::shared_ptr<int> &i1, const std::shared_ptr<int> &i2) const {
+            return *i1 > *i2;
+        }
+    };
+
+    g_random_engine.seed(21);
+    using Heap = boost::heap::fibonacci_heap<std::shared_ptr<int>, boost::heap::mutable_<true>, boost::heap::compare<Greater>>;
+
+    Heap heap;
+    std::vector<Heap::handle_type> handles;
+    for (int i = 0; i < kNumIters; ++i) {
+        int num_insertions = num_insertions_rng(g_random_engine);
+        int num_decrease_keys = num_decrease_keys_rng(g_random_engine);
+        std::vector<bool> ops(num_insertions + num_decrease_keys, false);
+        for (int j = 0; j < num_insertions; ++j) { ops[j] = true; }
+        std::shuffle(ops.begin(), ops.end(), g_random_engine);
+        for (bool op: ops) {
+            if (op || heap.empty()) {
+                int key = key_val_rng(g_random_engine);
+                auto item = std::make_shared<int>(key);
+
+                auto t0 = std::chrono::high_resolution_clock::now();
+                auto handle = heap.push(item);
+                auto t1 = std::chrono::high_resolution_clock::now();
+
+                t_insert += std::chrono::duration<double, std::micro>(t1 - t0).count();
+                n_insert++;
+                handles.push_back(handle);
+            } else {
+                std::shuffle(handles.begin(), handles.end(), g_random_engine);
+                auto handle = handles.back();
+                **handle -= 1;
+
+                auto t0 = std::chrono::high_resolution_clock::now();
+                heap.decrease(handle);
+                auto t1 = std::chrono::high_resolution_clock::now();
+
+                t_decrease_key += std::chrono::duration<double, std::micro>(t1 - t0).count();
+                n_decrease_key++;
+            }
+        }
+
+        if (!heap.empty()) {
+            auto itr = std::find_if(handles.begin(), handles.end(), [&heap](const auto &handle) { return heap.top() == *handle; });
+            ERL_ASSERTM(itr != handles.end(), "Min node not found in nodes.");
+            std::swap(*itr, handles.back());
+            handles.pop_back();
+
+            auto t0 = std::chrono::high_resolution_clock::now();
+            heap.pop();
+            auto t1 = std::chrono::high_resolution_clock::now();
+            t_extract_min += std::chrono::duration<double, std::micro>(t1 - t0).count();
+            n_extract_min++;
+        }
+
+        // std::cout << "iter: " << i << std::endl
+        //           << "insert: " << t_insert / double(n_insert) << " us per operation" << std::endl
+        //           << "decrease key: " << t_decrease_key / double(n_decrease_key) << " us per operation" << std::endl
+        //           << "extract min: " << t_extract_min / double(n_extract_min) << " us per operation" << std::endl
+        //           << "n_insert: " << n_insert << std::endl
+        //           << "n_decrease_key: " << n_decrease_key << std::endl
+        //           << "n_extract_min: " << n_extract_min << std::endl
+        //           << "heap size: " << heap.size() << std::endl
+        //           << std::endl;
+    }
+    std::cout << "insert: " << t_insert / double(n_insert) << " us per operation" << std::endl
+              << "decrease key: " << t_decrease_key / double(n_decrease_key) << " us per operation" << std::endl
+              << "extract min: " << t_extract_min / double(n_extract_min) << " us per operation" << std::endl
+              << "n_insert: " << n_insert << std::endl
+              << "n_decrease_key: " << n_decrease_key << std::endl
+              << "n_extract_min: " << n_extract_min << std::endl
+              << "heap size: " << heap.size() << std::endl
+              << std::endl;
+}
