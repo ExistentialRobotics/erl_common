@@ -41,9 +41,11 @@ target_include_directories(${PROJECT_NAME} SYSTEM
 target_link_libraries(${PROJECT_NAME}
         PUBLIC ${OpenCV_LIBRARIES}
         PUBLIC ${Pangolin_LIBRARIES}
-        PUBLIC Eigen3::Eigen yaml-cpp nlohmann_json::nlohmann_json Boost::program_options Boost::graph
-        PUBLIC pthread OpenMP::OpenMP_CXX Boost::boost
-        PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
+        PUBLIC yaml-cpp nlohmann_json::nlohmann_json
+        PUBLIC absl::flat_hash_map absl::flat_hash_set
+        PUBLIC Boost::boost Boost::program_options Boost::graph
+        PUBLIC pthread OpenMP::OpenMP_CXX
+        PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
         PUBLIC ${catkin_LIBRARIES})
 
 ###################

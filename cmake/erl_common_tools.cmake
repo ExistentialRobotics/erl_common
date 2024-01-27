@@ -77,15 +77,9 @@ macro(erl_add_tests)
     set(multiValueArgs LIBRARIES)
     cmake_parse_arguments(${PROJECT_NAME}_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT DEFINED ERL_BUILD_TEST_${PROJECT_NAME})
-        set(ERL_BUILD_TEST_${PROJECT_NAME} ${ERL_BUILD_TEST})
-    endif ()
-    if (NOT ERL_BUILD_TEST)
-        set(ERL_BUILD_TEST_${PROJECT_NAME} OFF)
-    endif ()
     if (ERL_BUILD_TEST_${PROJECT_NAME})
         # add gtest
-        file(GLOB_RECURSE GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/*.cpp)
+        file(GLOB GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/*.cpp)
         if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1" AND CATKIN_ENABLE_TESTING)
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
@@ -611,7 +605,10 @@ macro(erl_setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -mavx2 -mfma -march=core-avx2")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -funroll-loops")
+    if (ERL_USE_INTEL_MKL)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mavx2 -mfma -march=core-avx2")
+    endif ()
     if (NOT CMAKE_OSX_DEPLOYMENT_TARGET)
         set(CMAKE_OSX_DEPLOYMENT_TARGET 13.0)
     endif ()
@@ -779,6 +776,12 @@ macro(erl_setup_common_packages)
             COMMANDS APPLE "try `brew install boost`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
+    erl_find_package(
+            PACKAGE absl
+            REQUIRED GLOBAL
+            COMMANDS APPLE "try `brew install abseil`"
+            COMMANDS UBUNTU_LINUX "try `sudo apt install libabseil-dev`"
+            COMMANDS ARCH_LINUX "try `sudo pacman -S abseil-cpp`")
     # There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
     if (ERL_USE_INTEL_MKL)  # option from erl_setup_lapack
         set(EIGEN3_VERSION_STRING "3.4.90")  # some other packages may read this variable.
@@ -917,6 +920,9 @@ macro(erl_setup_test)
                     COMMANDS ARCH_LINUX "try `sudo pacman -S gtest`")
             include(GoogleTest)
         endif ()
+    endif ()
+    if (NOT DEFINED ERL_BUILD_TEST_${PROJECT_NAME})
+        set(ERL_BUILD_TEST_${PROJECT_NAME} ${ERL_BUILD_TEST})
     endif ()
 endmacro()
 

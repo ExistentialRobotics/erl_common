@@ -77,6 +77,14 @@ namespace erl::common {
         }
     }
 
+#define GTEST_PREPARE_OUTPUT_DIR()                                                                               \
+    auto test_info = ::testing::UnitTest::GetInstance()->current_test_info();                                    \
+    std::filesystem::path test_output_dir = test_info->test_suite_name();                                        \
+    test_output_dir /= test_info->name();                                                                        \
+    do {                                                                                                         \
+        if (!std::filesystem::exists(test_output_dir)) { std::filesystem::create_directories(test_output_dir); } \
+    } while (false)
+
 #define ASSERT_EIGEN_MATRIX_EQUAL(question, ans, gt)                                                                        \
     do {                                                                                                                    \
         { ASSERT_EQ(ans.rows(), gt.rows()); }                                                                               \
@@ -118,35 +126,35 @@ namespace erl::common {
     } while (false)
 
     template<typename duration, typename F, typename... Args>
-    long
+    double
     ReportTime(const char *label, int repeat, bool print_all_repetitions, F func, Args &&...args) {
         std::string unit;
-        if (std::is_same<duration, std::chrono::nanoseconds>::value) {
+        if (std::is_same_v<duration, std::chrono::nanoseconds>) {
             unit = " ns";
-        } else if (std::is_same<duration, std::chrono::microseconds>::value) {
+        } else if (std::is_same_v<duration, std::chrono::microseconds>) {
             unit = " us";
-        } else if (std::is_same<duration, std::chrono::milliseconds>::value) {
+        } else if (std::is_same_v<duration, std::chrono::milliseconds>) {
             unit = " ms";
-        } else if (std::is_same<duration, std::chrono::seconds>::value) {
+        } else if (std::is_same_v<duration, std::chrono::seconds>) {
             unit = " s";
-        } else if (std::is_same<duration, std::chrono::minutes>::value) {
+        } else if (std::is_same_v<duration, std::chrono::minutes>) {
             unit = " min";
-        } else if (std::is_same<duration, std::chrono::hours>::value) {
+        } else if (std::is_same_v<duration, std::chrono::hours>) {
             unit = " hrs";
         }
         auto t1 = std::chrono::high_resolution_clock::now();
         func(std::forward<Args>(args)...);
         auto t2 = std::chrono::high_resolution_clock::now();
-        long dt_mean = std::chrono::duration_cast<duration>(t2 - t1).count();
-        long dt_square_mean = dt_mean * dt_mean;
-        long dt_max = dt_mean;
-        long dt_min = dt_mean;
+        double dt_mean = std::chrono::duration<double, typename duration::period>(t2 - t1).count();
+        double dt_square_mean = dt_mean * dt_mean;
+        double dt_max = dt_mean;
+        double dt_min = dt_mean;
         if (print_all_repetitions) { std::cout << label << "[0]: " << dt_mean << unit << std::endl; }
         for (int i = 0; i < repeat; ++i) {
             t1 = std::chrono::high_resolution_clock::now();
             func(std::forward<Args>(args)...);
             t2 = std::chrono::high_resolution_clock::now();
-            long dt = std::chrono::duration_cast<duration>(t2 - t1).count();
+            double dt = std::chrono::duration<double, typename duration::period>(t2 - t1).count();
             if (print_all_repetitions) { std::cout << label << '[' << i + 1 << "]: " << dt << unit << std::endl; }
             dt_mean += dt;
             dt_square_mean += dt * dt;
