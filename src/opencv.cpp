@@ -1,44 +1,6 @@
 #include "erl_common/opencv.hpp"
 
 namespace erl::common {
-//    cv::Mat
-//    ShowEigenMatrix(const Eigen::Ref<const Eigen::MatrixXd> &mat, double nan_value, double inf_value, const std::string &window_name, int delay_ms) {
-//        Eigen::MatrixXd normalized_mat = mat;
-//        double min = std::numeric_limits<double>::infinity();
-//        double max = -std::numeric_limits<double>::infinity();
-//        long rows = normalized_mat.rows();
-//        long cols = normalized_mat.cols();
-//        for (long r = 0; r < rows; ++r) {
-//            for (long c = 0; c < cols; ++c) {
-//                const double &value = mat(r, c);
-//                if (std::isnan(value) || std::isinf(value)) { continue; }
-//                if (value < min) { min = value; }
-//                if (value > max) { max = value; }
-//            }
-//        }
-//        double value_range = (max - min) / 255.;
-//        nan_value = (nan_value - min) / value_range;
-//        inf_value = (inf_value - min) / value_range;
-//
-//        for (long r = 0; r < rows; ++r) {
-//            for (long c = 0; c < cols; ++c) {
-//                double &value = normalized_mat(r, c);
-//                if (std::isnan(value)) {
-//                    value = nan_value;
-//                } else if (std::isinf(value)) {
-//                    value = inf_value;
-//                } else {
-//                    value = (value - min) / value_range;
-//                }
-//            }
-//        }
-//        Eigen::MatrixXi normalized_mat_int = normalized_mat.cast<int>();
-//        cv::Mat cv_mat;
-//        cv::eigen2cv(normalized_mat_int, cv_mat);
-//        cv_mat = ColorGrayCustom(cv_mat);
-//        ShowCvMat(cv_mat, window_name, delay_ms);
-//        return cv_mat;
-//    }
 
     void
     ColorGrayCustom(const cv::Mat &gray, cv::Mat &custom) {

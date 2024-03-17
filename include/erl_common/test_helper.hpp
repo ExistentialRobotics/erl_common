@@ -79,6 +79,8 @@ namespace erl::common {
 
 #define GTEST_PREPARE_OUTPUT_DIR()                                                                               \
     auto test_info = ::testing::UnitTest::GetInstance()->current_test_info();                                    \
+    std::filesystem::path gtest_src_dir = __FILE__;                                                              \
+    gtest_src_dir = gtest_src_dir.parent_path();                                                                 \
     std::filesystem::path test_output_dir = test_info->test_suite_name();                                        \
     test_output_dir /= test_info->name();                                                                        \
     do {                                                                                                         \

@@ -38,6 +38,7 @@ namespace Eigen {
 
     template<typename T>
     using Scalar = Matrix<T, 1, 1>;
+    using Scalari = Scalar<int>;
     using Scalard = Scalar<double>;
 
     // VECTOR

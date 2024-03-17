@@ -73,7 +73,7 @@ namespace erl::common {
 
     // T must be POD or arithmetic type, which is required by pybind11's NumPy interface
     template<typename T, int Rank>
-    typename std::enable_if<SupportedByPybindNumpy<T>::value, py::class_<Tensor<T, Rank>>>::type
+    typename std::enable_if<py::supported_by_numpy<T>::value, py::class_<Tensor<T, Rank>>>::type
     BindTensor(py::module &m, const std::string &name) {
         using Self = Tensor<T, Rank>;
         return py::class_<Self>(m, name.c_str(), py::buffer_protocol())
@@ -127,7 +127,7 @@ namespace erl::common {
     }
 
     template<typename T, int Rank>
-    typename std::enable_if<!SupportedByPybindNumpy<T>::value, py::class_<Tensor<T, Rank>>>::type
+    typename std::enable_if<!py::supported_by_numpy<T>::value, py::class_<Tensor<T, Rank>>>::type
     BindTensor(py::module &m, const std::string &name) {
         using Self = Tensor<T, Rank>;
         return py::class_<Self>(m, name.c_str())
@@ -166,7 +166,7 @@ namespace erl::common {
     }
 
     template<typename T, int Dim>  // T is supported by NumPy interface provided by pybind11
-    typename std::enable_if<SupportedByPybindNumpy<T>::value, py::class_<GridMap<T, Dim>, std::shared_ptr<GridMap<T, Dim>>>>::type
+    typename std::enable_if<py::supported_by_numpy<T>::value, py::class_<GridMap<T, Dim>, std::shared_ptr<GridMap<T, Dim>>>>::type
     BindGridMap(py::module &m, const std::string &name) {
         using Self = GridMap<T, Dim>;
         auto py_class =
@@ -182,7 +182,7 @@ namespace erl::common {
     }
 
     template<typename T, int Dim>
-    typename std::enable_if<!SupportedByPybindNumpy<T>::value, py::class_<GridMap<T, Dim>, std::shared_ptr<GridMap<T, Dim>>>>::type
+    typename std::enable_if<!py::supported_by_numpy<T>::value, py::class_<GridMap<T, Dim>, std::shared_ptr<GridMap<T, Dim>>>>::type
     BindGridMap(py::module &m, const std::string &name) {
         using Self = GridMap<T, Dim>;
         auto py_class =
@@ -204,7 +204,7 @@ namespace erl::common {
     }
 
     template<typename T>
-    typename std::enable_if<SupportedByPybindNumpy<T>::value, py::class_<IncrementalGridMap2D<T>>>::type
+    typename std::enable_if<py::supported_by_numpy<T>::value, py::class_<IncrementalGridMap2D<T>>>::type
     BindIncrementalGridMap2D(py::module &m, const std::string &name) {
         using Self = IncrementalGridMap2D<T>;
         return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
@@ -273,7 +273,7 @@ namespace erl::common {
     }
 
     template<typename T>
-    typename std::enable_if<!SupportedByPybindNumpy<T>::value, py::class_<IncrementalGridMap2D<T>>>::type
+    typename std::enable_if<!py::supported_by_numpy<T>::value, py::class_<IncrementalGridMap2D<T>>>::type
     BindIncrementalGridMap2D(py::module &m, const std::string &name) {
         using Self = IncrementalGridMap2D<T>;
         return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
