@@ -78,7 +78,7 @@ namespace erl::common {
     }
 
 #define GTEST_PREPARE_OUTPUT_DIR()                                                                               \
-    auto test_info = ::testing::UnitTest::GetInstance()->current_test_info();                                    \
+    auto test_info = ::testing::UnitTest::GetInstance() -> current_test_info();                                  \
     std::filesystem::path gtest_src_dir = __FILE__;                                                              \
     gtest_src_dir = gtest_src_dir.parent_path();                                                                 \
     std::filesystem::path test_output_dir = test_info->test_suite_name();                                        \
@@ -176,5 +176,37 @@ namespace erl::common {
         }
 
         return dt_mean;
+    }
+
+    template<typename duration>
+    struct BlockTimer {
+        const char *label;
+        std::chrono::time_point<std::chrono::high_resolution_clock> t1;
+
+        explicit BlockTimer(const char *label)
+            : label(label),
+              t1(std::chrono::high_resolution_clock::now()) {}
+
+        ~BlockTimer() {
+            auto t2 = std::chrono::high_resolution_clock::now();
+            double dt = std::chrono::duration<double, typename duration::period>(t2 - t1).count();
+
+            std::string unit;
+            if (std::is_same_v<duration, std::chrono::nanoseconds>) {
+                unit = " ns";
+            } else if (std::is_same_v<duration, std::chrono::microseconds>) {
+                unit = " us";
+            } else if (std::is_same_v<duration, std::chrono::milliseconds>) {
+                unit = " ms";
+            } else if (std::is_same_v<duration, std::chrono::seconds>) {
+                unit = " s";
+            } else if (std::is_same_v<duration, std::chrono::minutes>) {
+                unit = " min";
+            } else if (std::is_same_v<duration, std::chrono::hours>) {
+                unit = " hrs";
+            }
+
+            ERL_INFO("%s: %f %s.", label, dt, unit.c_str());
+        }
     }
 }  // namespace erl::common

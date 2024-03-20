@@ -42,7 +42,7 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC ${OpenCV_LIBRARIES}
         PUBLIC ${Pangolin_LIBRARIES}
         PUBLIC yaml-cpp nlohmann_json::nlohmann_json
-        PUBLIC absl::flat_hash_map absl::flat_hash_set
+        PUBLIC ${absl_LIBRARIES}
         PUBLIC Boost::boost Boost::program_options Boost::graph
         PUBLIC pthread OpenMP::OpenMP_CXX
         PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
