@@ -206,7 +206,7 @@ namespace erl::common {
                 unit = " hrs";
             }
 
-            ERL_INFO("%s: %f %s.", label, dt, unit.c_str());
+            std::cout << label << ": " << dt << unit << std::endl;
         }
-    }
+    };
 }  // namespace erl::common
