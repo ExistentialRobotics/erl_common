@@ -789,7 +789,7 @@ macro(erl_setup_common_packages)
     get_target_property(absl_raw_hash_set_path absl::raw_hash_set LOCATION)
     get_filename_component(absl_LIB_DIR ${absl_raw_hash_set_path} DIRECTORY)
     unset(absl_raw_hash_set_path)
-    file(GLOB absl_LIBRARIES ${absl_LIB_DIR}/libabsl_*.so)
+    file(GLOB absl_LIBRARIES ${absl_LIB_DIR}/libabsl_*.so.*)
     # There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
     if (ERL_USE_INTEL_MKL)  # option from erl_setup_lapack
         set(EIGEN3_VERSION_STRING "3.4.90")  # some other packages may read this variable.
