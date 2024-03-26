@@ -710,8 +710,11 @@ macro(erl_setup_lapack)
             set(MKL_INCLUDE_DIRS ${MKL_H} CACHE PATH "Path to MKL include directory" FORCE)
             # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
             # we must remove MKL_LIBRARIES to avoid adding it to catkin_LIBRARIES when using catkin
+            # however, find_package(MKL) will throw an error if it is called again
             unset(MKL_LIBRARIES)  # remove normal variable
             unset(MKL_LIBRARIES CACHE)  # remove CACHE variable
+            # let's set the full path of MKL libraries
+            set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE FILEPATH "Path to MKL libraries" FORCE)
         elseif (ERL_USE_AOCL)
             message(STATUS "Use AMD Optimizing CPU Library")
             add_definitions(-DEIGEN_USE_BLAS)
