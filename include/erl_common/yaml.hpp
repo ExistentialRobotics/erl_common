@@ -42,11 +42,10 @@ namespace erl::common {
 
         inline void
         AsYamlFile(const std::string& yaml_file) const {
-            auto node = AsYamlNode();
             std::ofstream ofs(yaml_file);
             if (!ofs.is_open()) { throw std::runtime_error("Failed to open file: " + yaml_file); }
             YAML::Emitter emitter(ofs);
-            emitter << node;
+            emitter << AsYamlNode();
         }
     };
 
@@ -65,10 +64,7 @@ namespace erl::common {
 
         [[nodiscard]] inline std::string
         AsYamlString() const override {
-            YAML::Emitter emitter;
-            // this triggers YAML::Emitter& operator<<(YAML::Emitter& out, const T& rhs)
-            emitter << *static_cast<const T*>(this);  // allow YAML style manipulation, e.g., emitter.SetIndent(4);
-            return emitter.c_str();
+            return YAML::Dump(AsYamlNode());
         }
     };
 
@@ -90,26 +86,10 @@ namespace erl::common {
         AsYamlNode() const override {
             return YAML::convert<T>::encode(*static_cast<const T*>(this));
         }
-
-        [[nodiscard]] inline std::string
-        AsYamlString() const override {
-            YAML::Emitter emitter;
-            // this triggers YAML::Emitter& operator<<(YAML::Emitter& out, const T& rhs)
-            emitter << *static_cast<const T*>(this);  // allow YAML style manipulation, e.g., emitter.SetIndent(4);
-            return emitter.c_str();
-        }
     };
 }  // namespace erl::common
 
 namespace YAML {
-
-    template<typename T>
-    inline Emitter&
-    operator<<(Emitter& out, const T& rhs) {
-        out << convert<T>(rhs);
-        return out;
-    }
-
     template<typename T, int Rows = Eigen::Dynamic, int Cols = Eigen::Dynamic, int Order = Eigen::ColMajor>
     struct ConvertEigenMatrix {
         inline static Node
@@ -166,29 +146,6 @@ namespace YAML {
             return true;
         }
     };
-
-    template<typename T, int Rows = Eigen::Dynamic, int Cols = Eigen::Dynamic, int Order = Eigen::ColMajor>
-    inline Emitter&
-    operator<<(Emitter& out, const Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
-        out << BeginSeq;
-        int rows = Rows == Eigen::Dynamic ? rhs.rows() : Rows;
-        int cols = Cols == Eigen::Dynamic ? rhs.cols() : Cols;
-        if (Order == Eigen::RowMajor) {
-            for (int i = 0; i < rows; ++i) {
-                out << BeginSeq;
-                for (int j = 0; j < cols; ++j) { out << rhs(i, j); }
-                out << EndSeq;
-            }
-        } else {
-            for (int j = 0; j < cols; ++j) {
-                out << BeginSeq;
-                for (int i = 0; i < rows; ++i) { out << rhs(i, j); }
-                out << EndSeq;
-            }
-        }
-        out << EndSeq;
-        return out;
-    }
 
     template<>
     struct convert<Eigen::Matrix2i> : public ConvertEigenMatrix<int, 2, 2> {};
@@ -297,21 +254,6 @@ namespace YAML {
         }
     };
 
-    // This is a faster way to dump an Eigen vector as YAML format to a stream.
-    // An alternative is to use YAML::convert<Eigen::Vector<T, Size>>::encode(Eigen::Vector<T, GetSize>) -> YAML::Node and YAML::Dump(YAML::Node).
-    template<typename T, int Size>
-    inline Emitter&
-    operator<<(Emitter& out, const Eigen::Vector<T, Size>& rhs) {
-        out << BeginSeq << Flow;
-        if (Size == Eigen::Dynamic) {
-            for (int i = 0; i < rhs.size(); ++i) { out << rhs[i]; }
-        } else {
-            for (int i = 0; i < Size; ++i) { out << rhs[i]; }
-        }
-        out << EndSeq;
-        return out;
-    }
-
     template<>
     struct convert<Eigen::VectorXd> : public ConvertEigenVector<double, Eigen::Dynamic> {};
 
@@ -377,17 +319,6 @@ namespace YAML {
     };
 
     template<typename T>
-    inline Emitter&
-    operator<<(Emitter& out, const std::optional<T>& rhs) {
-        if (rhs) {
-            out << *rhs;
-        } else {
-            out << YAML::Null;
-        }
-        return out;
-    }
-
-    template<typename T>
     struct convert<std::shared_ptr<T>> {
         inline static Node
         encode(const std::shared_ptr<T>& rhs) {
@@ -409,17 +340,6 @@ namespace YAML {
     };
 
     template<typename T>
-    inline Emitter&
-    operator<<(Emitter& out, const std::shared_ptr<T>& rhs) {
-        if (rhs == nullptr) {
-            out << Null;
-        } else {
-            out << *rhs;
-        }
-        return out;
-    }
-
-    template<typename T>
     struct convert<std::unique_ptr<T>> {
         inline static Node
         encode(const std::unique_ptr<T>& rhs) {
@@ -439,17 +359,6 @@ namespace YAML {
             }
         }
     };
-
-    template<typename T>
-    inline Emitter&
-    operator<<(Emitter& out, const std::unique_ptr<T>& rhs) {
-        if (rhs == nullptr) {
-            out << Null;
-        } else {
-            out << *rhs;
-        }
-        return out;
-    }
 
     template<typename KeyType, typename ValueType>
     struct convert<std::unordered_map<KeyType, ValueType>> {
@@ -476,24 +385,6 @@ namespace YAML {
         }
     };
 
-    template<typename KeyType, typename ValueType>
-    inline Emitter&
-    operator<<(Emitter& out, const std::unordered_map<KeyType, ValueType>& rhs) {
-        out << BeginMap;
-        for (const auto& [key, value]: rhs) { out << Key << key << Value << value; }
-        out << EndMap;
-        return out;
-    }
-
-    template<typename T, std::size_t N>
-    inline Emitter&
-    operator<<(Emitter& out, const std::array<T, N>& rhs) {
-        out << BeginSeq;
-        for (const auto& value: rhs) { out << value; }
-        out << EndSeq;
-        return out;
-    }
-
     template<>
     struct convert<cv::Scalar> {
         inline static Node
@@ -516,16 +407,11 @@ namespace YAML {
             return true;
         }
     };
-
-    inline Emitter&
-    operator<<(Emitter& out, const cv::Scalar& rhs) {
-        out << BeginSeq << rhs[0] << rhs[1] << rhs[2] << rhs[3] << EndSeq;
-        return out;
-    }
 }  // namespace YAML
 
-inline std::ostream&
-operator<<(std::ostream& out, const erl::common::YamlableBase& yaml) {
+template<typename T>
+inline std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, std::ostream&>
+operator<<(std::ostream& out, const T& yaml) {
     out << yaml.AsYamlString();
     return out;
 }
