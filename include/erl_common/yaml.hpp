@@ -103,6 +103,13 @@ namespace erl::common {
 
 namespace YAML {
 
+    template<typename T>
+    inline Emitter&
+    operator<<(Emitter& out, const T& rhs) {
+        out << convert<T>(rhs);
+        return out;
+    }
+
     template<typename T, int Rows = Eigen::Dynamic, int Cols = Eigen::Dynamic, int Order = Eigen::ColMajor>
     struct ConvertEigenMatrix {
         inline static Node
