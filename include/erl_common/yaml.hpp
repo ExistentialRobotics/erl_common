@@ -75,8 +75,6 @@ namespace erl::common {
      */
     template<typename Base, typename T>
     struct OverrideYamlable : public Base {
-        static_assert(std::is_base_of_v<Yamlable<Base>, Base>, "Base must be derived from Yamlable<Base>.");
-
         inline void
         FromYamlNode(const YAML::Node& node) override {
             YAML::convert<T>::decode(node, *static_cast<T*>(this));

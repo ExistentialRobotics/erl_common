@@ -75,6 +75,15 @@ static std::mutex g_print_mutex;
         g_print_mutex.unlock();                                                           \
     } while (false)
 
+#define ERL_INFO_ONCE(...)          \
+    do {                            \
+        static bool infoed = false; \
+        if (!infoed) {              \
+            infoed = true;          \
+            ERL_INFO(__VA_ARGS__);  \
+        }                           \
+    } while (false)
+
 #ifndef NDEBUG
 #define ERL_DEBUG(...)                                                                     \
     do {                                                                                   \
