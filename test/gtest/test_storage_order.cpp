@@ -1,8 +1,5 @@
-#include <gtest/gtest.h>
-
 #include "erl_common/storage_order.hpp"
 #include "erl_common/test_helper.hpp"
-#include <iostream>
 
 TEST(StorageOrderTest, CoordsToIndexTiming) {
 
@@ -14,16 +11,8 @@ TEST(StorageOrderTest, CoordsToIndexTiming) {
     coords << 1, 2, 2, 3, 3;
 
     int index_1, index_2;
-
-    auto strides = ComputeCStrides<int>(shape, 1);
-
-    ReportTime<std::chrono::nanoseconds>("CoordsToIndex(shape, coords)", 100, false, [&](){
-        index_1 = CoordsToIndex<5>(shape, coords, true);
-    });
-
-    ReportTime<std::chrono::nanoseconds>("CoordsToIndex(strides, coords)", 100, false, [&](){
-        index_2 = CoordsToIndex<5>(strides, coords);
-    });
-
+    const auto strides = ComputeCStrides<int>(shape, 1);
+    ReportTime<std::chrono::nanoseconds>("CoordsToIndex(shape, coords)", 100, false, [&] { index_1 = CoordsToIndex<5>(shape, coords, true); });
+    ReportTime<std::chrono::nanoseconds>("CoordsToIndex(strides, coords)", 100, false, [&] { index_2 = CoordsToIndex<5>(strides, coords); });
     ASSERT_EQ(index_1, index_2);
 }

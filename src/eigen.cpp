@@ -1,5 +1,4 @@
 #include "erl_common/eigen.hpp"
-#include <iostream>
 
 int
 mkl_serv_intel_cpu_true() {  // cheat MKL to think it is running on Intel CPU

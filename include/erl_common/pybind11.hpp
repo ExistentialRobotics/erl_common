@@ -28,49 +28,50 @@ namespace py = pybind11;
  * Eigen::MatrixXd::conservativeResize can be used to replace std::vector<gpis::Point<T, Dim>>
  */
 
+#include "pybind11_opencv.hpp"
+
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
-#include "pybind11_opencv.hpp"
 
 #define ERL_PYBIND_WRAP_NAME_PROPERTY_AS_READONLY(py_cls, cls, name, property) py_cls.def_property_readonly(name, [](const cls& obj) { return obj.property; })
 #define ERL_PYBIND_WRAP_PROPERTY_AS_READONLY(py_cls, cls, property)            ERL_PYBIND_WRAP_NAME_PROPERTY_AS_READONLY(py_cls, cls, #property, property)
 
 namespace PYBIND11_NAMESPACE {
     template<typename T>
-    using supported_by_numpy = py::detail::any_of<py::detail::is_pod_struct<T>, std::is_arithmetic<T>>;
+    using SupportedByNumpy = detail::any_of<detail::is_pod_struct<T>, std::is_arithmetic<T>>;
 
     template<typename T>
-    class raw_ptr_wrapper {
-        T* ptr = nullptr;
+    class RawPtrWrapper {
+        T* m_ptr_ = nullptr;
 
     public:
-        raw_ptr_wrapper() = default;
+        RawPtrWrapper() = default;
 
-        explicit raw_ptr_wrapper(T* ptr)
-            : ptr(ptr) {}
+        explicit RawPtrWrapper(T* ptr)
+            : m_ptr_(ptr) {}
 
         T&
         operator*() const {
-            return *ptr;
+            return *m_ptr_;
         }
 
         T*
         operator->() const {
-            return ptr;
+            return m_ptr_;
         }
 
         T&
         operator[](std::size_t i) const {
-            return ptr[i];
+            return m_ptr_[i];
         }
 
         T*
         get() const {
-            return ptr;
+            return m_ptr_;
         }
     };
 }  // namespace PYBIND11_NAMESPACE
 
-PYBIND11_DECLARE_HOLDER_TYPE(T, raw_ptr_wrapper<T>);
+PYBIND11_DECLARE_HOLDER_TYPE(T, RawPtrWrapper<T>);
 
 #pragma GCC diagnostic pop

@@ -7,8 +7,13 @@ This CMake project provides `erl_common` which is a collection of commonly used 
 - Intel MKL: linear algebra
 - Boost: filesystem, program_options, system, thread, etc.
 - OpenCV: image processing
+- fmt: Python f-string style formatting
+- absl: Google's common libraries (abseil-cpp)
+- Pangolin: 2d curve plotting and 3d trajectory visualization
 - OpenMP: multi-threading
-- pybind11: Python binding
+- Python3: Python binding or embedding Python interpreter in C++
+- pybind11: Python binding or embedding Python interpreter in C++
+- GTest: Google Test
 - nlohmann_json: JSON parser
 - YAML-CPP: YAML parser
 
@@ -18,12 +23,15 @@ and some utility functions and data structures like
 - assertion, timing, check results 
 - binary IO, csv IO
 - C++ template helper
+- C++ tqdm implementation
+- support for embedding Python interpreter in C++
 - random number generator
 - string utilities
 - storage order converter
 - Eigen3 extension
 - YAML-CPP extension
 - OpenCV extension
+- Pangolin extension
 - grid map and visualization
 
 # Install Dependencies
@@ -33,12 +41,17 @@ and some utility functions and data structures like
 - Eigen3
 - nlohmann_json
 - OpenCV
-- PCL
 - nanoflann
 - yaml-cpp
 - Intel MKL
 - LAPACK
 - LAPACKE
+- fmt
+- absl
+- Pangolin
+- Python3
+- pybind11
+- GTest
 
 
 [Scripts for installing dependencies on Ubuntu 22.04](scripts/setup_ubuntu_22.04.bash)

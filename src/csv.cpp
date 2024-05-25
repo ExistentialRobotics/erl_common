@@ -11,16 +11,16 @@ namespace erl::common {
         std::vector<std::vector<std::string>> rows;
         std::string line;
         std::string cell;
-        const char* type_of_whitespaces = "\t\n\r ";
 
         while (std::getline(ifs, line)) {
             std::stringstream ss(line);
             std::vector<std::string> row;
 
             while (std::getline(ss, cell, delimiter)) {
+                const auto type_of_whitespaces = "\t\n\r ";
                 auto first = cell.find_first_not_of(type_of_whitespaces);
                 auto last = cell.find_last_not_of(type_of_whitespaces);
-                cell = cell.substr(first, (last - first + 1));
+                cell = cell.substr(first, last - first + 1);
                 row.push_back(cell);
             }
 

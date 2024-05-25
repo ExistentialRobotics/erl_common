@@ -1,7 +1,8 @@
 #pragma once
 
-#include <pangolin/pangolin.h>
 #include <pangolin/display/display.h>
+#include <pangolin/pangolin.h>
+
 #include <map>
 
 namespace erl::common {
@@ -12,7 +13,7 @@ namespace erl::common {
         std::map<std::string, pangolin::View*> m_displays_;
 
     public:
-        PangolinWindow(const std::string& window_name, int window_width, int window_height, int window_x = 0, int window_y = 0)
+        PangolinWindow(const std::string& window_name, const int window_width, const int window_height, const int window_x = 0, const int window_y = 0)
             : m_window_name_(window_name),
               m_window_(pangolin::CreateWindowAndBind(window_name, window_width, window_height)) {
             m_window_.MakeCurrent();
@@ -22,7 +23,7 @@ namespace erl::common {
         }
 
         void
-        Activate(bool clear = false) {
+        Activate(const bool clear = false) {
             m_window_.MakeCurrent();
             pangolin::BindToContext(m_window_name_);
             m_window_.ProcessEvents();
@@ -31,12 +32,12 @@ namespace erl::common {
         }
 
         void
-        Deactivate() {
+        Deactivate() const {
             m_window_.RemoveCurrent();
         }
 
-        pangolin::WindowInterface&
-        GetWindow() {
+        [[nodiscard]] pangolin::WindowInterface&
+        GetWindow() const {
             return m_window_;
         }
 
@@ -52,8 +53,8 @@ namespace erl::common {
             return *m_displays_[display_name];
         }
 
-        pangolin::View&
-        GetDisplay(const std::string& display_name) {
+        [[nodiscard]] pangolin::View&
+        GetDisplay(const std::string& display_name) const {
             return *m_displays_.at(display_name);
         }
     };

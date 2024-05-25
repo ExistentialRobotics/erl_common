@@ -1,17 +1,17 @@
+#include "erl_common/yaml.hpp"
+
 #include <gtest/gtest.h>
 
 #include <iostream>
 
-#include "erl_common/yaml.hpp"
-
 namespace erl::test {
 
-    struct SubSetting : public common::Yamlable<SubSetting> {
+    struct SubSetting : common::Yamlable<SubSetting> {
         int c = 0;
         int d = 1;
     };
 
-    struct Setting : public common::Yamlable<Setting> {
+    struct Setting : common::Yamlable<Setting> {
         int a = 0;
         double b = 3.0;
         SubSetting sub_setting;
@@ -106,7 +106,7 @@ TEST(YamlTest, EigenConversion) {
     Eigen::Vector3d v;
     v << 1, 2, 3;
 
-    YAML::Node node(v);
+    const YAML::Node node(v);
     std::cout << node << std::endl;
     ASSERT_STREQ(YAML::Dump(node).c_str(), "- 1\n- 2\n- 3");
 }

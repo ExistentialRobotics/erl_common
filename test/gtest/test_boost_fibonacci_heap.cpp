@@ -5,9 +5,9 @@
 
 TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
     using namespace erl::common;
-    using Heap = boost::heap::fibonacci_heap<int, boost::heap::mutable_<true>, boost::heap::compare<std::greater<int>>>;
+    using Heap = boost::heap::fibonacci_heap<int, boost::heap::mutable_<true>, boost::heap::compare<std::greater<>>>;
 
-    int num_of_nodes = 100000;
+    constexpr int num_of_nodes = 100000;
     std::vector<int> keys(num_of_nodes);
     std::iota(keys.begin(), keys.end(), num_of_nodes);
     std::shuffle(keys.begin(), keys.end(), g_random_engine);
@@ -17,9 +17,9 @@ TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
     std::vector<Heap::handle_type> handles;
     handles.reserve(num_of_nodes);
     auto t0 = std::chrono::high_resolution_clock::now();
-    for (int &key: keys) { handles.push_back(heap.push(key)); }
+    std::transform(keys.begin(), keys.end(), std::back_inserter(handles), [&heap](const int key) { return heap.push(key); });
     auto t1 = std::chrono::high_resolution_clock::now();
-    double dt = std::chrono::duration<double, std::micro>(t1 - t0).count() / double(num_of_nodes);
+    double dt = std::chrono::duration<double, std::micro>(t1 - t0).count() / static_cast<double>(num_of_nodes);
     std::cout << "insert: " << dt << " us per operation." << std::endl;
     // test decrease key
     std::shuffle(handles.begin(), handles.end(), g_random_engine);
@@ -29,14 +29,14 @@ TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
         heap.decrease(handle);
     }
     t1 = std::chrono::high_resolution_clock::now();
-    dt = std::chrono::duration<double, std::micro>(t1 - t0).count() / double(num_of_nodes);
+    dt = std::chrono::duration<double, std::micro>(t1 - t0).count() / static_cast<double>(num_of_nodes);
     std::cout << "decrease key: " << dt << " us per operation" << std::endl;
     // test extract min
     int cnt = 0;
     double t = 0;
     while (!heap.empty()) {
         t0 = std::chrono::high_resolution_clock::now();
-        int min_key = heap.top();
+        const int min_key = heap.top();
         heap.pop();
         t1 = std::chrono::high_resolution_clock::now();
         t += std::chrono::duration<double, std::micro>(t1 - t0).count();
@@ -44,17 +44,17 @@ TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
         cnt++;
         if (cnt % 10 == 0) { std::cout << std::endl; }
     }
-    dt = t / double(num_of_nodes);
+    dt = t / static_cast<double>(num_of_nodes);
     std::cout << "extract min: " << dt << " us per operation" << std::endl;
 }
 
 TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
     using namespace erl::common;
 
-    constexpr int kMaxInsertionsPerIter = 10;
-    constexpr int kMaxDecreaseKeysPerIter = 5;
-    constexpr int kNumIters = 20000;
-    constexpr int kMaxKeyVal = 1000000;
+    constexpr int max_insertions_per_iter = 10;
+    constexpr int max_decrease_keys_per_iter = 5;
+    constexpr int num_iters = 20000;
+    constexpr int max_key_val = 1000000;
 
     double t_insert = 0;
     double t_extract_min = 0;
@@ -63,12 +63,12 @@ TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
     long n_extract_min = 0;
     long n_decrease_key = 0;
 
-    std::uniform_int_distribution<int> num_insertions_rng(0, kMaxInsertionsPerIter);
-    std::uniform_int_distribution<int> num_decrease_keys_rng(0, kMaxDecreaseKeysPerIter);
-    std::uniform_int_distribution<int> key_val_rng(0, kMaxKeyVal);
+    std::uniform_int_distribution num_insertions_rng(0, max_insertions_per_iter);
+    std::uniform_int_distribution num_decrease_keys_rng(0, max_decrease_keys_per_iter);
+    std::uniform_int_distribution key_val_rng(0, max_key_val);
 
     struct Greater {
-        inline bool
+        bool
         operator()(const std::shared_ptr<int> &i1, const std::shared_ptr<int> &i2) const {
             return *i1 > *i2;
         }
@@ -79,13 +79,13 @@ TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
 
     Heap heap;
     std::vector<Heap::handle_type> handles;
-    for (int i = 0; i < kNumIters; ++i) {
-        int num_insertions = num_insertions_rng(g_random_engine);
-        int num_decrease_keys = num_decrease_keys_rng(g_random_engine);
+    for (int i = 0; i < num_iters; ++i) {
+        const int num_insertions = num_insertions_rng(g_random_engine);
+        const int num_decrease_keys = num_decrease_keys_rng(g_random_engine);
         std::vector<bool> ops(num_insertions + num_decrease_keys, false);
         for (int j = 0; j < num_insertions; ++j) { ops[j] = true; }
         std::shuffle(ops.begin(), ops.end(), g_random_engine);
-        for (bool op: ops) {
+        for (const bool op: ops) {
             if (op || heap.empty()) {
                 int key = key_val_rng(g_random_engine);
                 auto item = std::make_shared<int>(key);
@@ -134,9 +134,9 @@ TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
         //           << "heap size: " << heap.size() << std::endl
         //           << std::endl;
     }
-    std::cout << "insert: " << t_insert / double(n_insert) << " us per operation" << std::endl
-              << "decrease key: " << t_decrease_key / double(n_decrease_key) << " us per operation" << std::endl
-              << "extract min: " << t_extract_min / double(n_extract_min) << " us per operation" << std::endl
+    std::cout << "insert: " << t_insert / static_cast<double>(n_insert) << " us per operation" << std::endl
+              << "decrease key: " << t_decrease_key / static_cast<double>(n_decrease_key) << " us per operation" << std::endl
+              << "extract min: " << t_extract_min / static_cast<double>(n_extract_min) << " us per operation" << std::endl
               << "n_insert: " << n_insert << std::endl
               << "n_decrease_key: " << n_decrease_key << std::endl
               << "n_extract_min: " << n_extract_min << std::endl

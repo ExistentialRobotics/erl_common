@@ -91,21 +91,32 @@ macro(erl_add_tests)
         else ()
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
-                add_executable(${name} ${file})
-                target_link_libraries(${name} ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main)
-                if (DEFINED ${name}_GTEST_ARGS)
-                    gtest_discover_tests(
-                            ${name}
-                            EXTRA_ARGS ${${name}_GTEST_ARGS}
-                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                    )
-                else ()
-                    gtest_discover_tests(
-                            ${name}
-                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                    )
-                endif ()
                 message(STATUS "Adding gtest ${name}")
+                add_executable(${name} ${file})
+                if (${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS)
+                    cmake_parse_arguments("${name}" "" "" "${name}_LIBRARIES" ${${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS})
+                    if (${name}_${name}_LIBRARIES)
+                        message(STATUS "additional LIBRARIES for ${name}: ${${name}_${name}_LIBRARIES}")
+                    endif ()
+                    if (${name}_UNPARSED_ARGUMENTS)
+                        set(${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS ${${name}_UNPARSED_ARGUMENTS})
+                    endif ()
+                endif ()
+                target_link_libraries(${name} ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main ${${name}_${name}_LIBRARIES})
+                #                if (DEFINED ${name}_GTEST_ARGS)
+                #                    gtest_discover_tests(
+                #                            ${name}
+                #                            EXTRA_ARGS ${${name}_GTEST_ARGS}
+                #                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                #                            DISCOVERY_TIMEOUT 60
+                #                    )
+                #                else ()
+                #                    gtest_discover_tests(
+                #                            ${name}
+                #                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                #                            DISCOVERY_TIMEOUT 60
+                #                    )
+                #                endif ()
             endforeach ()
         endif ()
         # TODO: add python tests
@@ -368,6 +379,10 @@ macro(erl_find_package)
         message(STATUS "=================================================================================================")
         if (ERL_PACKAGE STREQUAL "Python3")
             message(STATUS "To specify python interpreter, run `cmake -DPython3_ROOT_DIR=/path/to/python3_bin_folder ..`")
+            message(STATUS "With CLion, Python_EXECUTABLE is set to the selected python interpreter")
+            if (DEFINED Python_EXECUTABLE)
+                get_filename_component(Python3_ROOT_DIR ${Python_EXECUTABLE} DIRECTORY)
+            endif ()
         endif ()
         erl_platform_based_message(
                 MSG_TYPE STATUS
@@ -589,6 +604,7 @@ endfunction()
 #######################################################################################################################
 macro(erl_setup_compiler)
     option(ERL_IGNORE_CONDA_LIBRARIES "Ignore conda libraries" ON)
+    option(ERL_PRINT_HEADER_DEPENDENCIES "Print header dependencies" OFF)
     if (NOT $ENV{CONDA_PREFIX} STREQUAL "" AND ERL_IGNORE_CONDA_LIBRARIES)
         list(APPEND CMAKE_IGNORE_PREFIX_PATH $ENV{CONDA_PREFIX})  # ignore conda libraries
     endif ()
@@ -602,11 +618,16 @@ macro(erl_setup_compiler)
     endif ()
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
+
+    if (ERL_PRINT_HEADER_DEPENDENCIES)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -H")
+    endif ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra -flto=auto")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -funroll-loops")
+
     if (NOT CMAKE_OSX_DEPLOYMENT_TARGET)
         set(CMAKE_OSX_DEPLOYMENT_TARGET 13.0)
     endif ()
@@ -614,13 +635,21 @@ macro(erl_setup_compiler)
     if (CCACHE_FOUND)
         set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
     else ()
-        message(STATUS "ccache is not found, execute `sudo apt install ccache` for faster compiling")
+        message(STATUS "ccache is not found")
     endif ()
     if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_definitions(-DNDEBUG)
     else ()
         set(CMAKE_VERBOSE_MAKEFILE ON)
     endif ()
+endmacro()
+
+#######################################################################################################################
+# erl_enable_cuda
+#######################################################################################################################
+macro(erl_enable_cuda)
+    set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER} CACHE STRING "Host compiler for CUDA" FORCE)
+    enable_language(CUDA)
 endmacro()
 
 #######################################################################################################################
@@ -766,6 +795,13 @@ endmacro()
 #######################################################################################################################
 macro(erl_setup_common_packages)
     erl_find_package(
+            PACKAGE fmt
+            REQUIRED GLOBAL
+            COMMANDS ARCH_LINUX "try `sudo pacman -S fmt`"
+    )
+    set_target_properties(fmt::fmt PROPERTIES SYSTEM ON)
+    set_target_properties(fmt::fmt-header-only PROPERTIES SYSTEM ON)
+    erl_find_package(
             PACKAGE OpenMP
             REQUIRED GLOBAL
             COMMANDS APPLE "try `brew install libomp`"
@@ -789,21 +825,25 @@ macro(erl_setup_common_packages)
     get_filename_component(absl_LIB_DIR ${absl_raw_hash_set_path} DIRECTORY)
     unset(absl_raw_hash_set_path)
     file(GLOB absl_LIBRARIES ${absl_LIB_DIR}/libabsl_*.so.*)
+    file(GLOB exclude_absl_LIBRARIES ${absl_LIB_DIR}/libabsl_*test*.so.*)
+    foreach (exclude_absl_LIBRARY ${exclude_absl_LIBRARIES})
+        list(REMOVE_ITEM absl_LIBRARIES ${exclude_absl_LIBRARY})
+    endforeach ()
     # There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
     # enable vectorization of Eigen, borrow from https://github.com/dev-cafe/cmake-cookbook/tree/v1.0/chapter-02/recipe-06
     if (ERL_USE_INTEL_MKL)
         include(CheckCXXCompilerFlag)
         # check -march=native -xHost -mavx -mavx2 -mfma -mfma4
         unset(_CXX_FLAGS)
-        foreach(_flag IN ITEMS "-march=native" "-xHost" "-mavx" "-mavx2" "-mfma" "-mfma4")
+        foreach (_flag IN ITEMS "-march=native" "-xHost" "-mavx" "-mavx2" "-mfma" "-mfma4")
             string(REPLACE "=" "_" _flag_works ${_flag})
             string(REPLACE "-" "_" _flag_works ${_flag_works})
             check_cxx_compiler_flag("${_flag}" ${_flag_works})
             if (${_flag_work})
                 message(STATUS "Use ${_flag} for Release build")
                 set(_CXX_FLAGS "${_CXX_FLAGS} ${_flag}")
-            endif()
-        endforeach()
+            endif ()
+        endforeach ()
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${_CXX_FLAGS}")
         unset(_CXX_FLAGS)
     endif ()
@@ -909,7 +949,7 @@ macro(erl_setup_python)
     if (ERL_BUILD_PYTHON)
         erl_find_package(
                 PACKAGE Python3
-                QUIET REQUIRED COMPONENTS Interpreter Development
+                REQUIRED COMPONENTS Interpreter Development
                 COMMANDS APPLE "try `brew install python3`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install python3-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S python`")
@@ -917,7 +957,7 @@ macro(erl_setup_python)
         message(STATUS "Python3_EXECUTABLE: ${Python3_EXECUTABLE}")
         erl_find_package(
                 PACKAGE pybind11
-                QUIET REQUIRED
+                REQUIRED
                 COMMANDS APPLE "try `brew install pybind11`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install pybind11-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S pybind11`")
@@ -1054,13 +1094,17 @@ endmacro()
 # erl_project_setup
 #######################################################################################################################
 macro(erl_project_setup _name)
-    set(options)
+    set(options ENABLE_CUDA)
     set(oneValueArgs)
     set(multiValueArgs ERL_PACKAGES CATKIN_COMPONENTS CATKIN_DEPENDS)
     cmake_parse_arguments(${_name} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (${_name}_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "Some arguments are not recognized by erl_project_setup")
+    endif ()
+
+    if (${_name}_ENABLE_CUDA)
+        erl_enable_cuda()
     endif ()
 
     foreach (erl_package ${${_name}_ERL_PACKAGES})

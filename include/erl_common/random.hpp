@@ -1,19 +1,20 @@
 #pragma once
 
-#include <random>
-#include <vector>
-#include <numeric>
-#include <algorithm>
+#include "logging.hpp"
+
 #include <Eigen/Dense>
 
-#include "assert.hpp"
+#include <algorithm>
+#include <numeric>
+#include <random>
+#include <vector>
 
 namespace erl::common {
 
     extern std::mt19937 g_random_engine;
 
     template<typename T>
-    inline std::vector<T>
+    std::vector<T>
     GenerateShuffledIndices(std::size_t size) {
         std::vector<T> indices(size);
         std::iota(indices.begin(), indices.end(), 0);
@@ -22,7 +23,7 @@ namespace erl::common {
     }
 
     template<typename T>
-    inline std::vector<T>
+    std::vector<T>
     GenerateShuffledIndices(std::size_t size, std::mt19937 &rd) {
         std::vector<T> indices(size);
         std::iota(indices.begin(), indices.end(), 0);
@@ -31,14 +32,14 @@ namespace erl::common {
     }
 
     template<typename T>
-    inline std::vector<T>
+    std::vector<T>
     GenerateShuffledIndices(std::size_t num_samples, double ratio) {
         std::vector<T> indices(num_samples);
         std::iota(indices.begin(), indices.end(), 0);
         std::shuffle(indices.begin(), indices.end(), g_random_engine);
         ERL_ASSERTM(ratio > 0.0 && ratio <= 1.0, "ratio must be in (0.0, 1.0]");
         if (ratio < 1.0) {
-            num_samples = static_cast<std::size_t>(std::ceil(double(num_samples) * ratio));
+            num_samples = static_cast<std::size_t>(std::ceil(static_cast<double>(num_samples) * ratio));
             indices.resize(num_samples);
         }
         return indices;

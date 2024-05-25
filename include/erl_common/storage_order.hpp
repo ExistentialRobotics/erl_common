@@ -1,75 +1,66 @@
 #pragma once
 
-#include <vector>
-
-#include "assert.hpp"
 #include "eigen.hpp"
+#include "logging.hpp"
+
+#include <vector>
 
 namespace erl::common {
 
     template<typename T>
-    inline std::vector<T>
-    ComputeCStrides(const std::vector<T> &shape, T item_size) {
-        auto ndim = T(shape.size());
+    std::vector<T>
+    ComputeCStrides(const std::vector<T> &shape, const T item_size) {
+        const auto ndim = static_cast<T>(shape.size());
         std::vector<T> strides(ndim, item_size);
         for (T i = ndim - 1; i > 0; --i) { strides[i - 1] = strides[i] * shape[i]; }
         return strides;
     }
 
     template<typename T>
-    inline Eigen::VectorX<T>
-    ComputeCStrides(const Eigen::Ref<const Eigen::VectorX<T>> &shape, T item_size) {
-        auto ndim = T(shape.size());
+    Eigen::VectorX<T>
+    ComputeCStrides(const Eigen::Ref<const Eigen::VectorX<T>> &shape, const T item_size) {
+        const auto ndim = static_cast<T>(shape.size());
         Eigen::VectorX<T> strides = Eigen::VectorX<T>::Constant(ndim, item_size);
         for (T i = ndim - 1; i > 0; --i) { strides[i - 1] = strides[i] * shape[i]; }
         return strides;
     }
 
     template<typename T>
-    inline std::vector<T>
-    ComputeFStrides(const std::vector<T> &shape, T item_size) {
-        auto ndim = T(shape.size());
+    std::vector<T>
+    ComputeFStrides(const std::vector<T> &shape, const T item_size) {
+        const auto ndim = static_cast<T>(shape.size());
         std::vector<T> strides(ndim, item_size);
         for (T i = 1; i < ndim; ++i) { strides[i] = strides[i - 1] * shape[i - 1]; }
         return strides;
     }
 
     template<typename T>
-    inline Eigen::VectorX<T>
-    ComputeFStrides(const Eigen::Ref<const Eigen::VectorX<T>> &shape, T item_size) {
-        auto ndim = T(shape.size());
+    Eigen::VectorX<T>
+    ComputeFStrides(const Eigen::Ref<const Eigen::VectorX<T>> &shape, const T item_size) {
+        const auto ndim = static_cast<T>(shape.size());
         Eigen::VectorX<T> strides = Eigen::VectorX<T>::Constant(ndim, item_size);
         for (T i = 1; i < ndim; ++i) { strides[i] = strides[i - 1] * shape[i - 1]; }
         return strides;
     }
 
     template<int Dim>
-    [[nodiscard]] inline int
+    [[nodiscard]] int
     CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape, const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords, bool c_stride) {
-        auto ndim = int(shape.size());
+        const auto ndim = static_cast<int>(shape.size());
 
         if (Dim == 2) {
-            if (c_stride) {
-                return coords[1] + coords[0] * shape[1];
-            } else {
-                return coords[0] + coords[1] * shape[0];
-            }
+            if (c_stride) { return coords[1] + coords[0] * shape[1]; }
+            return coords[0] + coords[1] * shape[0];
         }
 
         if (Dim == 3) {
-            if (c_stride) {
-                return coords[2] + shape[2] * (coords[1] + shape[1] * coords[0]);
-            } else {
-                return coords[0] + shape[0] * (coords[1] + shape[1] * coords[2]);
-            }
+            if (c_stride) { return coords[2] + shape[2] * (coords[1] + shape[1] * coords[0]); }
+            return coords[0] + shape[0] * (coords[1] + shape[1] * coords[2]);
         }
 
         if (Dim == 4) {
-            if (c_stride) {
-                return coords[3] + shape[3] * (coords[2] + shape[2] * (coords[1] + shape[1] * coords[0]));
-            } else {
-                return coords[0] + shape[0] * (coords[1] + shape[1] * (coords[2] + shape[2] * coords[3]));
-            }
+            if (c_stride) { return coords[3] + shape[3] * (coords[2] + shape[2] * (coords[1] + shape[1] * coords[0])); }
+            return coords[0] + shape[0] * (coords[1] + shape[1] * (coords[2] + shape[2] * coords[3]));
         }
 
         if (c_stride) {
@@ -100,22 +91,17 @@ namespace erl::common {
     }
 
     template<int Dim>
-    [[nodiscard]] inline int
+    [[nodiscard]] int
     CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &strides, const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords) {
-        auto ndim = int(strides.size());
+        const auto ndim = static_cast<int>(strides.size());
         for (int i = 0; i < ndim; ++i) { ERL_DEBUG_ASSERT(coords[i] >= 0, "%d-dim of coords is not positive: %d", i, coords[i]); }
         return strides.dot(coords);
     }
 
     template<int Dim>
-    [[nodiscard]] inline Eigen::Vector<int, Dim>
+    [[nodiscard]] Eigen::Vector<int, Dim>
     IndexToCoords(const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape, int index, bool c_stride) {
-        // for (int i = 0; i < shape.size(); ++i) { ERL_DEBUG_ASSERT(shape[i] >= 0, "negative size %d at %d-dim", shape[i], i); }
-        // int total_size = shape.prod();
-        // ERL_DEBUG_ASSERT(index >= -total_size && index < total_size, "%s", AsString("index ", index, "is out of range of shape ", shape.transpose()).c_str());
-        // if (index < 0) { index += total_size; }
-
-        auto ndim = int(shape.size());
+        const auto ndim = static_cast<int>(shape.size());
         Eigen::Vector<int, Dim> coords;
         coords.setZero(ndim);
 

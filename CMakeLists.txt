@@ -39,6 +39,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM
         PUBLIC ${MKL_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 # https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
 target_link_libraries(${PROJECT_NAME}
+        PUBLIC fmt::fmt
         PUBLIC ${OpenCV_LIBRARIES}
         PUBLIC ${Pangolin_LIBRARIES}
         PUBLIC yaml-cpp nlohmann_json::nlohmann_json

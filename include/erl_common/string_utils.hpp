@@ -1,7 +1,9 @@
 #pragma once
 
-#include <sstream>
 #include <cxxabi.h>
+
+#include <memory>
+#include <sstream>
 #include <typeinfo>
 
 #ifdef __GNUG__
@@ -26,32 +28,11 @@ type_name() {
 
 namespace erl::common {
 
-#define ERL_FORMAT_STRING(...)                              \
-    ([&]() {                                                \
-        char buffer[4096];                                  \
-        std::snprintf(buffer, sizeof(buffer), __VA_ARGS__); \
-        return std::string(buffer);                         \
-    }())
-
     template<typename... Args>
-    inline std::string
+    std::string
     AsString(Args... args) {
         std::stringstream ss;
         (ss << ... << args);  // https://en.cppreference.com/w/cpp/language/fold
-        return ss.str();
-    }
-
-#define ERL_AS_STRING(x) #x
-
-    template<typename T>
-    inline std::string
-    AsString(const std::vector<T> &vec) {
-        if (vec.empty()) { return "vector<" + type_name<T>() + ">(size:0)[]"; }
-        std::stringstream ss;
-        std::size_t n = vec.size();
-        ss << "vector<" << type_name<T>() << ">(size:" << n << ")[" << vec[0];
-        for (std::size_t i = 1; i < n; ++i) { ss << ", " << vec[i]; }
-        ss << "]";
         return ss.str();
     }
 }  // namespace erl::common

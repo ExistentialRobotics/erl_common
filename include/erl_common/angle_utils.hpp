@@ -9,11 +9,11 @@ namespace erl::common {
      */
     inline double
     WrapAnglePi(double angle) {
-        angle = std::fmod(angle, 2 * M_PI);
+        angle = std::fmod(angle, 2.0 * M_PI);
         if (angle < -M_PI) {
-            angle += 2 * M_PI;
+            angle += 2.0 * M_PI;
         } else if (angle >= M_PI) {
-            angle -= 2 * M_PI;
+            angle -= 2.0 * M_PI;
         }
         return angle;
         // if (angle < -M_PI) {
@@ -33,8 +33,8 @@ namespace erl::common {
 
     inline double
     WrapAngleTwoPi(double angle) {
-        angle = std::fmod(angle, 2 * M_PI);
-        if (angle < 0) { angle += 2 * M_PI; }
+        angle = std::fmod(angle, 2.0 * M_PI);
+        if (angle < 0.0) { angle += 2.0 * M_PI; }
         return angle;
         // if (angle < 0 && angle > -1.e-7) {
         //     return 0;

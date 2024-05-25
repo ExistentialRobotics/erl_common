@@ -1,17 +1,18 @@
 #include "pybind11_erl_common.hpp"
+
 #include "erl_common/grid_map_drawer_2d.hpp"
 #include "erl_common/grid_map_info.hpp"
+#include "erl_common/random.hpp"
 #include "erl_common/string_utils.hpp"
 #include "erl_common/tensor.hpp"
 #include "erl_common/yaml.hpp"
-#include "erl_common/random.hpp"
 
 using namespace erl::common;
 
 static void
 BindYaml(py::module &m) {
-    auto submodule = m.def_submodule("yaml", "Interface for YAML");
-    py::class_<YamlableBase, std::shared_ptr<YamlableBase>>(submodule, ERL_AS_STRING(YamlableBase))
+    const auto submodule = m.def_submodule("yaml", "Interface for YAML");
+    py::class_<YamlableBase, std::shared_ptr<YamlableBase>>(submodule, "YamlableBase")
         .def("as_yaml_string", &YamlableBase::AsYamlString)
         .def("as_yaml_file", &YamlableBase::AsYamlFile, py::arg("yaml_file"))
         .def("from_yaml_string", &YamlableBase::FromYamlString, py::arg("yaml_str"))
@@ -27,16 +28,25 @@ static void
 BindStorage(py::module &m) {
     auto submodule = m.def_submodule("storage", "This module handles linear continuous data storage.");
 
-    submodule.def("compute_c_strides", py::overload_cast<const std::vector<int> &, int>(&ComputeCStrides<int>), py::arg("shape"), py::arg("item_size"))
+    submodule
         .def(
             "compute_c_strides",
-            py::overload_cast<const Eigen::Ref<const Eigen::VectorX<int>> &, int>(&ComputeCStrides<int>),
+            [](const std::vector<int> &shape, const int item_size) { return ComputeCStrides(shape, item_size); },
             py::arg("shape"),
             py::arg("item_size"))
-        .def("compute_f_strides", py::overload_cast<const std::vector<int> &, int>(&ComputeFStrides<int>), py::arg("shape"), py::arg("item_size"))
+        .def(
+            "compute_c_strides",
+            [](const Eigen::Ref<const Eigen::VectorX<int>> &shape, const int item_size) { return ComputeCStrides(shape, item_size); },
+            py::arg("shape"),
+            py::arg("item_size"))
         .def(
             "compute_f_strides",
-            py::overload_cast<const Eigen::Ref<const Eigen::VectorX<int>> &, int>(&ComputeFStrides<int>),
+            [](const std::vector<int> &shape, const int item_size) { return ComputeFStrides(shape, item_size); },
+            py::arg("shape"),
+            py::arg("item_size"))
+        .def(
+            "compute_f_strides",
+            [](const Eigen::Ref<const Eigen::VectorX<int>> &shape, const int item_size) { return ComputeFStrides(shape, item_size); },
             py::arg("shape"),
             py::arg("item_size"));
 
@@ -81,29 +91,29 @@ BindStorage(py::module &m) {
         .def("get_grid_coordinates_of_filled_metric_polygon", &GridMapInfo2D::GetGridCoordinatesOfFilledMetricPolygon<2>, py::arg("polygon_metric_vertices"))
         .def("get_pixel_coordinates_of_filled_metric_polygon", &GridMapInfo2D::GetPixelCoordinatesOfFilledMetricPolygon<2>, py::arg("polygon_metric_vertices"));
 
-    BindGridMapInfo<3>(submodule, ERL_AS_STRING(GridMapInfo3D));
+    BindGridMapInfo<3>(submodule, "GridMapInfo3D");
 
-    BindTensor<double, 2>(submodule, ERL_AS_STRING(TensorDouble2D));
-    BindTensor<double, 3>(submodule, ERL_AS_STRING(TensorDouble3D));
-    BindTensor<double, Eigen::Dynamic>(submodule, ERL_AS_STRING(TensorDoubleXd));
-    BindTensor<int, 2>(submodule, ERL_AS_STRING(TensorInt2D));
-    BindTensor<int, 3>(submodule, ERL_AS_STRING(TensorInt3D));
-    BindTensor<int, Eigen::Dynamic>(submodule, ERL_AS_STRING(TensorIntXd));
-    BindTensor<uint8_t, 2>(submodule, ERL_AS_STRING(TensorUnsigned2D));
-    BindTensor<uint8_t, 3>(submodule, ERL_AS_STRING(TensorUnsigned3D));
-    BindTensor<uint8_t, Eigen::Dynamic>(submodule, ERL_AS_STRING(TensorUnsignedXd));
+    BindTensor<double, 2>(submodule, "TensorDouble2D");
+    BindTensor<double, 3>(submodule, "TensorDouble3D");
+    BindTensor<double, Eigen::Dynamic>(submodule, "TensorDoubleXd");
+    BindTensor<int, 2>(submodule, "TensorInt2D");
+    BindTensor<int, 3>(submodule, "TensorInt3D");
+    BindTensor<int, Eigen::Dynamic>(submodule, "TensorIntXd");
+    BindTensor<uint8_t, 2>(submodule, "TensorUnsigned2D");
+    BindTensor<uint8_t, 3>(submodule, "TensorUnsigned3D");
+    BindTensor<uint8_t, Eigen::Dynamic>(submodule, "TensorUnsignedXd");
 
-    BindGridMap<double, 2>(submodule, ERL_AS_STRING(GridMapDouble2D));
-    BindGridMap<double, 3>(submodule, ERL_AS_STRING(GridMapDouble3D));
-    BindGridMap<double, Eigen::Dynamic>(submodule, ERL_AS_STRING(GridMapDoubleXd));
-    BindGridMap<int, 2>(submodule, ERL_AS_STRING(GridMapInt2D));
-    BindGridMap<int, 3>(submodule, ERL_AS_STRING(GridMapInt3D));
-    BindGridMap<int, Eigen::Dynamic>(submodule, ERL_AS_STRING(GridMapIntXd));
-    BindGridMap<uint8_t, 2>(submodule, ERL_AS_STRING(GridMapUnsigned2D));
-    BindGridMap<uint8_t, 3>(submodule, ERL_AS_STRING(GridMapUnsigned3D));
-    BindGridMap<uint8_t, Eigen::Dynamic>(submodule, ERL_AS_STRING(GridMapUnsignedXd));
+    BindGridMap<double, 2>(submodule, "GridMapDouble2D");
+    BindGridMap<double, 3>(submodule, "GridMapDouble3D");
+    BindGridMap<double, Eigen::Dynamic>(submodule, "GridMapDoubleXd");
+    BindGridMap<int, 2>(submodule, "GridMapInt2D");
+    BindGridMap<int, 3>(submodule, "GridMapInt3D");
+    BindGridMap<int, Eigen::Dynamic>(submodule, "GridMapIntXd");
+    BindGridMap<uint8_t, 2>(submodule, "GridMapUnsigned2D");
+    BindGridMap<uint8_t, 3>(submodule, "GridMapUnsigned3D");
+    BindGridMap<uint8_t, Eigen::Dynamic>(submodule, "GridMapUnsignedXd");
 
-    py::class_<GridMapDrawer2D>(submodule, ERL_AS_STRING(GridMapDrawer2D))
+    py::class_<GridMapDrawer2D>(submodule, "GridMapDrawer2D")
         .def(py::init<const std::shared_ptr<GridMapInfo2D> &>(), py::arg("grid_map_info"))
         .def_readwrite("grid_map_info", &GridMapDrawer2D::grid_map_info)
         .def_property(

@@ -1,5 +1,7 @@
 #include "erl_common/opencv.hpp"
 
+#include <unordered_set>
+
 namespace erl::common {
 
     void
@@ -19,14 +21,14 @@ namespace erl::common {
         for (int row = 0; row < gray.rows; ++row) {
             for (int col = 0; col < gray.cols; ++col) {
                 int value = gray.at<int>(row, col);
-                std::size_t index = value_to_index[value];
+                const std::size_t index = value_to_index[value];
                 custom.at<cv::Vec3b>(row, col) = kCustomColorMap[index];
             }
         }
     }
 
     void
-    ColorGrayToJet(const cv::Mat &gray, cv::Mat &jet, bool normalize) {
+    ColorGrayToJet(const cv::Mat &gray, cv::Mat &jet, const bool normalize) {
         cv::Mat gray_uint8;
 
         if (normalize) {
@@ -81,10 +83,10 @@ namespace erl::common {
         const Eigen::Ref<const Eigen::Matrix2Xd> &trajectory,
         const std::shared_ptr<GridMapInfo2D> &grid_map_info,
         const cv::Scalar &color,
-        int thickness,
-        bool pixel_based) {
+        const int thickness,
+        const bool pixel_based) {
 
-        long num_points = trajectory.cols();
+        const long num_points = trajectory.cols();
         if (num_points == 0) { return map; }
 
         std::vector<cv::Point2i> points;

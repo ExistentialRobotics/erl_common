@@ -1,8 +1,9 @@
 #pragma once
 
 #include "pangolin_window.hpp"
-#include <pangolin/plot/plotter.h>
+
 #include <pangolin/display/image_view.h>
+#include <pangolin/plot/plotter.h>
 
 namespace erl::common {
 
@@ -11,7 +12,7 @@ namespace erl::common {
         pangolin::DataLog m_data_log_;
         pangolin::Plotter m_plotter_;
         pangolin::View& m_display_;
-        std::vector<float> m_log_buffer_;
+        std::vector<float> m_log_buffer_;  // cppcheck-suppress unusedStructMember
         // used to keep track of the max and min values within the plot window
         std::vector<float> m_max_values_;
         std::vector<float> m_min_values_;
@@ -26,9 +27,9 @@ namespace erl::common {
             float plot_t_init = 0.0f,
             float plot_t_tick = 0.1f,
             float plot_y_tick = 0.1f,
-            const pangolin::Colour &bg_color = {0.0f, 0.0f, 0.0f, 1.0f},
-            const pangolin::Colour &axis_color = {1.0f, 1.0f, 1.0f, 1.0f},
-            const pangolin::Colour &tick_color = {0.5f, 0.5f, 0.5f, 1.0f});
+            const pangolin::Colour& bg_color = {0.0f, 0.0f, 0.0f, 1.0f},
+            const pangolin::Colour& axis_color = {1.0f, 1.0f, 1.0f, 1.0f},
+            const pangolin::Colour& tick_color = {0.5f, 0.5f, 0.5f, 1.0f});
 
         void
         Reset() {
@@ -53,8 +54,8 @@ namespace erl::common {
             return m_plotter_;
         }
 
-        pangolin::View&
-        GetDisplay() {
+        [[nodiscard]] pangolin::View&
+        GetDisplay() const {
             return m_display_;
         }
 

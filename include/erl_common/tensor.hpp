@@ -1,8 +1,9 @@
 #pragma once
 
+#include "erl_common/storage_order.hpp"
+
 #include <numeric>
 #include <unordered_set>
-#include "erl_common/storage_order.hpp"
 
 namespace erl::common {
 
@@ -32,8 +33,7 @@ namespace erl::common {
         Tensor(Eigen::VectorXi shape, const T &fill_value)
             : m_shape_(std::move(shape)) {
             CheckShape();
-            int total_size = Size();
-            if (total_size > 0) { m_data_.setConstant(total_size, fill_value); }
+            if (int total_size = Size(); total_size > 0) { m_data_.setConstant(total_size, fill_value); }
         }
 
         Tensor(Eigen::VectorXi shape, Eigen::VectorX<T> data)
@@ -74,7 +74,7 @@ namespace erl::common {
             return m_data_.data();
         }
 
-        [[nodiscard]] inline int
+        [[nodiscard]] int
         Dims() const {
             return m_shape_.size();
         }
@@ -90,35 +90,34 @@ namespace erl::common {
             return 0;
         }
 
-        [[nodiscard]] inline bool
+        [[nodiscard]] bool
         IsRowMajor() const {
             return RowMajor;
         }
 
-        inline void
+        void
         Fill(const T &value) {
-            int total_size = Size();
-            if (total_size > 0) { m_data_.setConstant(total_size, value); }
+            if (int total_size = Size(); total_size > 0) { m_data_.setConstant(total_size, value); }
         }
 
-        inline T &
+        T &
         operator[](const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords) {
             int index = CoordsToIndex<Rank>(m_shape_, coords, RowMajor);
             return m_data_[index];
         }
 
-        inline const T &
+        const T &
         operator[](const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords) const {
             int index = CoordsToIndex<Rank>(m_shape_, coords, RowMajor);
             return m_data_[index];
         }
 
-        inline T &
+        T &
         operator[](int index) {
             return m_data_[index];
         }
 
-        inline const T &
+        const T &
         operator[](int index) const {
             return m_data_[index];
         }
@@ -132,7 +131,7 @@ namespace erl::common {
                 std::unordered_set<int>(dims_to_remove.begin(), dims_to_remove.end()).size() == dims_to_remove.size(),
                 "there are duplicate dims in dims_to_remove");
 
-            auto ndim = int(Dims());
+            const auto ndim = Dims();
             // Remove unwanted dimensions
             std::vector<int> dims_to_keep(ndim);
             std::iota(dims_to_keep.begin(), dims_to_keep.end(), 0);
@@ -153,14 +152,14 @@ namespace erl::common {
             Tensor<T, Eigen::Dynamic> slice(slice_shape);
             for (int i = 0; i < slice.Size(); ++i) {
                 auto slice_coords = IndexToCoords<Eigen::Dynamic>(slice_shape, i, RowMajor);
-                for (int j = 0; j < (int) dims_to_keep.size(); ++j) { coords[dims_to_keep[j]] = slice_coords[j]; }
+                for (int j = 0; j < static_cast<int>(dims_to_keep.size()); ++j) { coords[dims_to_keep[j]] = slice_coords[j]; }
                 slice[i] = (*this)[coords];
             }
 
             return slice;
         }
 
-        inline void
+        void
         Print(std::ostream &os) const {
             os << "Tensor, shape: " << m_shape_.transpose() << ", data: array of " << typeid(T).name() << std::endl;
         }
@@ -173,7 +172,7 @@ namespace erl::common {
     };
 
     template<typename T, int Rank, bool RowMajor = true>
-    inline std::ostream &
+    std::ostream &
     operator<<(std::ostream &os, const Tensor<T, Rank, RowMajor> &tensor) {
         tensor.Print(os);
         return os;
@@ -182,14 +181,14 @@ namespace erl::common {
     template<typename T, bool RowMajor = true>
     using TensorX = Tensor<T, Eigen::Dynamic, RowMajor>;
 
-    typedef Tensor<double, 2> TensorDouble2D;
-    typedef Tensor<double, 3> TensorDouble3D;
-    typedef TensorX<double> TensorDoubleXd;
-    typedef Tensor<int, 2> TensorInt2D;
-    typedef Tensor<int, 3> TensorInt3D;
-    typedef TensorX<int> TensorIntXd;
-    typedef Tensor<uint8_t, 2> TensorUnsigned2D;
-    typedef Tensor<uint8_t, 3> TensorUnsigned3D;
-    typedef TensorX<uint8_t> TensorUnsignedXd;
+    using TensorDouble2D = Tensor<double, 2>;
+    using TensorDouble3D = Tensor<double, 3>;
+    using TensorDoubleXd = TensorX<double>;
+    using TensorInt2D = Tensor<int, 2>;
+    using TensorInt3D = Tensor<int, 3>;
+    using TensorIntXd = TensorX<int>;
+    using TensorUnsigned2D = Tensor<uint8_t, 2>;
+    using TensorUnsigned3D = Tensor<uint8_t, 3>;
+    using TensorUnsignedXd = TensorX<uint8_t>;
 
 }  // namespace erl::common

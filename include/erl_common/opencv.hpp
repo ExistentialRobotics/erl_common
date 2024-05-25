@@ -1,13 +1,14 @@
 #pragma once
 
-#include <unordered_set>
-#include <Eigen/Dense>
+#include "grid_map_info.hpp"
+#include "logging.hpp"
+
 #include <opencv2/core.hpp>
 #include <opencv2/core/eigen.hpp>
-#include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-#include "assert.hpp"
-#include "grid_map_info.hpp"
+#include <opencv2/imgproc.hpp>
+
+#include <Eigen/Dense>
 
 namespace erl::common {
     inline const std::vector<cv::Vec3b> kCustomColorMap = {
@@ -377,18 +378,20 @@ namespace erl::common {
      * @param mat
      * @param window_name
      * @param delay_ms in ms
+     * @param mouse_callback
+     * @param userdata
      */
     inline void
     ShowCvMat(
         const cv::Mat &mat,
         const std::string &window_name = "cv_mat",
-        int delay_ms = 0,
+        const int delay_ms = 0,
         void (*mouse_callback)(int event, int x, int y, int flags, void *userdata) = nullptr,
         void *userdata = nullptr) {
         bool window_exists;
         try {
             window_exists = cv::getWindowProperty(window_name, cv::WND_PROP_VISIBLE) > 0;
-        } catch (const std::exception &e) { window_exists = false; }
+        } catch (const std::exception &) { window_exists = false; }
         if (!window_exists) { cv::namedWindow(window_name, cv::WINDOW_NORMAL); }
         cv::imshow(window_name, mat);
         if (!window_exists) { cv::resizeWindow(window_name, 1000, 800); }  // only resize when first show
@@ -415,6 +418,7 @@ namespace erl::common {
      * @param nan_value value to replace nan
      * @param inf_value value to replace inf
      * @param window_name
+     * @param delay_ms
      */
     template<typename T>
     cv::Mat
@@ -422,8 +426,8 @@ namespace erl::common {
         Eigen::MatrixXd normalized_mat = mat.template cast<double>();
         double min = std::numeric_limits<double>::infinity();
         double max = -std::numeric_limits<double>::infinity();
-        long rows = normalized_mat.rows();
-        long cols = normalized_mat.cols();
+        const long rows = normalized_mat.rows();
+        const long cols = normalized_mat.cols();
         for (long r = 0; r < rows; ++r) {
             for (long c = 0; c < cols; ++c) {
                 const double &value = mat(r, c);
@@ -460,10 +464,12 @@ namespace erl::common {
         // connect mouse callback
         auto callback = [](int event, int x, int y, int flags, void *userdata) {
             (void) flags;
-            auto &matrix = *static_cast<const Eigen::MatrixX<T> *>(userdata);
-            if (event == cv::EVENT_LBUTTONDOWN) { std::cout << "x: " << x << ", y: " << y << ", mat(x, y): " << double(matrix(y, x)) << std::endl; }
+            if (event == cv::EVENT_LBUTTONDOWN) {
+                std::cout << "x: " << x << ", y: " << y << ", mat(x, y): "  //
+                          << static_cast<double>((*static_cast<const Eigen::MatrixX<T> *>(userdata))(y, x)) << std::endl;
+            }
         };
-        ShowCvMat(cv_mat, window_name, delay_ms, callback, const_cast<Eigen::MatrixX<T>*>(&mat));
+        ShowCvMat(cv_mat, window_name, delay_ms, callback, const_cast<Eigen::MatrixX<T> *>(&mat));
         return cv_mat;
     }
 
@@ -488,7 +494,7 @@ namespace erl::common {
         const std::shared_ptr<GridMapInfo2D> &grid_map_info,
         const cv::Scalar &color) {
 
-        long num_points = angles_in_world.size();
+        const long num_points = angles_in_world.size();
         if (num_points == 0) { return map; }
 
         std::vector<std::vector<cv::Point2i>> contours(1);
@@ -515,9 +521,9 @@ namespace erl::common {
         const Eigen::Ref<const Eigen::VectorXd> &ranges,
         const std::shared_ptr<GridMapInfo2D> &grid_map_info,
         const cv::Scalar &color,
-        int ray_thickness) {
+        const int ray_thickness) {
 
-        long num_points = angles_in_world.size();
+        const long num_points = angles_in_world.size();
         if (num_points == 0) { return map; }
 
         std::vector<cv::Point2i> points;

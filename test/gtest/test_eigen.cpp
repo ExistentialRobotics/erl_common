@@ -27,7 +27,7 @@ TEST(EigenTest, FormatToString) {
               7, 8, 9;
     // clang-format on
 
-    std::cout << matrix.format(erl::common::GetEigenTextFormat(erl::common::EigenTextFormat::kNumpyFmt)) << std::endl;
+    std::cout << matrix.format(GetEigenTextFormat(erl::common::EigenTextFormat::kNumpyFmt)) << std::endl;
     std::cout << erl::common::EigenToString<erl::common::EigenTextFormat::kNumpyFmt>(matrix) << std::endl;
 }
 

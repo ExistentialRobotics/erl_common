@@ -9,10 +9,10 @@ TEST(GridMapInfo, Generate2DCellCoordinatesWithCStride) {
     Eigen::Vector2i map_shape;
     map_shape << 3, 5;
 
-    Eigen::Vector2d min = Eigen::Vector2d::Zero();
-    Eigen::Vector2d max = Eigen::Vector2d::Ones();
+    const Eigen::Vector2d min = Eigen::Vector2d::Zero();
+    const Eigen::Vector2d max = Eigen::Vector2d::Ones();
 
-    GridMapInfo<2> grid_map_info(map_shape, min, max);
+    const GridMapInfo2D grid_map_info(map_shape, min, max);
 
     Eigen::Matrix<int, 2, 15> expect;
     // clang-format off
@@ -34,10 +34,10 @@ TEST(GridMapInfo, Generate2DCellCoordinatesWithFStride) {
     Eigen::Vector2i map_shape;
     map_shape << 3, 5;
 
-    Eigen::Vector2d min = Eigen::Vector2d::Zero();
-    Eigen::Vector2d max = Eigen::Vector2d::Ones();
+    const Eigen::Vector2d min = Eigen::Vector2d::Zero();
+    const Eigen::Vector2d max = Eigen::Vector2d::Ones();
 
-    GridMapInfo<2> grid_map_info(map_shape, min, max);
+    const GridMapInfo2D grid_map_info(map_shape, min, max);
 
     Eigen::Matrix<int, 2, 15> expect;
     // clang-format off
@@ -59,10 +59,10 @@ TEST(GridMapInfo, Generate3DCellCoordinatesWithCStride) {
     Eigen::Vector3i map_shape;
     map_shape << 3, 5, 7;
 
-    Eigen::Vector3d min = Eigen::Vector3d::Zero();
-    Eigen::Vector3d max = Eigen::Vector3d::Ones();
+    const Eigen::Vector3d min = Eigen::Vector3d::Zero();
+    const Eigen::Vector3d max = Eigen::Vector3d::Ones();
 
-    GridMapInfo<3> grid_map_info(map_shape, min, max);
+    const GridMapInfo<3> grid_map_info(map_shape, min, max);
 
     Eigen::Matrix<int, 3, 3 * 5 * 7> actual = grid_map_info.GenerateGridCoordinates(true);
 
@@ -86,10 +86,10 @@ TEST(GridMapInfo, Generate3DCellCoordinatesWithFStride) {
     Eigen::Vector3i map_shape;
     map_shape << 3, 5, 7;
 
-    Eigen::Vector3d min = Eigen::Vector3d::Zero();
-    Eigen::Vector3d max = Eigen::Vector3d::Ones();
+    const Eigen::Vector3d min = Eigen::Vector3d::Zero();
+    const Eigen::Vector3d max = Eigen::Vector3d::Ones();
 
-    GridMapInfo<3> grid_map_info(map_shape, min, max);
+    const GridMapInfo<3> grid_map_info(map_shape, min, max);
 
     Eigen::Matrix<int, 3, 3 * 5 * 7> actual = grid_map_info.GenerateGridCoordinates(false);
 
@@ -113,10 +113,10 @@ TEST(GridMapInfo, Generate2DMeterCoordinatesWithCStride) {
     Eigen::Vector2i map_shape;
     map_shape << 3, 5;
 
-    Eigen::Vector2d min = Eigen::Vector2d::Zero();
-    Eigen::Vector2d max = Eigen::Vector2d::Ones();
+    const Eigen::Vector2d min = Eigen::Vector2d::Zero();
+    const Eigen::Vector2d max = Eigen::Vector2d::Ones();
 
-    GridMapInfo<2> grid_map_info(map_shape, min, max);
+    const GridMapInfo<2> grid_map_info(map_shape, min, max);
     Eigen::Matrix<double, 2, 15> actual = grid_map_info.GenerateMeterCoordinates(true);
 
     int cnt = 0;
@@ -137,10 +137,10 @@ TEST(GridMapInfo, Generate2DMeterCoordinatesWithFStride) {
     Eigen::Vector2i map_shape;
     map_shape << 3, 5;
 
-    Eigen::Vector2d min = Eigen::Vector2d::Zero();
-    Eigen::Vector2d max = Eigen::Vector2d::Ones();
+    const Eigen::Vector2d min = Eigen::Vector2d::Zero();
+    const Eigen::Vector2d max = Eigen::Vector2d::Ones();
 
-    GridMapInfo<2> grid_map_info(map_shape, min, max);
+    const GridMapInfo2D grid_map_info(map_shape, min, max);
     Eigen::Matrix<double, 2, 15> actual = grid_map_info.GenerateMeterCoordinates(false);
 
     int cnt = 0;
@@ -161,10 +161,10 @@ TEST(GridMapInfo, Generate3DMeterCoordinatesWithCStride) {
     Eigen::Vector3i map_shape;
     map_shape << 3, 5, 7;
 
-    Eigen::Vector3d min = Eigen::Vector3d::Zero();
-    Eigen::Vector3d max = Eigen::Vector3d::Ones();
+    const Eigen::Vector3d min = Eigen::Vector3d::Zero();
+    const Eigen::Vector3d max = Eigen::Vector3d::Ones();
 
-    GridMapInfo<3> grid_map_info(map_shape, min, max);
+    const GridMapInfo<3> grid_map_info(map_shape, min, max);
     Eigen::Matrix<double, 3, 3 * 5 * 7> actual = grid_map_info.GenerateMeterCoordinates(true);
 
     int cnt = 0;
@@ -188,10 +188,10 @@ TEST(GridMapInfo, Generate3DMeterCoordinatesWithFStride) {
     Eigen::Vector3i map_shape;
     map_shape << 3, 5, 7;
 
-    Eigen::Vector3d min = Eigen::Vector3d::Zero();
-    Eigen::Vector3d max = Eigen::Vector3d::Ones();
+    const Eigen::Vector3d min = Eigen::Vector3d::Zero();
+    const Eigen::Vector3d max = Eigen::Vector3d::Ones();
 
-    GridMapInfo<3> grid_map_info(map_shape, min, max);
+    const GridMapInfo3D grid_map_info(map_shape, min, max);
     Eigen::Matrix<double, 3, 3 * 5 * 7> actual = grid_map_info.GenerateMeterCoordinates(false);
 
     int cnt = 0;
@@ -214,10 +214,10 @@ TEST(GridMapInfo, RayCasting2D) {
     Eigen::Vector2i map_shape;
     map_shape << 11, 11;
 
-    Eigen::Vector2d min = Eigen::Vector2d::Zero();
-    Eigen::Vector2d max = Eigen::Vector2d::Ones();
+    const Eigen::Vector2d min = Eigen::Vector2d::Zero();
+    const Eigen::Vector2d max = Eigen::Vector2d::Ones();
 
-    GridMapInfo2D grid_map_info(map_shape, min, max);
+    const GridMapInfo2D grid_map_info(map_shape, min, max);
     {
         auto points = grid_map_info.RayCasting(Eigen::Vector2d{0.5, 0.5}, Eigen::Vector2d{0.5, 0.5});
         ASSERT_EQ(points.cols(), 1);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "logging.hpp"
 #include <memory>
 
 /// Check if T is an instantiation of the template `Class`. For example:
@@ -26,10 +27,18 @@ using IsWeakPtr = is_instantiation<std::weak_ptr, T>;
 template<typename T>
 using IsSmartPtr = std::disjunction<IsSharedPtr<T>, IsUniquePtr<T>, IsWeakPtr<T>>;
 
-#define ERL_SMART_PTR_TYPEDEFS(T) \
-    using Ptr = std::shared_ptr<T>; \
-    using ConstPtr = std::shared_ptr<const T>; \
-    using WeakPtr = std::weak_ptr<T>; \
+/// assert if pointer is null
+template<typename T, typename... Args>
+T
+NotNull(T ptr, const std::string &msg, Args &&...args) {
+    if (ptr == nullptr) { erl::common::Logging::Error(msg, std::forward<Args>(args)...); }
+    return ptr;
+}
+
+#define ERL_SMART_PTR_TYPEDEFS(T)                \
+    using Ptr = std::shared_ptr<T>;              \
+    using ConstPtr = std::shared_ptr<const T>;   \
+    using WeakPtr = std::weak_ptr<T>;            \
     using ConstWeakPtr = std::weak_ptr<const T>; \
-    using UniquePtr = std::unique_ptr<T>; \
+    using UniquePtr = std::unique_ptr<T>;        \
     using ConstUniquePtr = std::unique_ptr<const T>

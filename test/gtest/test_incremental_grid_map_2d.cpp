@@ -5,11 +5,11 @@
 TEST(IncrementalGridMap2DTest, DataAccess) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2D>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    const auto grid_map_info = std::make_shared<GridMapInfo2D>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>> grid_map(grid_map_info);
 
-    auto n_rows = grid_map_info->Shape(0);
-    auto n_cols = grid_map_info->Shape(1);
+    const int n_rows = grid_map_info->Shape(0);
+    const int n_cols = grid_map_info->Shape(1);
     for (int i = 0; i < n_rows; ++i) {
         for (int j = 0; j < n_cols; ++j) { ASSERT_EQ(grid_map(i, j), nullptr); }  // check the default value
     }

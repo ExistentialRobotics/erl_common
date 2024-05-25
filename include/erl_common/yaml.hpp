@@ -1,15 +1,13 @@
 #pragma once
 
+#include "logging.hpp"
+#include "opencv.hpp"
+
 #include <yaml-cpp/yaml.h>
 
 #include <fstream>
-#include <optional>
 #include <memory>
-#include <filesystem>
-
-#include "assert.hpp"
-#include "eigen.hpp"
-#include "opencv.hpp"
+#include <optional>
 
 // https://yaml.org/spec/1.2.2/
 // https://www.cloudbees.com/blog/yaml-tutorial-everything-you-need-get-started
@@ -22,7 +20,7 @@ namespace erl::common {
         virtual void
         FromYamlNode(const YAML::Node& node) = 0;
 
-        inline void
+        void
         FromYamlString(const std::string& yaml_string) {
             auto node = YAML::Load(yaml_string);
             FromYamlNode(node);
@@ -34,17 +32,19 @@ namespace erl::common {
         [[nodiscard]] virtual std::string
         AsYamlString() const = 0;
 
-        inline void
+        void
         FromYamlFile(const std::string& yaml_file) {
-            auto node = YAML::LoadFile(yaml_file);
+            const auto node = YAML::LoadFile(yaml_file);
             FromYamlNode(node);
         }
 
-        inline void
+        void
         AsYamlFile(const std::string& yaml_file) const {
             std::ofstream ofs(yaml_file);
-            if (!ofs.is_open()) { throw std::runtime_error("Failed to open file: " + yaml_file); }
+            ERL_ASSERTM(ofs.is_open(), "Failed to open file: {}", yaml_file);
             YAML::Emitter emitter(ofs);
+            emitter.SetIndent(4);
+            emitter.SetSeqFormat(YAML::Flow);
             emitter << AsYamlNode();
         }
     };
@@ -52,19 +52,23 @@ namespace erl::common {
     template<typename T>
     struct Yamlable : public YamlableBase {
 
-        inline void
+        void
         FromYamlNode(const YAML::Node& node) override {
             YAML::convert<T>::decode(node, *static_cast<T*>(this));
         }
 
-        [[nodiscard]] inline YAML::Node
+        [[nodiscard]] YAML::Node
         AsYamlNode() const override {
             return YAML::convert<T>::encode(*static_cast<const T*>(this));
         }
 
-        [[nodiscard]] inline std::string
+        [[nodiscard]] std::string
         AsYamlString() const override {
-            return YAML::Dump(AsYamlNode());
+            YAML::Emitter emitter;
+            emitter.SetIndent(4);
+            emitter.SetSeqFormat(YAML::Flow);
+            emitter << AsYamlNode();
+            return emitter.c_str();
         }
     };
 
@@ -75,12 +79,12 @@ namespace erl::common {
      */
     template<typename Base, typename T>
     struct OverrideYamlable : public Base {
-        inline void
+        void
         FromYamlNode(const YAML::Node& node) override {
             YAML::convert<T>::decode(node, *static_cast<T*>(this));
         }
 
-        [[nodiscard]] inline YAML::Node
+        [[nodiscard]] YAML::Node
         AsYamlNode() const override {
             return YAML::convert<T>::encode(*static_cast<const T*>(this));
         }
@@ -90,7 +94,7 @@ namespace erl::common {
 namespace YAML {
     template<typename T, int Rows = Eigen::Dynamic, int Cols = Eigen::Dynamic, int Order = Eigen::ColMajor>
     struct ConvertEigenMatrix {
-        inline static Node
+        static Node
         encode(const Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
             Node node(NodeType::Sequence);
             int rows = Rows == Eigen::Dynamic ? rhs.rows() : Rows;
@@ -113,7 +117,7 @@ namespace YAML {
             return node;
         }
 
-        inline static bool
+        static bool
         decode(const Node& node, Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
             if (node.IsNull() && (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic)) { return true; }
             if (!node.IsSequence()) { return false; }
@@ -123,9 +127,9 @@ namespace YAML {
                 int rows = Rows == Eigen::Dynamic ? node.size() : Rows;
                 int cols = Cols == Eigen::Dynamic ? node[0].size() : Cols;
                 rhs.resize(rows, cols);
-                ERL_DEBUG_ASSERT(rows == int(node.size()), "expecting rows: %d, get node.size(): %lu", rows, node.size());
+                ERL_DEBUG_ASSERT(rows == static_cast<int>(node.size()), "expecting rows: {:d}, get node.size(): {:d}", rows, node.size());
                 for (int i = 0; i < rows; ++i) {
-                    ERL_DEBUG_ASSERT(cols == int(node[i].size()), "expecting cols: %d, get node[0].size(): %lu", cols, node[i].size());
+                    ERL_DEBUG_ASSERT(cols == static_cast<int>(node[i].size()), "expecting cols: {:d}, get node[0].size(): {:d}", cols, node[i].size());
                     auto& kRowNode = node[i];
                     for (int j = 0; j < cols; ++j) { rhs(i, j) = kRowNode[j].as<T>(); }
                 }
@@ -133,9 +137,9 @@ namespace YAML {
                 int cols = Cols == Eigen::Dynamic ? node.size() : Cols;
                 int rows = Rows == Eigen::Dynamic ? node[0].size() : Rows;
                 rhs.resize(rows, cols);
-                ERL_DEBUG_ASSERT(cols == int(node.size()), "expecting cols: %d, get node.size(): %lu", cols, node.size());
+                ERL_DEBUG_ASSERT(cols == static_cast<int>(node.size()), "expecting cols: {:d}, get node.size(): {:d}", cols, node.size());
                 for (int j = 0; j < cols; ++j) {
-                    ERL_DEBUG_ASSERT(rows == int(node[j].size()), "expecting rows: %d, get node[0].size(): %lu", rows, node[j].size());
+                    ERL_DEBUG_ASSERT(rows == static_cast<int>(node[j].size()), "expecting rows: {:d}, get node[0].size(): {:d}", rows, node[j].size());
                     auto& kColNode = node[j];
                     for (int i = 0; i < rows; ++i) { rhs(i, j) = kColNode[i].as<T>(); }
                 }
@@ -228,7 +232,7 @@ namespace YAML {
 
     template<typename T, int Size = Eigen::Dynamic>
     struct ConvertEigenVector {
-        inline static Node
+        static Node
         encode(const Eigen::Vector<T, Size>& rhs) {
             Node node(NodeType::Sequence);
             if (Size == Eigen::Dynamic) {
@@ -239,7 +243,7 @@ namespace YAML {
             return node;
         }
 
-        inline static bool
+        static bool
         decode(const Node& node, Eigen::Vector<T, Size>& rhs) {
             if (!node.IsSequence()) { return false; }
             if (Size == Eigen::Dynamic) {
@@ -288,86 +292,103 @@ namespace YAML {
     template<>
     struct convert<Eigen::Vector4i> : public ConvertEigenVector<int, 4> {};
 
-    template<typename T>
-    struct convert<std::optional<T>> {
-        inline static Node
-        encode(const std::optional<T>& rhs) {
-            if (rhs) {
-                return convert<T>::encode(*rhs);
-            } else {
-                return Node(NodeType::Null);
-            }
+    template<typename... Args>
+    struct convert<std::tuple<Args...>> {
+        static Node
+        encode(const std::tuple<Args...>& rhs) {
+            Node node(NodeType::Sequence);
+            std::apply([&node](const Args&... args) { (node.push_back(convert<Args>::encode(args)), ...); }, rhs);
+            return node;
         }
 
-        inline static bool
+        static bool
+        decode(const Node& node, std::tuple<Args...>& rhs) {
+            if (!node.IsSequence()) { return false; }
+            if (node.size() != sizeof...(Args)) { return false; }
+            std::apply([&node](Args&... args) { (convert<Args>::decode(node, args) && ...); }, rhs);
+            return true;
+        }
+    };
+
+    template<typename T>
+    struct convert<std::optional<T>> {
+        static Node
+        encode(const std::optional<T>& rhs) {
+            if (rhs) { return convert<T>::encode(*rhs); }
+            return Node(NodeType::Null);
+        }
+
+        static bool
         decode(const Node& node, std::optional<T>& rhs) {
             if (node.Type() != NodeType::Null) {
                 T value;
                 if (convert<T>::decode(node, value)) {
                     rhs = value;
                     return true;
-                } else {
-                    return false;
                 }
-            } else {
-                rhs = std::nullopt;
-                return true;
+                return false;
             }
+            rhs = std::nullopt;
+            return true;
         }
     };
 
     template<typename T>
     struct convert<std::shared_ptr<T>> {
-        inline static Node
+        static Node
         encode(const std::shared_ptr<T>& rhs) {
             if (rhs == nullptr) { return Node(NodeType::Null); }
             return convert<T>::encode(*rhs);
         }
 
-        inline static bool
+        static bool
         decode(const Node& node, std::shared_ptr<T>& rhs) {
-            ERL_DEBUG_ASSERT(rhs == nullptr, "rhs should not be nullptr.");
+            if (node.IsNull()) {
+                rhs = nullptr;
+                return true;
+            }
             auto value = std::make_shared<T>();
             if (convert<T>::decode(node, *value)) {
                 rhs = value;
                 return true;
-            } else {
-                return false;
             }
+            return false;
         }
     };
 
     template<typename T>
     struct convert<std::unique_ptr<T>> {
-        inline static Node
+        static Node
         encode(const std::unique_ptr<T>& rhs) {
             if (rhs == nullptr) { return Node(NodeType::Null); }
             return convert<T>::encode(*rhs);
         }
 
-        inline static bool
+        static bool
         decode(const Node& node, std::unique_ptr<T>& rhs) {
-            ERL_DEBUG_ASSERT(rhs == nullptr, "rhs should not be nullptr.");
+            if (node.IsNull()) {
+                rhs = nullptr;
+                return true;
+            }
             auto value = std::make_unique<T>();
             if (convert<T>::decode(node, *value)) {
                 rhs = std::move(value);
                 return true;
-            } else {
-                return false;
             }
+            return false;
         }
     };
 
     template<typename KeyType, typename ValueType>
     struct convert<std::unordered_map<KeyType, ValueType>> {
-        inline static Node
+        static Node
         encode(const std::unordered_map<KeyType, ValueType>& rhs) {
             Node node(NodeType::Map);
             for (const auto& [key, value]: rhs) { node[convert<KeyType>::encode(key)] = convert<ValueType>::encode(value); }
             return node;
         }
 
-        inline static bool
+        static bool
         decode(const Node& node, std::unordered_map<KeyType, ValueType>& rhs) {
             if (!node.IsMap()) { return false; }
             for (auto it = node.begin(); it != node.end(); ++it) {
@@ -383,9 +404,24 @@ namespace YAML {
         }
     };
 
+    template<typename Period>
+    struct convert<std::chrono::duration<int64_t, Period>> {
+        static Node
+        encode(const std::chrono::duration<int64_t, Period>& rhs) {
+            return Node(rhs.count());
+        }
+
+        static bool
+        decode(const Node& node, std::chrono::duration<int64_t, Period>& rhs) {
+            if (!node.IsScalar()) { return false; }
+            rhs = std::chrono::duration<int64_t, Period>(node.as<int64_t>());
+            return true;
+        }
+    };
+
     template<>
     struct convert<cv::Scalar> {
-        inline static Node
+        static Node
         encode(const cv::Scalar& rhs) {
             Node node(NodeType::Sequence);
             node.push_back(rhs[0]);
@@ -395,7 +431,7 @@ namespace YAML {
             return node;
         }
 
-        inline static bool
+        static bool
         decode(const Node& node, cv::Scalar& rhs) {
             if (!node.IsSequence()) { return false; }
             rhs[0] = node[0].as<double>();
@@ -407,9 +443,8 @@ namespace YAML {
     };
 }  // namespace YAML
 
-template<typename T>
-inline std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, std::ostream&>
-operator<<(std::ostream& out, const T& yaml) {
+inline std::ostream&
+operator<<(std::ostream& out, const erl::common::YamlableBase& yaml) {
     out << yaml.AsYamlString();
     return out;
 }

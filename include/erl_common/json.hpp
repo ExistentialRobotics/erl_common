@@ -1,18 +1,18 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
-
 #include "eigen.hpp"
+
+#include <nlohmann/json.hpp>
 
 namespace nlohmann {
 
     template<typename T, int Rows = Eigen::Dynamic, int Cols = Eigen::Dynamic, int Order = Eigen::ColMajor>
     struct ConvertEigenMatrix {
-        inline static void
+        static void
         to_json(json& array, const Eigen::Matrix<T, Rows, Cols, Order>& mat) {
             array = json::array();
-            int rows = Rows == Eigen::Dynamic ? mat.rows() : Rows;
-            int cols = Cols == Eigen::Dynamic ? mat.cols() : Cols;
+            const int rows = Rows == Eigen::Dynamic ? mat.rows() : Rows;
+            const int cols = Cols == Eigen::Dynamic ? mat.cols() : Cols;
 
             if (Order == Eigen::RowMajor) {
                 for (int i = 0; i < rows; ++i) {
@@ -29,7 +29,7 @@ namespace nlohmann {
             }
         }
 
-        inline static void
+        static void
         from_json(const json& array, Eigen::Matrix<T, Rows, Cols, Order>& mat) {
             if (!array.is_array()) { throw std::invalid_argument("The json type must be an array."); }
             if (array.empty()) { throw std::invalid_argument("The json array must not be empty."); }
@@ -149,13 +149,13 @@ namespace nlohmann {
 
     template<typename T, int Size = Eigen::Dynamic>
     struct ConvertEigenVector {
-        inline static void
-        to_json(nlohmann::json& array, const Eigen::Matrix<T, Size, 1>& vec) {
+        static void
+        to_json(json& array, const Eigen::Matrix<T, Size, 1>& vec) {
             array = json::array();
             for (int i = 0; i < Size; ++i) { array.push_back(vec(i)); }
         }
 
-        inline static void
+        static void
         from_json(const json& array, Eigen::Matrix<T, Size, 1>& vec) {
             if (!array.is_array()) { throw std::invalid_argument("The json type must be an array."); }
 
