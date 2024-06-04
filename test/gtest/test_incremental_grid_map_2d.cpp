@@ -1,6 +1,5 @@
-#include <gtest/gtest.h>
-
 #include "erl_common/grid_map.hpp"
+#include "erl_common/test_helper.hpp"
 
 TEST(IncrementalGridMap2DTest, DataAccess) {
     using namespace erl::common;

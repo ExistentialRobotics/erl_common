@@ -105,17 +105,17 @@ static std::mutex g_print_mutex;
 #if defined(ERL_ROS_VERSION_1) || defined(ERL_ROS_VERSION_2)
     #include <ros/assert.h>
     #include <ros/console.h>
-    #define ERL_FATAL(...)                ROS_FATAL(fmt::format(__VA_ARGS__))
-    #define ERL_ERROR(...)                ROS_ERROR(fmt::format(__VA_ARGS__))
-    #define ERL_WARN(...)                 ROS_WARN(fmt::format(__VA_ARGS__))
-    #define ERL_WARN_ONCE(...)            ROS_WARN_ONCE(fmt::format(__VA_ARGS__))
-    #define ERL_WARN_COND(condition, ...) ROS_WARN_COND(condition, fmt::format(__VA_ARGS__))
-    #define ERL_INFO(...)                 ROS_INFO(fmt::format(__VA_ARGS__))
-    #define ERL_DEBUG(...)                ROS_DEBUG(fmt::format(__VA_ARGS__))
+    #define ERL_FATAL(...)                ROS_FATAL(fmt::format(__VA_ARGS__).c_str())
+    #define ERL_ERROR(...)                ROS_ERROR(fmt::format(__VA_ARGS__).c_str())
+    #define ERL_WARN(...)                 ROS_WARN(fmt::format(__VA_ARGS__).c_str())
+    #define ERL_WARN_ONCE(...)            ROS_WARN_ONCE(fmt::format(__VA_ARGS__).c_str())
+    #define ERL_WARN_COND(condition, ...) ROS_WARN_COND(condition, fmt::format(__VA_ARGS__).c_str())
+    #define ERL_INFO(...)                 ROS_INFO(fmt::format(__VA_ARGS__).c_str())
+    #define ERL_DEBUG(...)                ROS_DEBUG(fmt::format(__VA_ARGS__).c_str())
     #ifdef ROS_ASSERT_ENABLED
         #define ERL_ASSERT(expr) ROS_ASSERT(expr)
         #define ERL_ASSERTM(expr, ...) \
-            do { ROS_ASSERT_MSG(expr, fmt::format(__VA_ARGS__)); } while (false)
+            do { ROS_ASSERT_MSG(expr, fmt::format(__VA_ARGS__).c_str()); } while (false)
     #endif
 #else
     #define ERL_FATAL(...)                                                                          \

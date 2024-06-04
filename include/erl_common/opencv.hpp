@@ -430,7 +430,7 @@ namespace erl::common {
         const long cols = normalized_mat.cols();
         for (long r = 0; r < rows; ++r) {
             for (long c = 0; c < cols; ++c) {
-                const double &value = mat(r, c);
+                const double value = mat(r, c);
                 if (std::isnan(value) || std::isinf(value)) { continue; }
                 if (value < min) { min = value; }
                 if (value > max) { max = value; }
@@ -462,7 +462,7 @@ namespace erl::common {
         cv::eigen2cv(normalized_mat_int, cv_mat);
         cv_mat = ColorGrayCustom(cv_mat);
         // connect mouse callback
-        auto callback = [](int event, int x, int y, int flags, void *userdata) {
+        auto callback = [](const int event, int x, int y, const int &flags, void *userdata) {
             (void) flags;
             if (event == cv::EVENT_LBUTTONDOWN) {
                 std::cout << "x: " << x << ", y: " << y << ", mat(x, y): "  //
@@ -502,11 +502,11 @@ namespace erl::common {
         contour.reserve(num_points + 1);
         contour.emplace_back(grid_map_info->MeterToGridForValue(position[1], 1), grid_map_info->MeterToGridForValue(position[0], 0));
         for (long i = 0; i < num_points; ++i) {
-            const double &kAngle = angles_in_world[i];
-            const double &kRange = ranges[i];
+            const double &angle = angles_in_world[i];
+            const double &range = ranges[i];
             contour.emplace_back(
-                grid_map_info->MeterToGridForValue(position[1] + kRange * std::sin(kAngle), 1),
-                grid_map_info->MeterToGridForValue(position[0] + kRange * std::cos(kAngle), 0));
+                grid_map_info->MeterToGridForValue(position[1] + range * std::sin(angle), 1),
+                grid_map_info->MeterToGridForValue(position[0] + range * std::cos(angle), 0));
         }
         cv::fillPoly(map, contours, color);
 
@@ -521,21 +521,21 @@ namespace erl::common {
         const Eigen::Ref<const Eigen::VectorXd> &ranges,
         const std::shared_ptr<GridMapInfo2D> &grid_map_info,
         const cv::Scalar &color,
-        const int ray_thickness) {
+        const int &ray_thickness) {
 
         const long num_points = angles_in_world.size();
         if (num_points == 0) { return map; }
 
         std::vector<cv::Point2i> points;
         points.reserve(num_points * 2);
-        cv::Point2i start_point(grid_map_info->MeterToGridForValue(position[1], 1), grid_map_info->MeterToGridForValue(position[0], 0));
+        const cv::Point2i start_point(grid_map_info->MeterToGridForValue(position[1], 1), grid_map_info->MeterToGridForValue(position[0], 0));
         for (long i = 0; i < num_points; ++i) {
-            const double &kAngle = angles_in_world[i];
-            const double &kRange = ranges[i];
+            const double &angle = angles_in_world[i];
+            const double &range = ranges[i];
             points.push_back(start_point);
             points.emplace_back(
-                grid_map_info->MeterToGridForValue(position[1] + kRange * std::sin(kAngle), 1),
-                grid_map_info->MeterToGridForValue(position[0] + kRange * std::cos(kAngle), 0));
+                grid_map_info->MeterToGridForValue(position[1] + range * std::sin(angle), 1),
+                grid_map_info->MeterToGridForValue(position[0] + range * std::cos(angle), 0));
         }
         cv::polylines(map, points, false, color, ray_thickness);
 

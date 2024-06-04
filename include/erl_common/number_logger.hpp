@@ -1,9 +1,11 @@
 #pragma once
+#include "logging.hpp"
 
 #include <fstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace erl::common {
 
@@ -24,9 +26,9 @@ namespace erl::common {
         explicit NumberLogger(
             const std::string &filename = "",
             std::string step_name = "step",
-            int init_step_idx = 0,
-            bool append = false,
-            bool on_screen = false)
+            const int init_step_idx = 0,
+            const bool append = false,
+            const bool on_screen = false)
             : m_step_name_(std::move(step_name)),
               m_step_idx_(init_step_idx),
               m_append_(append),
@@ -47,7 +49,7 @@ namespace erl::common {
         }
 
         void
-        SetStepIdx(int row_idx) {
+        SetStepIdx(const int row_idx) {
             m_step_idx_ = row_idx;
         }
 
@@ -62,11 +64,11 @@ namespace erl::common {
 
         void
         AddColumns(const std::vector<std::string> &column_names) {
-            for (const auto &column_name: column_names) { AddColumn(column_name); }
+            for (const std::string &column_name: column_names) { AddColumn(column_name); }
         }
 
         void
-        Log(const std::string &column_name, double value, double weight = 1.0) {
+        Log(const std::string &column_name, const double value, const double weight = 1.0) {
             ERL_ASSERTM(!std::isnan(value) && !std::isinf(value), "Value is NaN or Inf");
             ERL_ASSERTM(!std::isnan(weight) && !std::isinf(weight), "Weight is NaN or Inf");
             m_log_called_ = true;
@@ -106,7 +108,7 @@ namespace erl::common {
                     ERL_ASSERTM(!m_column_names_.empty(), "AddColumn must be called before Print");
                     if (!m_append_) {  // write header only if not appending
                         m_file_ << m_step_name_;
-                        for (const auto &column_name: m_column_names_) { m_file_ << "," << column_name << "_mean," << column_name << "_std"; }
+                        for (const std::string &column_name: m_column_names_) { m_file_ << "," << column_name << "_mean," << column_name << "_std"; }
                         m_file_ << std::endl;
                     }
                     m_header_written_ = true;
@@ -123,7 +125,7 @@ namespace erl::common {
                 ss << fmt::format("|{:^{}}|", m_step_name_, step_column_width);
 
                 std::vector<std::pair<int, int>> column_widths;
-                for (const auto &column_name: m_column_names_) {
+                for (const std::string &column_name: m_column_names_) {
                     const int mean_column_width = std::max(static_cast<int>(column_name.size()) + 9, min_column_width);
                     const int std_column_width = std::max(static_cast<int>(column_name.size()) + 8, min_column_width);
                     column_widths.emplace_back(mean_column_width, std_column_width);

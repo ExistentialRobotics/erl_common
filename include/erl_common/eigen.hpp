@@ -6,9 +6,9 @@
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #include "logging.hpp"
-#include "string_utils.hpp"
 
 #include <fstream>
+
 #include <unsupported/Eigen/CXX11/Tensor>
 
 // https://stackoverflow.com/questions/4433950/overriding-functions-from-dynamic-libraries

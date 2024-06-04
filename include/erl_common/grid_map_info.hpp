@@ -429,12 +429,12 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector<int, D>>
-        IndexToPixel(const int index, const bool c_stride) const {
+        IndexToPixel(const int &index, const bool &c_stride) const {
             return GridToPixelForPoints(IndexToGrid(index, c_stride));
         }
 
         [[nodiscard]] Eigen::Matrix<int, Dim, Eigen::Dynamic>
-        GenerateGridCoordinates(const bool c_stride) const {
+        GenerateGridCoordinates(const bool &c_stride) const {
             const int size = Size();
             if (!size) { return {}; }
 
@@ -463,7 +463,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] Eigen::Matrix<double, Dim, Eigen::Dynamic>
-        GenerateMeterCoordinates(const bool c_stride) const {
+        GenerateMeterCoordinates(const bool &c_stride) const {
             int size = Size();
             if (!size) { return {}; }
 

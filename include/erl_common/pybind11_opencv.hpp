@@ -17,7 +17,7 @@ namespace pybind11::detail {
 
         // Python -> C++
         bool
-        load(const handle src, const bool convert) {
+        load(const handle &src, const bool convert) {
             // If we are in no-convert mode, only load if given an array of the correct type
             if (!convert && !isinstance<array_t<double>>(src)) { return false; }
 

@@ -1,6 +1,5 @@
+#include "erl_common/test_helper.hpp"
 #include "erl_common/yaml.hpp"
-
-#include <gtest/gtest.h>
 
 #include <iostream>
 

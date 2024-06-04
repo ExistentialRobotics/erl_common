@@ -1,5 +1,5 @@
-#include "erl_common/test_helper.hpp"
 #include "erl_common/angle_utils.hpp"
+#include "erl_common/test_helper.hpp"
 
 TEST(ERL_COMMON, WrapAnglePi) {
     EXPECT_DOUBLE_EQ(erl::common::WrapAnglePi(0), 0);

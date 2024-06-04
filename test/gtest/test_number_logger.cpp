@@ -1,7 +1,7 @@
-#include "erl_common/test_helper.hpp"
 #include "erl_common/number_logger.hpp"
 #include "erl_common/progress_bar.hpp"
 #include "erl_common/random.hpp"
+#include "erl_common/test_helper.hpp"
 
 TEST(NumberLogger, Basic) {
     GTEST_PREPARE_OUTPUT_DIR();

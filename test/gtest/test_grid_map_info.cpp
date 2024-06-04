@@ -1,6 +1,5 @@
-#include <gtest/gtest.h>
-
 #include "erl_common/grid_map_info.hpp"
+#include "erl_common/test_helper.hpp"
 
 TEST(GridMapInfo, Generate2DCellCoordinatesWithCStride) {
 

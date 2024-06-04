@@ -1,11 +1,12 @@
 #pragma once
 
 #include "binary_file.hpp"
-#include "logging.hpp"
-#include "eigen.hpp"
 #include "block_timer.hpp"
+#include "eigen.hpp"
+#include "logging.hpp"
 
 #include <gtest/gtest.h>
+
 #include <chrono>
 #include <cmath>
 #include <iomanip>
@@ -15,7 +16,7 @@ namespace erl::common {
 
     template<bool IsIntegral, typename T>
     bool
-    CheckValue(const char *question_str, T ans, T gt, double abs_tol = 1.e-6, double rel_tol = 1.e-6, bool assert_diff = true) {
+    CheckValue(const char *question_str, T ans, T gt, double abs_tol = 1.e-6, double rel_tol = 1.e-6, const bool assert_diff = true) {
         if (IsIntegral && ans == gt) {
             Logging::Success("{}: {}", question_str, ans);
             return true;
@@ -44,7 +45,7 @@ namespace erl::common {
 
     template<typename T1, typename T2>
     bool
-    CheckAnswers(const char *question_str, T1 ans, T2 gt, double abs_tol = 1.e-6, double rel_tol = 1.e-6, bool assert_diff = true) {
+    CheckAnswers(const char *question_str, T1 ans, T2 gt, double abs_tol = 1.e-6, double rel_tol = 1.e-6, const bool assert_diff = true) {
 
         if (static_cast<size_t>(ans.size()) != static_cast<size_t>(gt.size())) {
             Logging::Failure("{}: size is different, {} and {}.", question_str, ans.size(), gt.size());
@@ -124,7 +125,7 @@ namespace erl::common {
 
     template<typename duration, typename F, typename... Args>
     double
-    ReportTime(const char *label, int repeat, bool print_all_repetitions, F func, Args &&...args) {
+    ReportTime(const char *label, int repeat, const bool print_all_repetitions, F func, Args &&...args) {
         std::string unit;
         if (std::is_same_v<duration, std::chrono::nanoseconds>) {
             unit = " ns";
@@ -166,7 +167,7 @@ namespace erl::common {
             }
             dt_mean /= repeat;
             dt_square_mean /= repeat;
-            auto dt_std = static_cast<long>(std::sqrt(dt_square_mean - dt_mean * dt_mean));
+            const long &dt_std = static_cast<long>(std::sqrt(dt_square_mean - dt_mean * dt_mean));
             std::cout << label << ": " << dt_mean << " +- " << dt_std << unit << std::endl;
         }
 

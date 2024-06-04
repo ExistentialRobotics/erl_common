@@ -48,12 +48,12 @@ namespace erl::common {
     }
 
     inline double
-    DegreeToRadian(double degree) {
+    DegreeToRadian(const double degree) {
         return degree * M_PI / 180.0;
     }
 
     inline double
-    RadianToDegree(double radian) {
+    RadianToDegree(const double radian) {
         return radian * 180.0 / M_PI;
     }
 }  // namespace erl::common

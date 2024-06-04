@@ -43,20 +43,24 @@ ContinuationIndentWidth: 4
 IncludeBlocks: Regroup
 IncludeCategories:
   - Regex: '^<*/.*\.h[pp]?>'
-    Priority: 2
-    SortPriority: 2
-    CaseSensitive: false
-  - Regex: '^<.*\.h[pp]?>'
-    Priority: 2
-    SortPriority: 2
-    CaseSensitive: false
-  - Regex: '^<[a-z_]*(/[a-z_]*)+>'
-    Priority: 2
-    SortPriority: 2
-    CaseSensitive: false
-  - Regex: '^<[a-z_]*>'
     Priority: 3
     SortPriority: 3
+    CaseSensitive: false
+  - Regex: '^<.*\.h[pp]?>'
+    Priority: 3
+    SortPriority: 3
+    CaseSensitive: false
+  - Regex: '^<[a-z_]*(/[a-z_]*)+>'
+    Priority: 3
+    SortPriority: 3
+    CaseSensitive: false
+  - Regex: '^<[a-z_]*>'
+    Priority: 4
+    SortPriority: 4
+    CaseSensitive: false
+  - Regex: '^"[a-z_]*/.*'
+    Priority: 2
+    SortPriority: 2
     CaseSensitive: false
   - Regex: '^".*'
     Priority: 1

@@ -1,6 +1,8 @@
-#include "erl_common/test_helper.hpp"
 #include "erl_common/random.hpp"
+#include "erl_common/test_helper.hpp"
+
 #include <vector>
+
 #include <boost/heap/d_ary_heap.hpp>
 
 TEST(ERL_COMMON, BoostDaryHeapSeq) {
@@ -74,7 +76,7 @@ TEST(ERL_COMMON, BoostDaryHeapRandom) {
         }
     };
 
-    g_random_engine.seed(21); // NOLINT(*-msc51-cpp)
+    g_random_engine.seed(21);  // NOLINT(*-msc51-cpp)
     using Heap = boost::heap::d_ary_heap<std::shared_ptr<int>, boost::heap::mutable_<true>, boost::heap::arity<8>, boost::heap::compare<Greater>>;
 
     Heap heap;

@@ -1,5 +1,6 @@
-#include "erl_common/test_helper.hpp"
 #include "erl_common/progress_bar.hpp"
+#include "erl_common/test_helper.hpp"
+
 #include <chrono>
 
 TEST(ProgressBar, SingleBar) {

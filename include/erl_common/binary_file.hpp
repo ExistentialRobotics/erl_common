@@ -29,7 +29,7 @@ namespace erl::common {
         std::ofstream ofs;
         ofs.open(path, std::ios::out | std::ios::binary);
         if (ofs.is_open()) {
-            ofs.write(reinterpret_cast<char *>(data), n * sizeof(T));
+            ofs.write(reinterpret_cast<const char *>(data), n * sizeof(T));
             ofs.close();
             return true;
         }

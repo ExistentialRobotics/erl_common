@@ -1,7 +1,8 @@
 #pragma once
 
 #include "progress_bar.hpp"
-#include "fmt.hpp"
+
+#include <fmt/format.h>
 
 #include <chrono>
 

@@ -103,20 +103,20 @@ macro(erl_add_tests)
                     endif ()
                 endif ()
                 target_link_libraries(${name} ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main ${${name}_${name}_LIBRARIES})
-                #                if (DEFINED ${name}_GTEST_ARGS)
-                #                    gtest_discover_tests(
-                #                            ${name}
-                #                            EXTRA_ARGS ${${name}_GTEST_ARGS}
-                #                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                #                            DISCOVERY_TIMEOUT 60
-                #                    )
-                #                else ()
-                #                    gtest_discover_tests(
-                #                            ${name}
-                #                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                #                            DISCOVERY_TIMEOUT 60
-                #                    )
-                #                endif ()
+                if (DEFINED ${name}_GTEST_ARGS)
+                    gtest_discover_tests(
+                            ${name}
+                            EXTRA_ARGS ${${name}_GTEST_ARGS}
+                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                            DISCOVERY_TIMEOUT 60
+                    )
+                else ()
+                    gtest_discover_tests(
+                            ${name}
+                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                            DISCOVERY_TIMEOUT 60
+                    )
+                endif ()
             endforeach ()
         endif ()
         # TODO: add python tests
@@ -801,6 +801,9 @@ macro(erl_setup_common_packages)
     )
     set_target_properties(fmt::fmt PROPERTIES SYSTEM ON)
     set_target_properties(fmt::fmt-header-only PROPERTIES SYSTEM ON)
+    get_target_property(fmt_INCLUDE_DIRS fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(fmt_LIBRARIES fmt::fmt IMPORTED_LOCATION_RELEASE)
+
     erl_find_package(
             PACKAGE OpenMP
             REQUIRED GLOBAL
@@ -813,6 +816,7 @@ macro(erl_setup_common_packages)
             COMMANDS APPLE "try `brew install boost`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
+
     erl_find_package(
             PACKAGE absl
             REQUIRED GLOBAL
@@ -829,6 +833,7 @@ macro(erl_setup_common_packages)
     foreach (exclude_absl_LIBRARY ${exclude_absl_LIBRARIES})
         list(REMOVE_ITEM absl_LIBRARIES ${exclude_absl_LIBRARY})
     endforeach ()
+
     # There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
     # enable vectorization of Eigen, borrow from https://github.com/dev-cafe/cmake-cookbook/tree/v1.0/chapter-02/recipe-06
     if (ERL_USE_INTEL_MKL)
@@ -848,7 +853,7 @@ macro(erl_setup_common_packages)
         unset(_CXX_FLAGS)
     endif ()
     if (ERL_USE_INTEL_MKL)  # option from erl_setup_lapack
-        set(EIGEN3_VERSION_STRING "3.4.90")  # some other packages may read this variable.
+        set(EIGEN3_VERSION_STRING "3.4.90" CACHE STRING "Eigen3 version" FORCE)  # some other packages may read this variable.
         erl_find_package(
                 PACKAGE Eigen3
                 ${EIGEN3_VERSION_STRING} REQUIRED CONFIG GLOBAL  # in case some other packages define FindEigen3.cmake
@@ -861,6 +866,7 @@ macro(erl_setup_common_packages)
                 COMMANDS APPLE "try `brew install eigen`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install libeigen3-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S eigen`")
+        set(EIGEN3_VERSION_STRING ${Eigen3_VERSION} CACHE STRING "Eigen3 version" FORCE)
     endif ()
     set_target_properties(Eigen3::Eigen PROPERTIES SYSTEM ON)
 
@@ -881,6 +887,17 @@ macro(erl_setup_common_packages)
     else ()
         set(OpenGL_GL_PREFERENCE "LEGACY")
     endif ()
+    # pangolin dependencies: OpenGL, EGL, epoxy
+    erl_find_package(
+            PACKAGE OpenGL
+            REQUIRED COMPONENTS OpenGL EGL
+            COMMANDS UBUNTU_LINUX "try `sudo apt install libglvnd-dev`"
+            COMMANDS ARCH_LINUX "try `sudo pacman -S libglvnd`")
+    erl_find_package(
+            PACKAGE epoxy
+            REQUIRED
+            COMMANDS UBUNTU_LINUX "try `sudo apt install libepoxy-dev`"
+            COMMANDS ARCH_LINUX "try `sudo pacman -S libepoxy`")
     erl_find_package(
             PACKAGE Pangolin
             REQUIRED
@@ -1180,10 +1197,6 @@ macro(erl_add_python_package)
         erl_setup_python()
         # get package name
         get_filename_component(${PROJECT_NAME}_PY_PACKAGE_NAME ${${PROJECT_NAME}_PYTHON_PKG_DIR} NAME)
-        if (NOT DEFINED ${PROJECT_NAME}_PYBIND_MODULE_NAME)
-            set(${PROJECT_NAME}_PYBIND_MODULE_NAME py${PROJECT_NAME})
-            message(STATUS "PYBIND_MODULE_NAME not set, using default value ${${PROJECT_NAME}_PYBIND_MODULE_NAME}")
-        endif ()
 
         # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
         set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${${PROJECT_NAME}_BUILD_PYTHON_DIR}/${${PROJECT_NAME}_PY_PACKAGE_NAME})
@@ -1191,6 +1204,10 @@ macro(erl_add_python_package)
         # add a binding library for this package
         file(GLOB_RECURSE SRC_FILES "${${PROJECT_NAME}_PYTHON_BINDING_DIR}/*.cpp")
         if (SRC_FILES)  # if there is any pybind11_*.cpp file
+            if (NOT DEFINED ${PROJECT_NAME}_PYBIND_MODULE_NAME)
+                set(${PROJECT_NAME}_PYBIND_MODULE_NAME py${PROJECT_NAME})
+                message(STATUS "PYBIND_MODULE_NAME not set, using default value ${${PROJECT_NAME}_PYBIND_MODULE_NAME}")
+            endif ()
             # pybind runtime lib
             pybind11_add_module(${${PROJECT_NAME}_PYBIND_MODULE_NAME} ${SRC_FILES})
             ## ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling

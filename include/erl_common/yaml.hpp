@@ -22,7 +22,7 @@ namespace erl::common {
 
         void
         FromYamlString(const std::string& yaml_string) {
-            auto node = YAML::Load(yaml_string);
+            const YAML::Node node = YAML::Load(yaml_string);
             FromYamlNode(node);
         }
 
@@ -97,8 +97,8 @@ namespace YAML {
         static Node
         encode(const Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
             Node node(NodeType::Sequence);
-            int rows = Rows == Eigen::Dynamic ? rhs.rows() : Rows;
-            int cols = Cols == Eigen::Dynamic ? rhs.cols() : Cols;
+            const int rows = Rows == Eigen::Dynamic ? rhs.rows() : Rows;
+            const int cols = Cols == Eigen::Dynamic ? rhs.cols() : Cols;
 
             if (Order == Eigen::RowMajor) {
                 for (int i = 0; i < rows; ++i) {
@@ -127,21 +127,21 @@ namespace YAML {
                 int rows = Rows == Eigen::Dynamic ? node.size() : Rows;
                 int cols = Cols == Eigen::Dynamic ? node[0].size() : Cols;
                 rhs.resize(rows, cols);
-                ERL_DEBUG_ASSERT(rows == static_cast<int>(node.size()), "expecting rows: {:d}, get node.size(): {:d}", rows, node.size());
+                ERL_DEBUG_ASSERT(rows == static_cast<int>(node.size()), "expecting rows: {}, get node.size(): {}", rows, node.size());
                 for (int i = 0; i < rows; ++i) {
-                    ERL_DEBUG_ASSERT(cols == static_cast<int>(node[i].size()), "expecting cols: {:d}, get node[0].size(): {:d}", cols, node[i].size());
-                    auto& kRowNode = node[i];
-                    for (int j = 0; j < cols; ++j) { rhs(i, j) = kRowNode[j].as<T>(); }
+                    ERL_DEBUG_ASSERT(cols == static_cast<int>(node[i].size()), "expecting cols: {}, get node[0].size(): {}", cols, node[i].size());
+                    auto& row_node = node[i];
+                    for (int j = 0; j < cols; ++j) { rhs(i, j) = row_node[j].as<T>(); }
                 }
             } else {
                 int cols = Cols == Eigen::Dynamic ? node.size() : Cols;
                 int rows = Rows == Eigen::Dynamic ? node[0].size() : Rows;
                 rhs.resize(rows, cols);
-                ERL_DEBUG_ASSERT(cols == static_cast<int>(node.size()), "expecting cols: {:d}, get node.size(): {:d}", cols, node.size());
+                ERL_DEBUG_ASSERT(cols == static_cast<int>(node.size()), "expecting cols: {}, get node.size(): {}", cols, node.size());
                 for (int j = 0; j < cols; ++j) {
-                    ERL_DEBUG_ASSERT(rows == static_cast<int>(node[j].size()), "expecting rows: {:d}, get node[0].size(): {:d}", rows, node[j].size());
-                    auto& kColNode = node[j];
-                    for (int i = 0; i < rows; ++i) { rhs(i, j) = kColNode[i].as<T>(); }
+                    ERL_DEBUG_ASSERT(rows == static_cast<int>(node[j].size()), "expecting rows: {}, get node[0].size(): {}", rows, node[j].size());
+                    auto& col_node = node[j];
+                    for (int i = 0; i < rows; ++i) { rhs(i, j) = col_node[i].as<T>(); }
                 }
             }
 

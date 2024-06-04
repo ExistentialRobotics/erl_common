@@ -1,7 +1,7 @@
 #pragma once
 
-#include "erl_common/pybind11.hpp"
 #include "erl_common/grid_map.hpp"
+#include "erl_common/pybind11.hpp"
 
 namespace py = pybind11;
 
@@ -227,12 +227,12 @@ namespace erl::common {
             .def("__getitem__", py::overload_cast<const Eigen::Ref<const Eigen::Vector2d> &>(&Self::operator[], py::const_), py::arg("metric_coords"))
             .def(
                 "__setitem__",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2i> &grid_coords, const T &data) { self.GetMutableData(grid_coords) = data; },
+                [](Self &self, const Eigen::Ref<const Eigen::Vector2i> &grid_coords, const T data) { self.GetMutableData(grid_coords) = data; },
                 py::arg("grid_coords"),
                 py::arg("data_container"))
             .def(
                 "__setitem__",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_coords, const T &data) { self.GetMutableData(metric_coords) = data; },
+                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_coords, const T data) { self.GetMutableData(metric_coords) = data; },
                 py::arg("metric_coords"),
                 py::arg("data_container"))
             .def("get_block", py::overload_cast<int, int, int, int>(&Self::GetBlock), py::arg("x_grid"), py::arg("y_grid"), py::arg("height"), py::arg("width"))
@@ -296,12 +296,12 @@ namespace erl::common {
             .def("__getitem__", py::overload_cast<const Eigen::Ref<const Eigen::Vector2d> &>(&Self::operator[], py::const_), py::arg("metric_coords"))
             .def(
                 "__setitem__",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2i> &grid_coords, const T &data) { self.GetMutableData(grid_coords) = data; },
+                [](Self &self, const Eigen::Ref<const Eigen::Vector2i> &grid_coords, const T data) { self.GetMutableData(grid_coords) = data; },
                 py::arg("grid_coords"),
                 py::arg("data_container"))
             .def(
                 "__setitem__",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_coords, const T &data) { self.GetMutableData(metric_coords) = data; },
+                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_coords, const T data) { self.GetMutableData(metric_coords) = data; },
                 py::arg("metric_coords"),
                 py::arg("data_container"))
             .def(

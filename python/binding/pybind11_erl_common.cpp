@@ -11,7 +11,7 @@ using namespace erl::common;
 
 static void
 BindYaml(py::module &m) {
-    const auto submodule = m.def_submodule("yaml", "Interface for YAML");
+    const py::module &submodule = m.def_submodule("yaml", "Interface for YAML");
     py::class_<YamlableBase, std::shared_ptr<YamlableBase>>(submodule, "YamlableBase")
         .def("as_yaml_string", &YamlableBase::AsYamlString)
         .def("as_yaml_file", &YamlableBase::AsYamlFile, py::arg("yaml_file"))

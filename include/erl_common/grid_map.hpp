@@ -38,7 +38,7 @@ namespace erl::common {
     };
 
     template<typename T, int Dim, bool RowMajor>
-    inline std::ostream &
+    std::ostream &
     operator<<(std::ostream &os, const GridMap<T, Dim, RowMajor> &grid_map) {
         grid_map.data.Print(os);
         return os;
@@ -101,8 +101,8 @@ namespace erl::common {
         [[nodiscard]] Eigen::MatrixX8U
         AsImage(const std::shared_ptr<GridMapInfo2D> &grid_map_info, const std::function<uint8_t(const T &)> &cast_func) const {
             Eigen::MatrixX8U image;
-            long n_rows = m_data_.rows();
-            long n_cols = m_data_.cols();
+            const long n_rows = m_data_.rows();
+            const long n_cols = m_data_.cols();
 
             if (grid_map_info == nullptr) {
                 image.resize(m_data_.rows(), m_data_.cols());
@@ -116,12 +116,12 @@ namespace erl::common {
                 image.setConstant(grid_map_info->Shape(0), grid_map_info->Shape(1), 0);
                 for (int i = 0; i < n_rows; ++i) {
                     double x = m_grid_map_info_->GridToMeterForValue(i, 0);
-                    int ii = grid_map_info->MeterToGridForValue(x, 0);
+                    const int ii = grid_map_info->MeterToGridForValue(x, 0);
                     for (int j = 0; j < n_cols; ++j) {
                         auto &data = m_data_(i, j);
                         double y = m_grid_map_info_->GridToMeterForValue(j, 1);
                         if (!grid_map_info->InMap(Eigen::Vector2d(x, y))) { continue; }
-                        int jj = grid_map_info->MeterToGridForValue(y, 1);
+                        const int jj = grid_map_info->MeterToGridForValue(y, 1);
                         image(ii, jj) = cast_func(data);
                     }
                 }
@@ -141,9 +141,8 @@ namespace erl::common {
             if (x_grid < 0 || y_grid < 0 || x_grid >= m_grid_map_info_->Shape(0) || y_grid >= m_grid_map_info_->Shape(1)) {
                 if (!IsSmartPtr<T>::value) { throw std::out_of_range("The grid coordinates are out of range."); }
                 return 0;
-            } else {
-                return m_data_(x_grid, y_grid);
             }
+            return m_data_(x_grid, y_grid);
         }
 
         /**
@@ -158,7 +157,7 @@ namespace erl::common {
         }
 
         T
-        operator()(double x, double y) const {
+        operator()(const double x, const double y) const {
             return operator()(m_grid_map_info_->MeterToGridForValue(x, 0), m_grid_map_info_->MeterToGridForValue(y, 1));
         }
 
@@ -189,7 +188,7 @@ namespace erl::common {
         }
 
         T &
-        GetMutableData(double x, double y) {
+        GetMutableData(const double &x, const double &y) {
             ERL_DEBUG_ASSERT(!omp_in_parallel(), "The grid map is not thread safe.");
             int x_grid = m_grid_map_info_->MeterToGridForValue(x, 0);
             int y_grid = m_grid_map_info_->MeterToGridForValue(y, 1);
@@ -207,7 +206,7 @@ namespace erl::common {
         }
 
         T &
-        GetMutableDataThreadSafe(double x, double y) {
+        GetMutableDataThreadSafe(const double &x, const double &y) {
             std::lock_guard<std::shared_mutex> lock(m_mutex_);
             return GetMutableData(x, y);
         }
@@ -230,7 +229,7 @@ namespace erl::common {
         }
 
         Eigen::Ref<Eigen::MatrixX<T>>
-        GetBlock(double x_min, double y_min, double x_max, double y_max, bool safe_crop = true) {
+        GetBlock(const double &x_min, const double &y_min, const double &x_max, const double &y_max, const bool &safe_crop = true) {
             int x_min_grid = m_grid_map_info_->MeterToGridForValue(x_min, 0);
             int y_min_grid = m_grid_map_info_->MeterToGridForValue(y_min, 1);
             int x_max_grid = m_grid_map_info_->MeterToGridForValue(x_max, 0);
@@ -245,12 +244,12 @@ namespace erl::common {
         }
 
         Eigen::Ref<Eigen::MatrixX<T>>
-        GetBlock(const Eigen::Ref<const Eigen::Vector2d> &metric_min, const Eigen::Ref<const Eigen::Vector2d> &metric_max, bool safe_crop = true) {
+        GetBlock(const Eigen::Ref<const Eigen::Vector2d> &metric_min, const Eigen::Ref<const Eigen::Vector2d> &metric_max, const bool &safe_crop = true) {
             return GetBlock(metric_min[0], metric_min[1], metric_max[0], metric_max[1], safe_crop);
         }
 
         void
-        CollectNonZeroData(double x_min, double y_min, double x_max, double y_max, std::vector<T> &data) {
+        CollectNonZeroData(const double &x_min, const double &y_min, const double &x_max, const double &y_max, std::vector<T> &data) {
             int x_min_grid = m_grid_map_info_->MeterToGridForValue(x_min, 0);
             int y_min_grid = m_grid_map_info_->MeterToGridForValue(y_min, 1);
             int x_max_grid = m_grid_map_info_->MeterToGridForValue(x_max, 0);
@@ -281,7 +280,7 @@ namespace erl::common {
          * @refitem https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
          */
         ExtendCode
-        GetExtendCode(int x, int y) const {
+        GetExtendCode(const int &x, const int &y) const {
 
             int code = 0;
 

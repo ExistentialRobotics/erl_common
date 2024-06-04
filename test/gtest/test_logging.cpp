@@ -10,7 +10,7 @@ TEST(Logging, DateTime) {
 TEST(Logging, Print) {
     erl::common::Logging::Info("info message\n");
     erl::common::Logging::Info("{}\n", 10);
-    erl::common::Logging::Info("{:d}\n", 10);
+    erl::common::Logging::Info("{}\n", 10);
     erl::common::Logging::Info("{:f}\n", 10.0);
     erl::common::Logging::Info("{:.3f}\n", 2.0 / 3.0);
     erl::common::Logging::Debug("debug message:{}:{}\n", __FILE__, __LINE__);

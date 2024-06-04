@@ -30,7 +30,7 @@ namespace erl::common {
             if (total_size > 0) { m_data_.resize(total_size); }
         }
 
-        Tensor(Eigen::VectorXi shape, const T &fill_value)
+        Tensor(Eigen::VectorXi shape, const T fill_value)
             : m_shape_(std::move(shape)) {
             CheckShape();
             if (int total_size = Size(); total_size > 0) { m_data_.setConstant(total_size, fill_value); }
@@ -96,7 +96,7 @@ namespace erl::common {
         }
 
         void
-        Fill(const T &value) {
+        Fill(const T value) {
             if (int total_size = Size(); total_size > 0) { m_data_.setConstant(total_size, value); }
         }
 

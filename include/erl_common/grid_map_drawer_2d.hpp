@@ -44,7 +44,7 @@ namespace erl::common {
         DrawSegments(
             const cv::Mat &mat,
             const cv::Scalar &color,
-            int thickness,
+            const int thickness,
             const Eigen::Ref<const Eigen::Matrix2Xd> &starts,
             const Eigen::Ref<const Eigen::Matrix2Xd> &ends) const {
 
@@ -99,7 +99,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] cv::Mat
-        DrawPolyline(const cv::Mat &mat, const cv::Scalar &color, const int thickness, bool closed, const Eigen::Ref<const Eigen::Matrix2Xd> &points) const {
+        DrawPolyline(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const bool closed, const Eigen::Ref<const Eigen::Matrix2Xd> &points) const {
             cv::Mat result = mat.clone();
             DrawPolylineInplace(result, color, thickness, closed, points);
             return result;
@@ -113,7 +113,7 @@ namespace erl::common {
         }
 
         void
-        DrawContourInplace(cv::Mat &mat, const cv::Scalar &color, const int thickness, const Eigen::Ref<const Eigen::Matrix2Xd> &contour) const {
+        DrawContourInplace(cv::Mat &mat, const cv::Scalar &color, const int &thickness, const Eigen::Ref<const Eigen::Matrix2Xd> &contour) const {
             std::vector<std::vector<cv::Point2i>> points(1);
             const long num_points = contour.cols();
             points[0].resize(num_points);

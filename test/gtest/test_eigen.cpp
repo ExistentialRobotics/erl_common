@@ -1,8 +1,8 @@
+#include "erl_common/eigen.hpp"
+
 #include <gtest/gtest.h>
 
 #include <iostream>
-
-#include "erl_common/eigen.hpp"
 
 TEST(EigenTest, MatrixCreation) {
 
@@ -43,9 +43,7 @@ TEST(EigenTest, SaveAndLoadText) {
     std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
 
     for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            ASSERT_NEAR(matrix(i, j), matrix_load(i, j), 1e-6);
-        }
+        for (int j = 0; j < 4; ++j) { ASSERT_NEAR(matrix(i, j), matrix_load(i, j), 1e-6); }
     }
 }
 
@@ -84,9 +82,7 @@ TEST(EigenTest, SaveAndLoadBinary) {
     std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
 
     for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            ASSERT_DOUBLE_EQ(matrix(i, j), matrix_load(i, j));
-        }
+        for (int j = 0; j < 4; ++j) { ASSERT_DOUBLE_EQ(matrix(i, j), matrix_load(i, j)); }
     }
 }
 
