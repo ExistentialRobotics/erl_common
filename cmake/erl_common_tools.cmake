@@ -853,7 +853,7 @@ macro(erl_setup_common_packages)
         unset(_CXX_FLAGS)
     endif ()
     if (ERL_USE_INTEL_MKL)  # option from erl_setup_lapack
-        set(EIGEN3_VERSION_STRING "3.4.90" CACHE STRING "Eigen3 version" FORCE)  # some other packages may read this variable.
+#        set(EIGEN3_VERSION_STRING "3.4.90" CACHE STRING "Eigen3 version" FORCE)  # some other packages may read this variable.
         erl_find_package(
                 PACKAGE Eigen3
                 ${EIGEN3_VERSION_STRING} REQUIRED CONFIG GLOBAL  # in case some other packages define FindEigen3.cmake
@@ -866,7 +866,10 @@ macro(erl_setup_common_packages)
                 COMMANDS APPLE "try `brew install eigen`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install libeigen3-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S eigen`")
-        set(EIGEN3_VERSION_STRING ${Eigen3_VERSION} CACHE STRING "Eigen3 version" FORCE)
+    endif ()
+    set(EIGEN3_VERSION_STRING ${Eigen3_VERSION} CACHE STRING "Eigen3 version" FORCE)
+    if (EIGEN3_VERSION_STRING VERSION_LESS "3.4.0")
+        message(FATAL_ERROR "Eigen3 version must be at least 3.4.0")
     endif ()
     set_target_properties(Eigen3::Eigen PROPERTIES SYSTEM ON)
 

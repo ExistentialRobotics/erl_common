@@ -79,7 +79,7 @@ namespace erl::common {
     public:
         IncrementalGridMap2D() = delete;
 
-        explicit IncrementalGridMap2D(std::shared_ptr<GridMapInfo2D> grid_map_info, const std::function<T(void)> &data_init_func = {})
+        explicit IncrementalGridMap2D(std::shared_ptr<GridMapInfo2D> grid_map_info, const std::function<T()> &data_init_func = {})
             : m_grid_map_info_(std::move(grid_map_info)),
               m_data_(m_grid_map_info_->Shape(0), m_grid_map_info_->Shape(1)),
               m_data_init_func_(data_init_func) {
