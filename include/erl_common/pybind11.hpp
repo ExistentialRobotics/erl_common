@@ -70,6 +70,32 @@ namespace PYBIND11_NAMESPACE {
             return m_ptr_;
         }
     };
+
+    namespace detail {
+        template<typename Iterator>
+        struct iterator_self_access {
+            using result_type = Iterator&;
+
+            result_type
+            operator()(Iterator& it) const {
+                return it;
+            }
+        };
+    }  // namespace detail
+
+    template<
+        return_value_policy Policy = return_value_policy::reference_internal,
+        typename Iterator,
+        typename Sentinel,
+        typename ValueType = typename detail::iterator_self_access<Iterator>::result_type,
+        typename... Extra>
+    typing::Iterator<ValueType>
+    wrap_iterator(Iterator first, Sentinel last, Extra&&... extra) {
+        return detail::make_iterator_impl<detail::iterator_self_access<Iterator>, Policy, Iterator, Sentinel, ValueType, Extra...>(
+            std::forward<Iterator>(first),
+            std::forward<Sentinel>(last),
+            std::forward<Extra>(extra)...);
+    }
 }  // namespace PYBIND11_NAMESPACE
 
 PYBIND11_DECLARE_HOLDER_TYPE(T, RawPtrWrapper<T>);
