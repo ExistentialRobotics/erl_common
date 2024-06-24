@@ -42,15 +42,11 @@ CompactNamespaces: false
 ContinuationIndentWidth: 4
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<*/.*\.h[pp]?>'
+  - Regex: '^<.+\.hpp>'
     Priority: 3
     SortPriority: 3
     CaseSensitive: false
-  - Regex: '^<.*\.h[pp]?>'
-    Priority: 3
-    SortPriority: 3
-    CaseSensitive: false
-  - Regex: '^<[a-z_]*(/[a-z_]*)+>'
+  - Regex: '^<[a-z_]*(/[a-z_]*)+(\.h|\.hpp)?>'
     Priority: 3
     SortPriority: 3
     CaseSensitive: false
