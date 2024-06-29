@@ -23,13 +23,15 @@ namespace Eigen {
     using MatrixXl = MatrixX<long>;
     using MatrixXb = MatrixX<bool>;
     using MatrixX8U = MatrixX<uint8_t>;
+    using Matrix6Xd = Matrix<double, 6, Dynamic>;
     using Matrix2Xl = Matrix<long, 2, Dynamic>;
     using Matrix3Xl = Matrix<long, 3, Dynamic>;
     using Matrix23d = Matrix<double, 2, 3>;
     using Matrix24d = Matrix<double, 2, 4>;
+    using Matrix34d = Matrix<double, 3, 4>;
 
-    template<typename T, int rows, int cols>
-    using RMatrix = Matrix<T, rows, cols, RowMajor>;
+    template<typename T, int Rows, int Cols>
+    using RMatrix = Matrix<T, Rows, Cols, RowMajor>;
 
     using RMatrix23d = RMatrix<double, 2, 3>;
     using RMatrix2Xd = RMatrix<double, 2, Dynamic>;
@@ -40,6 +42,7 @@ namespace Eigen {
     using Scalard = Scalar<double>;
 
     // VECTOR
+    using Vector2l = Vector2<long>;
     using VectorXl = VectorX<long>;
     using VectorXb = VectorX<bool>;
     using VectorX8U = VectorX<uint8_t>;

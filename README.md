@@ -93,3 +93,6 @@ pip install . --verbose
 # CMake helper functions and macros
 `erl_common` also provides some helper functions and macros to make other packages support both catkin and native CMake 
 build easily. See [cmake/README.md](cmake/README.md) for more details.
+
+# Functionalities
+- [Azimuth Elevation](include/erl_common/angle_utils.hpp)

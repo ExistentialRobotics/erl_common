@@ -99,7 +99,7 @@ namespace erl::common {
     };
 }  // namespace erl::common
 
-static std::mutex g_print_mutex;
+inline std::mutex g_print_mutex{};
 
 #if defined(ERL_ROS_VERSION_1) || defined(ERL_ROS_VERSION_2)
     #include <ros/assert.h>
