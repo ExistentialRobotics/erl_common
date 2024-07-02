@@ -1,9 +1,9 @@
 #include "erl_common/random.hpp"
 #include "erl_common/test_helper.hpp"
 
-#include <vector>
-
 #include <boost/heap/fibonacci_heap.hpp>
+
+#include <vector>
 
 TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
     using namespace erl::common;

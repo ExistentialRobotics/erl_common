@@ -1,5 +1,5 @@
-#include "erl_common/logging.hpp"
 #include "erl_common/csv.hpp"
+#include "erl_common/logging.hpp"
 
 #include <gtest/gtest.h>
 
