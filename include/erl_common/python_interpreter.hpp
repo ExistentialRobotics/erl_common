@@ -3,6 +3,7 @@
 #include "erl_common/pybind11.hpp"
 
 #include <pybind11/embed.h>
+
 #include <memory>
 
 namespace erl::common {

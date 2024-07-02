@@ -1,6 +1,7 @@
 #pragma once
 
 #include "logging.hpp"
+
 #include <memory>
 
 /// Check if T is an instantiation of the template `Class`. For example:

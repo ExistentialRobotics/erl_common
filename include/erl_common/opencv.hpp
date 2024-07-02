@@ -3,12 +3,11 @@
 #include "grid_map_info.hpp"
 #include "logging.hpp"
 
+#include <Eigen/Dense>
 #include <opencv2/core.hpp>
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-
-#include <Eigen/Dense>
 
 namespace erl::common {
     inline const std::vector<cv::Vec3b> kCustomColorMap = {

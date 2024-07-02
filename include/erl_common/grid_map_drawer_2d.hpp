@@ -99,7 +99,8 @@ namespace erl::common {
         }
 
         [[nodiscard]] cv::Mat
-        DrawPolyline(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const bool closed, const Eigen::Ref<const Eigen::Matrix2Xd> &points) const {
+        DrawPolyline(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const bool closed, const Eigen::Ref<const Eigen::Matrix2Xd> &points)
+            const {
             cv::Mat result = mat.clone();
             DrawPolylineInplace(result, color, thickness, closed, points);
             return result;

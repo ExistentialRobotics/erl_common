@@ -5,9 +5,8 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #pragma GCC diagnostic ignored "-Wunused-variable"
-#include <pybind11/pybind11.h>
-
 #include <opencv2/core.hpp>
+#include <pybind11/pybind11.h>
 
 namespace pybind11::detail {
     template<>

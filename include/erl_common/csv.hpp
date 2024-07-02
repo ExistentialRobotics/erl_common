@@ -41,12 +41,13 @@ namespace erl::common {
     }
 
     template<typename T>
-    void SaveCsvFile(const char *path, const std::vector<std::vector<T>> &rows, const char delimiter = ',') {
+    void
+    SaveCsvFile(const char *path, const std::vector<std::vector<T>> &rows, const char delimiter = ',') {
         std::ofstream ofs;
         ofs.open(path);
         if (!ofs.is_open()) { throw std::runtime_error("Fail to open file: " + std::string(path)); }
 
-        for (const auto &row : rows) {
+        for (const auto &row: rows) {
             auto iter = row.begin();
             ofs << *iter;
             ++iter;
@@ -60,4 +61,4 @@ namespace erl::common {
         ofs.close();
     }
 
-}
+}  // namespace erl::common

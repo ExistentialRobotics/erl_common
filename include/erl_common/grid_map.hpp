@@ -4,9 +4,10 @@
 #include "template_helper.hpp"
 #include "tensor.hpp"
 
+#include <omp.h>
+
 #include <memory>
 #include <mutex>
-#include <omp.h>
 #include <shared_mutex>
 
 namespace erl::common {

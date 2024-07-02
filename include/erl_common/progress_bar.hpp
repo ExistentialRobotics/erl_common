@@ -131,7 +131,8 @@ namespace erl::common {
             Write(msg, m_out_);
         }
 
-        void UpdateProgress(const std::size_t n, const std::string& msg = "") {
+        void
+        UpdateProgress(const std::size_t n, const std::string& msg = "") {
             m_prev_count_ = m_count_;
             m_count_ = n;
             UpdateDuration();

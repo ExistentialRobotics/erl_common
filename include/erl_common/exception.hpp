@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <exception>
+#include <string>
 
 struct NotImplemented : public std::exception {
 
