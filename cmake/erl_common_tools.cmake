@@ -768,12 +768,16 @@ macro(erl_setup_lapack)
 
             set(MKL_ARCH "intel64")
             set(MKL_LINK "dynamic")
-            set(MKL_INTERFACE_FULL "intel_lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
+            set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
             erl_find_package( # We need to find MKL to get MKL_H
                     PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
                     REQUIRED GLOBAL
                     COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
                     COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
+            if (OMP_LIBRARY)
+                get_filename_component(OMP_LIB_DIR ${OMP_LIBRARY} DIRECTORY)
+                set(ENV{LD_LIBRARY_PATH} "${OMP_LIB_DIR}:$ENV{LD_LIBRARY_PATH}")
+            endif ()
             erl_find_package( # LAPACK will resolve the full paths of MKL libraries
                     PACKAGE LAPACK
                     REQUIRED GLOBAL
