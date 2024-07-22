@@ -685,6 +685,9 @@ macro(erl_setup_compiler)
     else ()
         set(CMAKE_VERBOSE_MAKEFILE ON)
     endif ()
+
+    string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPPER)
+    add_definitions(-D${PROJECT_NAME_UPPER}_ROOT_DIR="${${PROJECT_NAME}_ROOT_DIR}")
 endmacro()
 
 # ######################################################################################################################
@@ -856,6 +859,15 @@ endmacro()
 # erl_setup_common_packages
 # ######################################################################################################################
 macro(erl_setup_common_packages)
+    option(ERL_USE_TRACY "Use Tracy Profiler" ON)
+    option(ERL_TRACY_PROFILE_MEMORY "Profile memory usage" OFF)
+    if (ERL_USE_TRACY)
+        set(TRACY_ENABLE ON)
+        if (ERL_TRACY_PROFILE_MEMORY)
+            add_compile_definitions(ERL_TRACY_PROFILE_MEMORY)
+        endif ()
+    endif ()
+
     erl_find_package(
             PACKAGE fmt
             REQUIRED GLOBAL
@@ -1005,6 +1017,15 @@ macro(erl_setup_common_packages)
     # PACKAGE Matplot++
     # REQUIRED
     # COMMANDS GENERAL "visit https://github.com/alandefreitas/matplotplusplus")
+
+    if (ERL_USE_TRACY)
+        set(BUILD_SHARED_LIBS ON)
+        add_subdirectory(deps/tracy)
+        set(LEGACY ON)  # use X11 for Tracy
+        add_subdirectory(deps/tracy/profiler)
+        link_libraries(Tracy::TracyClient)  # link Tracy to all targets
+    endif ()
+
     if (ROS_ACTIVATED)
         if (ROS_VERSION STREQUAL "1")
             set(OpenMP_INCLUDE_DIRS /usr/include)

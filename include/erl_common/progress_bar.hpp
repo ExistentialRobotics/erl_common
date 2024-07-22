@@ -4,9 +4,9 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <numeric>
-#include <vector>
 
 namespace erl::common {
 
@@ -29,7 +29,7 @@ namespace erl::common {
         };
 
     private:
-        inline static std::vector<std::shared_ptr<const ProgressBar>> s_progress_bars_{};
+        inline static std::vector<std::weak_ptr<const ProgressBar>> s_progress_bars_{};
 
         std::shared_ptr<Setting> m_setting_ = nullptr;
         double m_fraction_ = 0.0;
@@ -63,7 +63,11 @@ namespace erl::common {
         void
         Close() {
             for (auto itr = s_progress_bars_.begin(); itr != s_progress_bars_.end(); ++itr) {
-                if (itr->get() == this) {
+                if (itr->expired()) {
+                    s_progress_bars_.erase(itr--);  // erase and decrement iterator
+                    continue;
+                }
+                if (itr->lock().get() == this) {
                     s_progress_bars_.erase(itr);
                     break;
                 }
@@ -109,18 +113,18 @@ namespace erl::common {
             if (const std::size_t num_displayed = std::count_if(  //
                     s_progress_bars_.begin(),
                     s_progress_bars_.end(),
-                    [](const auto& pbar) { return pbar->m_displayed_; });
+                    [](const auto& pbar) -> bool { return !pbar.expired() && pbar.lock()->m_displayed_; });
                 num_displayed >= 1) {
                 GoBackLines(out, num_displayed);
             }
             auto idx_itr = idx.begin();
             if (str.empty()) {
-                out << s_progress_bars_[*(idx_itr++)]->AsString();
+                out << s_progress_bars_[*(idx_itr++)].lock()->AsString();
             } else {
-                out << str << std::endl << s_progress_bars_[*(idx_itr++)]->AsString();
+                out << str << std::endl << s_progress_bars_[*(idx_itr++)].lock()->AsString();
             }
 
-            for (; idx_itr != idx.end(); ++idx_itr) { out << std::endl << s_progress_bars_[*idx_itr]->AsString(); }
+            for (; idx_itr != idx.end(); ++idx_itr) { out << std::endl << s_progress_bars_[*idx_itr].lock()->AsString(); }
             out << std::flush;
         }
 
@@ -163,7 +167,7 @@ namespace erl::common {
             std::vector<std::size_t> idx(s_progress_bars_.size());
             std::iota(idx.begin(), idx.end(), 0);
             std::sort(idx.begin(), idx.end(), [](std::size_t i, std::size_t j) {
-                return s_progress_bars_[i]->m_setting_->position < s_progress_bars_[j]->m_setting_->position;
+                return s_progress_bars_[i].lock()->m_setting_->position < s_progress_bars_[j].lock()->m_setting_->position;
             });
             return idx;
         }
@@ -265,7 +269,7 @@ namespace erl::common {
 
         void
         Register() const {
-            if (std::none_of(s_progress_bars_.begin(), s_progress_bars_.end(), [this](const auto& bar) { return bar.get() == this; })) {
+            if (std::none_of(s_progress_bars_.begin(), s_progress_bars_.end(), [this](const auto& bar) { return bar.lock().get() == this; })) {
                 s_progress_bars_.push_back(shared_from_this());
             }
         }

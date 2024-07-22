@@ -11,15 +11,18 @@ namespace erl::common {
     template<typename Duration>
     struct BlockTimer {
         const char *label;
+        double *dt;
         std::chrono::time_point<std::chrono::high_resolution_clock> t1;
 
-        explicit BlockTimer(const char *label)
+        explicit BlockTimer(const char *label, double *dt = nullptr)
             : label(label),
+              dt(dt),
               t1(std::chrono::high_resolution_clock::now()) {}
 
         ~BlockTimer() {
             auto &&t2 = std::chrono::high_resolution_clock::now();
             double &&dt = std::chrono::duration<double, typename Duration::period>(t2 - t1).count();
+            if (this->dt != nullptr) { *this->dt = dt; }
 
             std::string unit;
             if (std::is_same_v<Duration, std::chrono::nanoseconds>) {

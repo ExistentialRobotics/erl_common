@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <random>
 
 TEST(EigenTest, MatrixCreation) {
 
@@ -39,8 +40,8 @@ TEST(EigenTest, SaveAndLoadText) {
 
     Eigen::Matrix4d matrix_load = LoadEigenMatrixFromTextFile<double, 4, 4>("matrix.txt");
 
-    std::cout << "matrix: " << std::endl << matrix << std::endl;
-    std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
+    // std::cout << "matrix: " << std::endl << matrix << std::endl;
+    // std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) { ASSERT_NEAR(matrix(i, j), matrix_load(i, j), 1e-6); }
@@ -56,8 +57,8 @@ TEST(EigenTest, SaveAndLoadTextWithInf) {
 
     Eigen::Matrix4d matrix_load = LoadEigenMatrixFromTextFile<double, 4, 4>("matrix.txt");
 
-    std::cout << "matrix: " << std::endl << matrix << std::endl;
-    std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
+    // std::cout << "matrix: " << std::endl << matrix << std::endl;
+    // std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -74,12 +75,12 @@ TEST(EigenTest, SaveAndLoadBinary) {
 
     using namespace erl::common;
     Eigen::Matrix4d matrix = Eigen::Matrix4d::Random();
-    SaveEigenMatrixToBinaryFile<double>("matrix.bin", matrix);
+    ASSERT_TRUE(SaveEigenMatrixToBinaryFile<double>("matrix.bin", matrix));
 
     Eigen::Matrix4d matrix_load = LoadEigenMatrixFromBinaryFile<double, 4, 4>("matrix.bin");
 
-    std::cout << "matrix: " << std::endl << matrix << std::endl;
-    std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
+    // std::cout << "matrix: " << std::endl << matrix << std::endl;
+    // std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) { ASSERT_DOUBLE_EQ(matrix(i, j), matrix_load(i, j)); }
@@ -91,12 +92,12 @@ TEST(EigenTest, SaveAndLoadBinaryWithInf) {
     using namespace erl::common;
     Eigen::Matrix4d matrix = Eigen::Matrix4d::Random();
     matrix(0, 0) = std::numeric_limits<double>::infinity();
-    SaveEigenMatrixToBinaryFile<double>("matrix.bin", matrix);
+    ASSERT_TRUE(SaveEigenMatrixToBinaryFile<double>("matrix.bin", matrix));
 
     Eigen::Matrix4d matrix_load = LoadEigenMatrixFromBinaryFile<double, 4, 4>("matrix.bin");
 
-    std::cout << "matrix: " << std::endl << matrix << std::endl;
-    std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
+    // std::cout << "matrix: " << std::endl << matrix << std::endl;
+    // std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -106,5 +107,78 @@ TEST(EigenTest, SaveAndLoadBinaryWithInf) {
                 ASSERT_TRUE(std::isinf(matrix_load(i, j)));
             }
         }
+    }
+}
+
+TEST(EigenTest, SaveAndLoadEigenMap) {
+    using namespace erl::common;
+    Eigen::MatrixXd matrix = Eigen::MatrixXd::Random(10, 5);
+    Eigen::Map<const Eigen::MatrixXd> matrix_map(matrix.data(), matrix.rows(), matrix.cols());
+    std::ofstream ofs("matrix.bin", std::ios::binary);
+    ASSERT_TRUE(SaveEigenMapToBinaryStream(ofs, matrix_map));
+    ofs.close();
+
+    Eigen::MatrixXd matrix_load(matrix.rows(), matrix.cols());
+    std::ifstream ifs("matrix.bin", std::ios::binary);
+    ASSERT_TRUE(LoadEigenMapFromBinaryStream(ifs, Eigen::Map<Eigen::MatrixXd>(matrix_load.data(), matrix.rows(), matrix.cols())));
+    ifs.close();
+
+    EXPECT_TRUE(matrix.cwiseEqual(matrix_load).all());
+}
+
+TEST(EigenTest, SaveAndLoadVectorOfFixedSizedMatrices) {
+    using namespace erl::common;
+    std::vector<Eigen::Matrix4d> matrices(10);
+    for (auto& matrix: matrices) { matrix = Eigen::Matrix4d::Random(); }
+
+    std::ofstream ofs("matrices.bin", std::ios::binary);
+    ASSERT_TRUE(SaveVectorOfEigenMatricesToBindaryStream(ofs, matrices));
+    ofs.close();
+
+    std::vector<Eigen::Matrix4d> matrices_load;
+    std::ifstream ifs("matrices.bin", std::ios::binary);
+    ASSERT_TRUE(LoadVectorOfEigenMatricesFromBinaryStream(ifs, matrices_load));
+    ifs.close();
+
+    for (std::size_t i = 0; i < matrices.size(); ++i) { EXPECT_TRUE(matrices[i].cwiseEqual(matrices_load[i]).all()); }
+}
+
+TEST(EigenTest, SaveAndLoadVectorOfDynamicSizedMatrices) {
+    using namespace erl::common;
+    std::uniform_int_distribution dist(1, 10);
+    std::mt19937 gen(0);
+    std::vector<Eigen::MatrixXd> matrices(10);
+    for (auto& matrix: matrices) { matrix = Eigen::MatrixXd::Random(dist(gen), dist(gen)); }
+
+    std::ofstream ofs("matrices.bin", std::ios::binary);
+    ASSERT_TRUE(SaveVectorOfEigenMatricesToBindaryStream(ofs, matrices));
+    ofs.close();
+
+    std::vector<Eigen::MatrixXd> matrices_load;
+    std::ifstream ifs("matrices.bin", std::ios::binary);
+    ASSERT_TRUE(LoadVectorOfEigenMatricesFromBinaryStream(ifs, matrices_load));
+    ifs.close();
+
+    for (std::size_t i = 0; i < matrices.size(); ++i) { EXPECT_TRUE(matrices[i].cwiseEqual(matrices_load[i]).all()); }
+}
+
+TEST(EigenTest, SaveAndLoadEigenMatrixOfFixedSizedEigenMatrices) {
+    using namespace erl::common;
+    Eigen::MatrixX<Eigen::Matrix4d> matrices(10, 5);
+    for (int i = 0; i < matrices.rows(); ++i) {
+        for (int j = 0; j < matrices.cols(); ++j) { matrices(i, j) = Eigen::Matrix4d::Random(); }
+    }
+
+    std::ofstream ofs("matrices.bin", std::ios::binary);
+    ASSERT_TRUE(SaveEigenMatrixOfEigenMatricesToBinaryStream(ofs, matrices));
+    ofs.close();
+
+    Eigen::MatrixX<Eigen::Matrix4d> matrices_load;
+    std::ifstream ifs("matrices.bin", std::ios::binary);
+    ASSERT_TRUE(LoadEigenMatrixOfEigenMatricesFromBinaryStream(ifs, matrices_load));
+    ifs.close();
+
+    for (int i = 0; i < matrices.rows(); ++i) {
+        for (int j = 0; j < matrices.cols(); ++j) { EXPECT_TRUE(matrices(i, j).cwiseEqual(matrices_load(i, j)).all()); }
     }
 }

@@ -9,7 +9,7 @@
 namespace erl::common {
     template<typename T>
     std::vector<T>
-    LoadBinaryFile(const char *path) {
+    LoadBinaryFile(const std::string &path) {
         std::ifstream ifs;
         ifs.open(path, std::ios::binary);
         ERL_ASSERTM(ifs.is_open(), "{} does not exist in {}.", path, std::filesystem::current_path());
@@ -25,7 +25,7 @@ namespace erl::common {
 
     template<typename T>
     bool
-    SaveBinaryFile(const char *path, const T *data, const std::streamsize n) {
+    SaveBinaryFile(const std::string &path, const T *data, const std::streamsize n) {
         std::ofstream ofs;
         ofs.open(path, std::ios::out | std::ios::binary);
         if (ofs.is_open()) {

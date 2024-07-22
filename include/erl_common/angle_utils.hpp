@@ -1,4 +1,6 @@
 #pragma once
+#include "eigen.hpp"
+
 #include <cmath>
 
 namespace erl::common {

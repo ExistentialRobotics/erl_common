@@ -17,25 +17,44 @@ namespace erl::common {
     struct YamlableBase {
         virtual ~YamlableBase() = default;
 
-        virtual void
+        [[nodiscard]] bool
+        operator==(const YamlableBase& other) const {
+            const std::string yaml_str = AsYamlString();
+            const std::string other_yaml_str = other.AsYamlString();
+            return yaml_str == other_yaml_str;  // if the yaml string is the same, the object is the same in terms of saving and loading
+        }
+
+        [[nodiscard]] bool
+        operator!=(const YamlableBase& other) const {
+            return !(*this == other);
+        }
+
+        [[nodiscard]] virtual bool
         FromYamlNode(const YAML::Node& node) = 0;
 
-        void
+        [[nodiscard]] bool
         FromYamlString(const std::string& yaml_string) {
             const YAML::Node node = YAML::Load(yaml_string);
-            FromYamlNode(node);
+            return FromYamlNode(node);
         }
 
         [[nodiscard]] virtual YAML::Node
         AsYamlNode() const = 0;
 
         [[nodiscard]] virtual std::string
-        AsYamlString() const = 0;
+        AsYamlString() const {
+            YAML::Emitter emitter;
+            emitter.SetIndent(4);
+            emitter.SetSeqFormat(YAML::Flow);
+            emitter << AsYamlNode();
+            return emitter.c_str();
+        }
 
-        void
+        [[nodiscard]] bool
         FromYamlFile(const std::string& yaml_file) {
+            ERL_DEBUG_ASSERT(std::filesystem::exists(yaml_file), "File does not exist: {}", yaml_file);
             const auto node = YAML::LoadFile(yaml_file);
-            FromYamlNode(node);
+            return FromYamlNode(node);
         }
 
         void
@@ -47,28 +66,39 @@ namespace erl::common {
             emitter.SetSeqFormat(YAML::Flow);
             emitter << AsYamlNode();
         }
+
+        [[nodiscard]] bool
+        Write(std::ostream& s) const {
+            if (!s.good()) { return false; }
+            const std::string yaml_str = AsYamlString() + "\n";
+            const auto len = static_cast<std::streamsize>(yaml_str.size());
+            s.write(reinterpret_cast<const char*>(&len), sizeof(len));
+            s.write(yaml_str.data(), len);
+            return s.good();
+        }
+
+        [[nodiscard]] bool
+        Read(std::istream& s) {
+            if (!s.good()) { return false; }
+            std::streamsize len;
+            s.read(reinterpret_cast<char*>(&len), sizeof(len));
+            std::string yaml_str(len, '\0');
+            s.read(yaml_str.data(), len);
+            return FromYamlString(yaml_str) && s.good();
+        }
     };
 
     template<typename T>
     struct Yamlable : public YamlableBase {
 
-        void
+        [[nodiscard]] bool
         FromYamlNode(const YAML::Node& node) override {
-            YAML::convert<T>::decode(node, *static_cast<T*>(this));
+            return YAML::convert<T>::decode(node, *static_cast<T*>(this));
         }
 
         [[nodiscard]] YAML::Node
         AsYamlNode() const override {
             return YAML::convert<T>::encode(*static_cast<const T*>(this));
-        }
-
-        [[nodiscard]] std::string
-        AsYamlString() const override {
-            YAML::Emitter emitter;
-            emitter.SetIndent(4);
-            emitter.SetSeqFormat(YAML::Flow);
-            emitter << AsYamlNode();
-            return emitter.c_str();
         }
     };
 
@@ -79,9 +109,9 @@ namespace erl::common {
      */
     template<typename Base, typename T>
     struct OverrideYamlable : public Base {
-        void
+        bool
         FromYamlNode(const YAML::Node& node) override {
-            YAML::convert<T>::decode(node, *static_cast<T*>(this));
+            return YAML::convert<T>::decode(node, *static_cast<T*>(this));
         }
 
         [[nodiscard]] YAML::Node
