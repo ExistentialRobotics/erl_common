@@ -859,7 +859,7 @@ endmacro()
 # erl_setup_common_packages
 # ######################################################################################################################
 macro(erl_setup_common_packages)
-    option(ERL_USE_TRACY "Use Tracy Profiler" ON)
+    option(ERL_USE_TRACY "Use Tracy Profiler" OFF)
     option(ERL_TRACY_PROFILE_MEMORY "Profile memory usage" OFF)
     if (ERL_USE_TRACY)
         set(TRACY_ENABLE ON)
