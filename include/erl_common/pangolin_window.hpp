@@ -13,14 +13,7 @@ namespace erl::common {
         std::map<std::string, pangolin::View*> m_displays_;
 
     public:
-        PangolinWindow(const std::string& window_name, const int window_width, const int window_height, const int window_x = 0, const int window_y = 0)
-            : m_window_name_(window_name),
-              m_window_(pangolin::CreateWindowAndBind(window_name, window_width, window_height)) {
-            m_window_.MakeCurrent();
-            m_window_.Move(window_x, window_y);
-            glEnable(GL_DEPTH_TEST);
-            m_displays_["main"] = &pangolin::DisplayBase();
-        }
+        PangolinWindow(const std::string& window_name, int window_width, int window_height, int window_x = -1, int window_y = -1);
 
         void
         Activate(const bool clear = false) {
@@ -33,6 +26,7 @@ namespace erl::common {
 
         void
         Deactivate() const {
+            pangolin::FinishFrame();
             m_window_.RemoveCurrent();
         }
 

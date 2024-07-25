@@ -7,6 +7,9 @@
 
 namespace erl::common {
 
+    /**
+     * A class to plot time series data in 2D using Pangolin.
+     */
     class PangolinPlotterTimeSeries2D {
         std::shared_ptr<PangolinWindow> m_window_;
         pangolin::DataLog m_data_log_;

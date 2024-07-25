@@ -37,7 +37,7 @@ namespace erl::common {
     PangolinPlotterTimeSeries2D::Append(const float t, const std::vector<float> &values) {
         ERL_ASSERTM(values.size() == m_log_buffer_.size() - 1, "Number of values does not match the number of series in the plotter");
 
-        m_window_->GetWindow().MakeCurrent();
+        m_window_->Activate();
         m_display_.Activate();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -59,11 +59,9 @@ namespace erl::common {
         range = m_plotter_.GetView();
         range.y.min = *std::min_element(m_min_values_.begin(), m_min_values_.end());
         range.y.max = *std::max_element(m_max_values_.begin(), m_max_values_.end());
-        const float d = (range.y.max - range.y.min) * 0.1f;
+        const float d = (range.y.max - range.y.min) * 0.2f;
         range.y.min -= d;
         range.y.max += d;
         m_plotter_.SetViewSmooth(range);
-
-        pangolin::FinishFrame();
     }
 }  // namespace erl::common
