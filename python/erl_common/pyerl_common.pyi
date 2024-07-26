@@ -16,11 +16,11 @@ def manually_set_seed(seed: int) -> None: ...
 
 class Logging:
     class Level(IntEnum):
-        INFO = 0
-        DEBUG = 1
-        WARN = 2
-        ERROR = 3
-        SILENT = 4
+        kInfo = 0
+        kDebug = 1
+        kWarn = 2
+        kError = 3
+        kSilent = 4
 
     level: Level
 

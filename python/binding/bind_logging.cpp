@@ -8,11 +8,11 @@ BindLogging(const py::module &m) {
 
     py::class_<Logging> logging(m, "Logging");
     py::enum_<Logging::Level>(logging, "Level")
-        .value("INFO", Logging::Level::INFO)
-        .value("DEBUG", Logging::Level::DEBUG)
-        .value("WARN", Logging::Level::WARN)
-        .value("ERROR", Logging::Level::ERROR)
-        .value("SILIENT", Logging::Level::SILIENT)
+        .value("kInfo", Logging::Level::kInfo)
+        .value("kDebug", Logging::Level::kDebug)
+        .value("kWarn", Logging::Level::kWarn)
+        .value("kError", Logging::Level::kError)
+        .value("kSilent", Logging::Level::kSilent)
         .export_values();
     logging.def_property_static("level", &Logging::GetLevel, &Logging::SetLevel)
         .def_static("get_date_str", &Logging::GetDateStr)

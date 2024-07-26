@@ -10,15 +10,15 @@ namespace erl::common {
 
     public:
         enum Level {
-            INFO,
-            DEBUG,
-            WARN,
-            ERROR,
-            SILIENT,
+            kInfo,
+            kDebug,
+            kWarn,
+            kError,
+            kSilent,
         };
 
     private:
-        inline static Level s_level_ = INFO;
+        inline static Level s_level_ = kInfo;
 
     public:
         static void
@@ -42,7 +42,7 @@ namespace erl::common {
         template<typename... Args>
         static void
         Info(Args... args) {
-            if (s_level_ > INFO) { return; }
+            if (s_level_ > kInfo) { return; }
             // https://fmt.dev/latest/syntax.html
             std::string msg = fmt::format(fmt::fg(fmt::color::deep_sky_blue) | fmt::emphasis::bold, "[{:%X}][INFO]: ", fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
@@ -53,7 +53,7 @@ namespace erl::common {
         template<typename... Args>
         static void
         Debug(Args... args) {
-            if (s_level_ > DEBUG) { return; }
+            if (s_level_ > kDebug) { return; }
             std::string msg = fmt::format(fmt::fg(fmt::color::orange) | fmt::emphasis::bold, "[{:%X}][DEBUG]: ", fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
@@ -63,7 +63,7 @@ namespace erl::common {
         template<typename... Args>
         static void
         Warn(Args... args) {
-            if (s_level_ > WARN) { return; }
+            if (s_level_ > kWarn) { return; }
             std::string msg = fmt::format(fmt::fg(fmt::color::orange_red) | fmt::emphasis::bold, "[{:%X}][WARN]: ", fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
@@ -78,7 +78,7 @@ namespace erl::common {
         template<typename... Args>
         static void
         Error(Args... args) {
-            if (s_level_ > ERROR) { return; }
+            if (s_level_ > kError) { return; }
             std::string msg = fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[{:%X}][ERROR]: ", fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
