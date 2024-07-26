@@ -6,30 +6,43 @@
 #include <mutex>
 
 namespace erl::common {
-    struct Logging {
-        static std::string
-        GetDateStr() {
-            return fmt::format("{:%Y-%m-%d}", fmt::localtime(std::time(nullptr)));
-        }
+    class Logging {
+
+    public:
+        enum Level {
+            INFO,
+            DEBUG,
+            WARN,
+            ERROR,
+            SILIENT,
+        };
+
+    private:
+        inline static Level s_level_ = INFO;
+
+    public:
+        static void
+        SetLevel(Level level);
+
+        static Level
+        GetLevel();
 
         static std::string
-        GetTimeStr() {
-            return fmt::format("{:%X}", fmt::localtime(std::time(nullptr)));
-        }
+        GetDateStr();
 
         static std::string
-        GetDateTimeStr() {
-            return fmt::format("{:%Y-%m-%d %X}", fmt::localtime(std::time(nullptr)));
-        }
+        GetTimeStr();
 
         static std::string
-        GetTimeStamp() {
-            return fmt::format("{:%Y%m%d-%H%M%S}", fmt::localtime(std::time(nullptr)));
-        }
+        GetDateTimeStr();
+
+        static std::string
+        GetTimeStamp();
 
         template<typename... Args>
         static void
         Info(Args... args) {
+            if (s_level_ > INFO) { return; }
             // https://fmt.dev/latest/syntax.html
             std::string msg = fmt::format(fmt::fg(fmt::color::deep_sky_blue) | fmt::emphasis::bold, "[{:%X}][INFO]: ", fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
@@ -40,6 +53,7 @@ namespace erl::common {
         template<typename... Args>
         static void
         Debug(Args... args) {
+            if (s_level_ > DEBUG) { return; }
             std::string msg = fmt::format(fmt::fg(fmt::color::orange) | fmt::emphasis::bold, "[{:%X}][DEBUG]: ", fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
@@ -49,21 +63,33 @@ namespace erl::common {
         template<typename... Args>
         static void
         Warn(Args... args) {
+            if (s_level_ > WARN) { return; }
             std::string msg = fmt::format(fmt::fg(fmt::color::orange_red) | fmt::emphasis::bold, "[{:%X}][WARN]: ", fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
         }
 
+        /**
+         * report error but not fatal message, e.g. when an exception is handled properly and the program can continue
+         * @tparam Args
+         * @param args
+         */
         template<typename... Args>
         static void
         Error(Args... args) {
+            if (s_level_ > ERROR) { return; }
             std::string msg = fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[{:%X}][ERROR]: ", fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
         }
 
+        /**
+         * report fatal message ignoring the logging level
+         * @tparam Args
+         * @param args
+         */
         template<typename... Args>
         static void
         Fatal(Args... args) {
@@ -73,6 +99,11 @@ namespace erl::common {
             ProgressBar::Write(msg);
         }
 
+        /**
+         * report success message ignoring the logging level
+         * @tparam Args
+         * @param args
+         */
         template<typename... Args>
         static void
         Success(Args... args) {
@@ -82,6 +113,12 @@ namespace erl::common {
             ProgressBar::Write(msg);
         }
 
+        /**
+         * report failure message ignoring the logging level
+         * @tparam Args
+         * @param args
+         * @return
+         */
         template<typename... Args>
         static std::string
         Failure(Args... args) {

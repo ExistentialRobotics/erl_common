@@ -7,6 +7,7 @@
 #include <list>
 #include <memory>
 #include <numeric>
+#include <vector>
 
 namespace erl::common {
 
@@ -43,13 +44,7 @@ namespace erl::common {
 
     public:
         static std::shared_ptr<ProgressBar>
-        Open(std::shared_ptr<Setting> setting = nullptr, std::ostream& out = std::cout) {
-            auto bar = std::shared_ptr<ProgressBar>(new ProgressBar(std::move(setting), out));
-            s_progress_bars_.push_back(bar);
-            bar->Update(0);
-            bar->m_displayed_ = true;
-            return bar;
-        }
+        Open(std::shared_ptr<Setting> setting = nullptr, std::ostream& out = std::cout);
 
         ProgressBar(const ProgressBar&) = delete;
         ProgressBar&
