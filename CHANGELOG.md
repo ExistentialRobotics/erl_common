@@ -2,6 +2,8 @@
 
 - Add support to change logging level globally
 - Fix python binding error in Ubuntu 20.04
+- Use `-Wl,--disable-new-dtags` to avoid RPATH issues in Ubuntu distributions, which do not support `RUNPATH` in ELF
+  files very well
 
 # 2024-07-24
 
