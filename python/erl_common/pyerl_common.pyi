@@ -5,14 +5,15 @@ from . import yaml
 from enum import IntEnum
 
 __all__ = [
+    "set_global_random_seed",
     "storage",
     "vedo_ext",
     "dict_ext",
     "yaml",
-    "manually_set_seed",
+    "Logging",
 ]
 
-def manually_set_seed(seed: int) -> None: ...
+def set_global_random_seed(seed: int) -> None: ...
 
 class Logging:
     class Level(IntEnum):

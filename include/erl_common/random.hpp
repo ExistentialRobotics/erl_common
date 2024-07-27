@@ -64,7 +64,7 @@ namespace erl::common {
     }
 
     inline void
-    ManuallySetSeed(unsigned int seed) {
+    SetGlobalRandomSeed(unsigned int seed) {
         g_random_engine.seed(seed);
     }
 }  // namespace erl::common
