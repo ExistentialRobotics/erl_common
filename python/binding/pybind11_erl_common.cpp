@@ -13,7 +13,11 @@ void
 BindStorage(py::module &m);
 
 void
+<<<<<<< Updated upstream
 BindLogging(py::module &m);
+=======
+BindLogging(const py::module &m);
+>>>>>>> Stashed changes
 
 PYBIND11_MODULE(PYBIND_MODULE_NAME, m) {
     m.doc() = "Python 3 Interface of erl_common";
