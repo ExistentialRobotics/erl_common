@@ -88,28 +88,10 @@ namespace erl::common {
         }
     };
 
-    template<typename T>
-    struct Yamlable : public YamlableBase {
+    template<typename T, typename Base = YamlableBase>
+    struct Yamlable : public Base {
 
         [[nodiscard]] bool
-        FromYamlNode(const YAML::Node& node) override {
-            return YAML::convert<T>::decode(node, *static_cast<T*>(this));
-        }
-
-        [[nodiscard]] YAML::Node
-        AsYamlNode() const override {
-            return YAML::convert<T>::encode(*static_cast<const T*>(this));
-        }
-    };
-
-    /**
-     * @brief Override the Yamlable interface when the class is derived from a Yamlable class.
-     * @tparam Base The base class that is derived from Yamlable<Base>.
-     * @tparam T The derived class that is derived from Base.
-     */
-    template<typename Base, typename T>
-    struct OverrideYamlable : public Base {
-        bool
         FromYamlNode(const YAML::Node& node) override {
             return YAML::convert<T>::decode(node, *static_cast<T*>(this));
         }

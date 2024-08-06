@@ -1268,6 +1268,7 @@ macro(erl_project_setup _name)
         endif ()
     endif ()
 
+    erl_set_project_paths()
     erl_setup_compiler()
     erl_detect_ros()
 
