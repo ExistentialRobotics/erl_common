@@ -448,6 +448,7 @@ macro(erl_find_package)
     unset(ERL_NO_RECORD)
     unset(ERL_PACKAGE)
     unset(ERL_COMMANDS)
+    unset(ERL_UNPARSED_ARGUMENTS)
 endmacro()
 
 # ######################################################################################################################
@@ -753,23 +754,26 @@ macro(erl_setup_lapack)
                 set(MKL_THREADING "intel_thread")
             endif ()
 
-            if (NOT DEFINED ENV{MKLROOT})
-                unset(MKL_INCLUDE_DIRS CACHE)
-                erl_find_path(
-                        OUTPUT MKL_INCLUDE_DIRS
-                        PACKAGE MKL
-                        mkl.h
-                        PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
-                        REQUIRED
-                        COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
-                        COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
-                get_filename_component(MKLROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
-                get_filename_component(MKLROOT ${MKLROOT} REALPATH)
-                set(ENV{MKLROOT} ${MKLROOT})
-                set(MKL_DIR ${MKLROOT}/lib/cmake/mkl CACHE PATH "Path to MKL cmake directory" FORCE)
-                message(STATUS "MKLROOT is set to ${MKLROOT}")
+            if (NOT DEFINED MKLROOT)
+                if (NOT DEFINED ENV{MKLROOT})
+                    unset(MKL_INCLUDE_DIRS CACHE)
+                    erl_find_path(
+                            OUTPUT MKL_INCLUDE_DIRS
+                            PACKAGE MKL
+                            mkl.h
+                            PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
+                            REQUIRED
+                            COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
+                            COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
+                    get_filename_component(MKLROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
+                    get_filename_component(MKLROOT ${MKLROOT} REALPATH)
+                else ()
+                    set(MKLROOT $ENV{MKLROOT})
+                endif ()
             endif ()
+            message(STATUS "MKLROOT is set to ${MKLROOT}")
 
+            set(MKL_DIR ${MKLROOT}/lib/cmake/mkl)
             set(MKL_ARCH "intel64")
             set(MKL_LINK "dynamic")
             set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
@@ -778,10 +782,10 @@ macro(erl_setup_lapack)
                     REQUIRED GLOBAL
                     COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
                     COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
-            if (OMP_LIBRARY)
-                get_filename_component(OMP_LIB_DIR ${OMP_LIBRARY} DIRECTORY)
-                set(ENV{LD_LIBRARY_PATH} "${OMP_LIB_DIR}:$ENV{LD_LIBRARY_PATH}")
-            endif ()
+            # we should unset MKL_DIR and MKLROOT in case some other packages have their own FindMKL scripts.
+            unset(MKL_DIR)
+            unset(MKLROOT)
+
             erl_find_package( # LAPACK will resolve the full paths of MKL libraries
                     PACKAGE LAPACK
                     REQUIRED GLOBAL
@@ -789,33 +793,22 @@ macro(erl_setup_lapack)
                     COMMANDS UBUNTU_LINUX "try `sudo apt install liblapack-dev`"
                     COMMANDS ARCH_LINUX "try `sudo pacman -S lapack`")
 
+            # set MKL_INCLUDE_DIRS to please catkin
             if (MKL_H)
                 set(MKL_INCLUDE_DIRS ${MKL_H} CACHE PATH "Path to MKL include directory" FORCE)
             elseif (MKL_INCLUDE)
                 set(MKL_INCLUDE_DIRS ${MKL_INCLUDE} CACHE PATH "Path to MKL include directory" FORCE)
             endif ()
 
-            # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
-            # we must remove MKL_LIBRARIES to avoid adding it to catkin_LIBRARIES when using catkin
-            # however, find_package(MKL) will throw an error if it is called again
-            # unset(MKL_LIBRARIES) # remove normal variable
-            # unset(MKL_LIBRARIES CACHE) # remove CACHE variable
-            if (MKL_LIBRARIES)  # for compatibility with MKL<2024.02
-                # put MKL_LIBRARIES into CACHE such that other packages will not make MKLConfig.cmake unhappy
-                set(MKL_LIBRARIES ${MKL_LIBRARIES} CACHE STRING "Names of MKL libraries" FORCE)
-            endif ()
-
-            # let's set the full path of MKL libraries
-            # set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE FILEPATH "Path to MKL libraries" FORCE)
-
-            # Update: Since Intel-MKL 2024.02, don't set or use MKL_LIBRARIES since it is used by MKLConfig.cmake internally.
-            # Instead, we should use MKL::MKL and MKL::<library_name> in target_link_libraries. MKL::MKL is a target that holds only linker
-            # arguments and linked to all MKL::<library_name> targets. MKL::<library_name> is a target that holds the full path of the library.
-            # e.g.
-            # target_link_libraries(${PROJECT_NAME}
-            #       PRIVATE MKL::mkl_core MKL::mkl_sequential MKL::mkl_intel_lp64
-            #       PRIVATE MKL::mkl_scalapack_lp64 MKL::mkl_cdft_core MKL::mkl_blacs_intelmpi_lp64
+            # Update: Since Intel-MKL 2024.02, don't set or use MKL_LIBRARIES since it is used by MKLConfig.cmake
+            # internally. Instead, we should use MKL::MKL and MKL::<library_name>. MKL::MKL is a target that holds only
+            # linker arguments and linked to all MKL::<library_name> targets. MKL::<library_name> is a target that holds
+            # the full path of the library. e.g.
+            # target_link_libraries(<my_linkable_target>
+            #       PUBLIC MKL::mkl_core MKL::mkl_sequential MKL::mkl_intel_lp64
+            #       PUBLIC MKL::mkl_scalapack_lp64 MKL::mkl_cdft_core MKL::mkl_blacs_intelmpi_lp64
             # )
+            # target_link_options(<my_linkable_target> PUBLIC MKL::MKL)
         elseif (ERL_USE_AOCL)
             message(STATUS "Use AMD Optimizing CPU Library")
             add_definitions(-DEIGEN_USE_BLAS)
