@@ -69,8 +69,12 @@ namespace erl::common {
 
         void
         Log(const std::string &column_name, const double value, const double weight = 1.0) {
-            ERL_ASSERTM(!std::isnan(value) && !std::isinf(value), "Value is NaN or Inf");
-            ERL_ASSERTM(!std::isnan(weight) && !std::isinf(weight), "Weight is NaN or Inf");
+            ERL_WARN_COND(std::isnan(value) || std::isinf(value), "Value is NaN or Inf");
+            ERL_WARN_COND(std::isnan(weight) || std::isinf(weight), "Weight is NaN or Inf");
+
+            ERL_DEBUG_ASSERT(!std::isnan(value) && !std::isinf(value), "Value is NaN or Inf");
+            ERL_DEBUG_ASSERT(!std::isnan(weight) && !std::isinf(weight), "Weight is NaN or Inf");
+
             m_log_called_ = true;
             ERL_ASSERTM(m_value_sum_.find(column_name) != m_value_sum_.end(), "Column name not found, call AddColumn first");
             m_value_sum_[column_name] += value * weight;

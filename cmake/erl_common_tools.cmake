@@ -791,16 +791,31 @@ macro(erl_setup_lapack)
 
             if (MKL_H)
                 set(MKL_INCLUDE_DIRS ${MKL_H} CACHE PATH "Path to MKL include directory" FORCE)
+            elseif (MKL_INCLUDE)
+                set(MKL_INCLUDE_DIRS ${MKL_INCLUDE} CACHE PATH "Path to MKL include directory" FORCE)
             endif ()
 
             # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
             # we must remove MKL_LIBRARIES to avoid adding it to catkin_LIBRARIES when using catkin
             # however, find_package(MKL) will throw an error if it is called again
-            unset(MKL_LIBRARIES) # remove normal variable
-            unset(MKL_LIBRARIES CACHE) # remove CACHE variable
+            # unset(MKL_LIBRARIES) # remove normal variable
+            # unset(MKL_LIBRARIES CACHE) # remove CACHE variable
+            if (MKL_LIBRARIES)  # for compatibility with MKL<2024.02
+                # put MKL_LIBRARIES into CACHE such that other packages will not make MKLConfig.cmake unhappy
+                set(MKL_LIBRARIES ${MKL_LIBRARIES} CACHE STRING "Names of MKL libraries" FORCE)
+            endif ()
 
             # let's set the full path of MKL libraries
-            set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE FILEPATH "Path to MKL libraries" FORCE)
+            # set(MKL_LIBRARIES ${LAPACK_LIBRARIES} CACHE FILEPATH "Path to MKL libraries" FORCE)
+
+            # Update: Since Intel-MKL 2024.02, don't set or use MKL_LIBRARIES since it is used by MKLConfig.cmake internally.
+            # Instead, we should use MKL::MKL and MKL::<library_name> in target_link_libraries. MKL::MKL is a target that holds only linker
+            # arguments and linked to all MKL::<library_name> targets. MKL::<library_name> is a target that holds the full path of the library.
+            # e.g.
+            # target_link_libraries(${PROJECT_NAME}
+            #       PRIVATE MKL::mkl_core MKL::mkl_sequential MKL::mkl_intel_lp64
+            #       PRIVATE MKL::mkl_scalapack_lp64 MKL::mkl_cdft_core MKL::mkl_blacs_intelmpi_lp64
+            # )
         elseif (ERL_USE_AOCL)
             message(STATUS "Use AMD Optimizing CPU Library")
             add_definitions(-DEIGEN_USE_BLAS)

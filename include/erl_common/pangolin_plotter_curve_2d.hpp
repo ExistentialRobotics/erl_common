@@ -10,7 +10,7 @@ namespace erl::common {
     /**
      * A class to plot time series data in 2D using Pangolin.
      */
-    class PangolinPlotterTimeSeries2D {
+    class PangolinPlotterCurve2D {
         std::shared_ptr<PangolinWindow> m_window_;
         pangolin::DataLog m_data_log_;
         pangolin::Plotter m_plotter_;
@@ -22,13 +22,13 @@ namespace erl::common {
         std::size_t m_head_ = 0;
 
     public:
-        PangolinPlotterTimeSeries2D(
+        PangolinPlotterCurve2D(
             std::shared_ptr<PangolinWindow> window,
             const std::string& plotter_name,
             const std::vector<std::string>& labels,
             int plot_window_width,
-            float plot_t_init = 0.0f,
-            float plot_t_tick = 0.1f,
+            float plot_x_init = 0.0f,
+            float plot_x_tick = 0.1f,
             float plot_y_tick = 0.1f,
             const pangolin::Colour& bg_color = {0.0f, 0.0f, 0.0f, 1.0f},
             const pangolin::Colour& axis_color = {1.0f, 1.0f, 1.0f, 1.0f},
@@ -63,7 +63,7 @@ namespace erl::common {
         }
 
         void
-        Append(float t, const std::vector<float>& values);
+        Append(float x, const std::vector<float>& values);
     };
 
 }  // namespace erl::common

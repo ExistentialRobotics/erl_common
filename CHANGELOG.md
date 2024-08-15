@@ -1,3 +1,9 @@
+# 2024-08-15
+
+- Update script for installing dependencies in Ubuntu 22.04.
+- `erl::common::BlockTimer` now can be set silent with `verbose=false`.
+- Improve Pangolin helper classes.
+
 # 2024-07-25
 
 - Add support to change logging level globally
