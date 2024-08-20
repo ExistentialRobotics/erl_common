@@ -782,9 +782,11 @@ macro(erl_setup_lapack)
                     REQUIRED GLOBAL
                     COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
                     COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
-            # we should unset MKL_DIR and MKLROOT in case some other packages have their own FindMKL scripts.
-            unset(MKL_DIR)
-            unset(MKLROOT)
+
+            if (NOT DEFINED ENV{MKLROOT})
+                set(ENV{MKLROOT} ${MKLROOT})
+                set(ENV_MKLROOT_SHOULD_BE_CLEARED ON)
+            endif ()
 
             erl_find_package( # LAPACK will resolve the full paths of MKL libraries
                     PACKAGE LAPACK
@@ -809,6 +811,14 @@ macro(erl_setup_lapack)
             #       PUBLIC MKL::mkl_scalapack_lp64 MKL::mkl_cdft_core MKL::mkl_blacs_intelmpi_lp64
             # )
             # target_link_options(<my_linkable_target> PUBLIC MKL::MKL)
+
+            # we should unset MKL_DIR and MKLROOT in case some other packages have their own FindMKL scripts.
+            unset(MKL_DIR)
+            unset(MKLROOT)
+            if (DEFINED ENV_MKLROOT_SHOULD_BE_CLEARED)
+                unset(ENV{MKLROOT})
+                unset(ENV_MKLROOT_SHOULD_BE_CLEARED)
+            endif ()
         elseif (ERL_USE_AOCL)
             message(STATUS "Use AMD Optimizing CPU Library")
             add_definitions(-DEIGEN_USE_BLAS)
