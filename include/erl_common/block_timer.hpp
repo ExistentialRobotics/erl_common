@@ -22,9 +22,11 @@ namespace erl::common {
               t1(std::chrono::high_resolution_clock::now()) {}
 
         ~BlockTimer() {
+            if (this->dt == nullptr && !verbose) { return; }  // No need to measure time and print message
+
             auto &&t2 = std::chrono::high_resolution_clock::now();
-            double &&dt = std::chrono::duration<double, typename Duration::period>(t2 - t1).count();
-            if (this->dt != nullptr) { *this->dt = dt; }
+            double &&t_diff = std::chrono::duration<double, typename Duration::period>(t2 - t1).count();
+            if (this->dt != nullptr) { *this->dt = t_diff; }
 
             if (verbose) {
                 std::string unit;
@@ -42,7 +44,7 @@ namespace erl::common {
                     unit = " hrs";
                 }
 
-                std::string msg = fmt::format("{}: {:.3f}{}", label, dt, unit);
+                std::string msg = fmt::format("{}: {:.3f}{}", label, t_diff, unit);
                 if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
                 ProgressBar::Write(msg);
             }

@@ -2,6 +2,7 @@
 
 #include "logging.hpp"
 #include "opencv.hpp"
+#include "string_utils.hpp"
 
 #include <yaml-cpp/yaml.h>
 
@@ -15,7 +16,37 @@
 namespace erl::common {
 
     struct YamlableBase {
+    protected:
+        inline static std::map<std::string, std::function<std::shared_ptr<YamlableBase>()>> s_class_id_mapping_ = {};
+
+    public:
         virtual ~YamlableBase() = default;
+
+        template<typename Derived>
+        static std::enable_if_t<std::is_base_of_v<YamlableBase, Derived>, bool>
+        Register(std::string yamlable_type = "") {
+            if (yamlable_type.empty()) { yamlable_type = demangle(typeid(Derived).name()); }
+            if (s_class_id_mapping_.find(yamlable_type) != s_class_id_mapping_.end()) {
+                ERL_WARN("{} is already registered.", yamlable_type);
+                return false;
+            }
+
+            s_class_id_mapping_[yamlable_type] = []() { return std::make_shared<Derived>(); };
+            ERL_DEBUG("{} is registered.", yamlable_type);
+            return true;
+        }
+
+        template<typename Derived>
+        static std::shared_ptr<Derived>
+        Create(const std::string& yamlable_type) {
+            const auto it = s_class_id_mapping_.find(yamlable_type);
+            if (it == s_class_id_mapping_.end()) {
+                ERL_WARN("Unknown yamlable type: {}. Here are the registered yamlable types:", yamlable_type);
+                for (const auto& pair: s_class_id_mapping_) { ERL_WARN("  - {}", pair.first); }
+                return nullptr;
+            }
+            return std::reinterpret_pointer_cast<Derived>(it->second());  // reinterpret_pointer_cast is safe here
+        }
 
         [[nodiscard]] bool
         operator==(const YamlableBase& other) const {
@@ -101,6 +132,8 @@ namespace erl::common {
             return YAML::convert<T>::encode(*static_cast<const T*>(this));
         }
     };
+
+#define ERL_REGISTER_YAMLABLE(Derived) inline const volatile bool kRegistered##Derived = erl::common::YamlableBase::Register<Derived>()
 }  // namespace erl::common
 
 namespace YAML {
@@ -303,6 +336,12 @@ namespace YAML {
 
     template<>
     struct convert<Eigen::Vector4i> : public ConvertEigenVector<int, 4> {};
+
+    template<>
+    struct convert<Eigen::VectorXl> : public ConvertEigenVector<long, Eigen::Dynamic> {};
+
+    template<>
+    struct convert<Eigen::Vector2l> : public ConvertEigenVector<long, 2> {};
 
     template<typename... Args>
     struct convert<std::tuple<Args...>> {

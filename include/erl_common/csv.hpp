@@ -61,4 +61,15 @@ namespace erl::common {
         ofs.close();
     }
 
+    struct SimpleCsv {
+        std::unordered_map<std::string, std::vector<std::string>> data;
+        std::vector<std::string> header;
+
+        void
+        Load(const char *path, char delimiter = ',');
+
+        void
+        Save(const char *path, char delimiter = ',');
+    };
+
 }  // namespace erl::common
