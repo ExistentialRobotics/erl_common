@@ -150,7 +150,7 @@ namespace erl::common {
         const long matrix_size = matrix.size();
         s.write(reinterpret_cast<const char*>(&matrix_size), sizeof(long));
         if (matrix_size == 0) {
-            ERL_WARN("Writing empty matrix to stream.");
+            // ERL_WARN("Writing empty matrix to stream.");
             return s.good();
         }
         const long matrix_shape[2] = {matrix.rows(), matrix.cols()};
@@ -225,7 +225,7 @@ namespace erl::common {
         s.read(reinterpret_cast<char*>(&matrix_size), sizeof(long));
         if (matrix_size == 0) {
             if constexpr (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic) {
-                ERL_WARN("Reading empty matrix from stream.");
+                // ERL_WARN("Reading empty matrix from stream.");
                 return true;
             } else if (matrix_size != Rows * Cols) {
                 ERL_WARN("Matrix size mismatch. Expected {}, got {}", Rows * Cols, matrix_size);
