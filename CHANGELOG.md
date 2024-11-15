@@ -1,3 +1,7 @@
+# 2024-11-14
+
+- Add: a function to cast `Eigen::Matrix<Eigen::Vector<T, M>>` to Numpy array of shape `(W, H, M)`.
+
 # 2024-08-15
 
 - Update script for installing dependencies in Ubuntu 22.04.

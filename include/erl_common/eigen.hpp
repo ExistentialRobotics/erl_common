@@ -177,7 +177,7 @@ namespace erl::common {
 
     template<typename T, int Rows, int Cols>
     [[nodiscard]] bool
-    SaveVectorOfEigenMatricesToBindaryStream(std::ostream& s, const std::vector<Eigen::Matrix<T, Rows, Cols>>& matrices) {
+    SaveVectorOfEigenMatricesToBinaryStream(std::ostream& s, const std::vector<Eigen::Matrix<T, Rows, Cols>>& matrices) {
         const std::size_t num_matrices = matrices.size();
         s.write(reinterpret_cast<const char*>(&num_matrices), sizeof(std::size_t));
         if (Rows != Eigen::Dynamic && Cols != Eigen::Dynamic) {

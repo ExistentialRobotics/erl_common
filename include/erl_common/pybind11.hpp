@@ -40,6 +40,20 @@ namespace PYBIND11_NAMESPACE {
     template<typename T>
     using SupportedByNumpy = detail::any_of<detail::is_pod_struct<T>, std::is_arithmetic<T>>;
 
+    template<typename T, int Dim>
+    array_t<T>
+    cast_to_array(const Eigen::MatrixX<Eigen::Vector<T, Dim>>& mat) {
+        static_assert(Dim >= 1, "Dim must be greater than or equal to 1.");
+        array_t<T> out({mat.rows(), mat.cols(), static_cast<long>(Dim)});
+        for (long i = 0; i < mat.rows(); ++i) {
+            for (long j = 0; j < mat.cols(); ++j) {
+                const Eigen::Vector<T, Dim>& vec = mat(i, j);
+                for (int k = 0; k < Dim; ++k) { out.mutable_at(i, j, k) = vec[k]; }
+            }
+        }
+        return out;
+    }
+
     template<typename T>
     class RawPtrWrapper {
         T* m_ptr_ = nullptr;

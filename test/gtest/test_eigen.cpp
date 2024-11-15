@@ -132,7 +132,7 @@ TEST(EigenTest, SaveAndLoadVectorOfFixedSizedMatrices) {
     for (auto& matrix: matrices) { matrix = Eigen::Matrix4d::Random(); }
 
     std::ofstream ofs("matrices.bin", std::ios::binary);
-    ASSERT_TRUE(SaveVectorOfEigenMatricesToBindaryStream(ofs, matrices));
+    ASSERT_TRUE(SaveVectorOfEigenMatricesToBinaryStream(ofs, matrices));
     ofs.close();
 
     std::vector<Eigen::Matrix4d> matrices_load;
@@ -151,7 +151,7 @@ TEST(EigenTest, SaveAndLoadVectorOfDynamicSizedMatrices) {
     for (auto& matrix: matrices) { matrix = Eigen::MatrixXd::Random(dist(gen), dist(gen)); }
 
     std::ofstream ofs("matrices.bin", std::ios::binary);
-    ASSERT_TRUE(SaveVectorOfEigenMatricesToBindaryStream(ofs, matrices));
+    ASSERT_TRUE(SaveVectorOfEigenMatricesToBinaryStream(ofs, matrices));
     ofs.close();
 
     std::vector<Eigen::MatrixXd> matrices_load;
@@ -181,4 +181,11 @@ TEST(EigenTest, SaveAndLoadEigenMatrixOfFixedSizedEigenMatrices) {
     for (int i = 0; i < matrices.rows(); ++i) {
         for (int j = 0; j < matrices.cols(); ++j) { EXPECT_TRUE(matrices(i, j).cwiseEqual(matrices_load(i, j)).all()); }
     }
+}
+
+#include <eigen3/unsupported/Eigen/CXX11/Tensor>
+
+TEST(EigenTest, Tensor) {
+    Eigen::Tensor<double, 3> tensor(3, 4, 5);  //
+    tensor(0, 0, 0);
 }
