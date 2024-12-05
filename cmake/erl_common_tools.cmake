@@ -698,6 +698,10 @@ endmacro()
 macro(erl_enable_cuda)
     set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER} CACHE STRING "Host compiler for CUDA" FORCE)
     enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CMAKE_CUDA_FLAGS_RELEASE "-O3")
+    set(CMAKE_CUDA_FLAGS_DEBUG "-G")
 endmacro()
 
 # ######################################################################################################################
@@ -1316,12 +1320,106 @@ macro(erl_project_setup _name)
     erl_setup_test()
 endmacro()
 
+function(erl_add_pybind_module)
+    # PYBIND_MODULE_NAME: module name
+    # PYBIND_SRC_DIR: source directory of the pybind module
+    # PYTHON_PKG_DIR: source directory of the python package, where the module will be copied to when ROS is activated
+    # INCLUDE_DIRS: directories to include
+    # LIBRARIES: libraries to link
+
+    set(options)
+    set(oneValueArgs PYBIND_MODULE_NAME PYBIND_SRC_DIR PYTHON_PKG_DIR)
+    set(multiValueArgs INCLUDE_DIRS LIBRARIES)
+    cmake_parse_arguments("arg" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if (NOT DEFINED ERL_BUILD_PYTHON_${PROJECT_NAME})
+        set(ERL_BUILD_PYTHON_${PROJECT_NAME} ${ERL_BUILD_PYTHON})
+    endif ()
+
+    if (NOT ERL_BUILD_PYTHON)
+        set(ERL_BUILD_PYTHON_${PROJECT_NAME} OFF)
+    endif ()
+
+    if (NOT ERL_BUILD_PYTHON_${PROJECT_NAME})
+        return()
+    endif ()
+
+    message(STATUS "Adding Python binding module ${arg_PYBIND_MODULE_NAME} for ${PROJECT_NAME}")
+    erl_setup_python()
+
+    file(GLOB_RECURSE SRC_FILES "${arg_PYBIND_SRC_DIR}/*.cpp")
+    if (NOT SRC_FILES)
+        message(FATAL_ERROR "No cpp file found in ${arg_PYBIND_SRC_DIR}")
+    endif ()
+
+    if (NOT DEFINED arg_PYBIND_MODULE_NAME)
+        message(FATAL_ERROR "PYBIND_MODULE_NAME not set")
+    endif ()
+
+    # pybind runtime lib
+    pybind11_add_module(${arg_PYBIND_MODULE_NAME} ${SRC_FILES})
+
+    # # ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+    # # Use separate rpaths during build and install phases
+    # set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    # # Don't use the install-rpath during the build phase
+    # set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+    # set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+    # # Automatically add all linked folders that are NOT in the build directory to the rpath (per library?)
+    # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    if (APPLE)
+        set(CMAKE_MACOSX_RPATH ON)
+        set(_rpath_portable_origin "@loader_path")
+    else ()
+        set(_rpath_portable_origin $ORIGIN)
+    endif ()
+
+    set(_rpath "${_rpath_portable_origin}:${_rpath_portable_origin}/lib/${PROJECT_NAME}")
+
+    # how to check rpath of a library file:
+    # objdump -x <library_name>.so | grep 'R.*PATH'
+    # output: RUNPATH     $ORIGIN:$ORIGIN/lib/<project_name>
+    # how to check shared library dependencies of a library file:
+    # ldd <library_name>.so
+    set_target_properties(${arg_PYBIND_MODULE_NAME} PROPERTIES
+            SKIP_BUILD_RPATH FALSE # Use separate rpaths during build and install phases
+            BUILD_WITH_INSTALL_RPATH FALSE # Don't use the install-rpath during the build phase
+            INSTALL_RPATH "${_rpath}" # search in the same directory, or in lib/<project_name>
+            INSTALL_RPATH_USE_LINK_PATH TRUE)
+    target_compile_definitions(${arg_PYBIND_MODULE_NAME}
+            PRIVATE PYBIND_MODULE_NAME=${arg_PYBIND_MODULE_NAME})
+    target_include_directories(${arg_PYBIND_MODULE_NAME} SYSTEM PRIVATE ${Python3_INCLUDE_DIRS})
+    if (DEFINED arg_INCLUDE_DIRS)
+        target_include_directories(${arg_PYBIND_MODULE_NAME} PRIVATE ${arg_INCLUDE_DIRS})
+    endif ()
+    if (DEFINED arg_LIBRARIES)
+        target_link_libraries(${arg_PYBIND_MODULE_NAME} PRIVATE ${arg_LIBRARIES})
+    endif ()
+
+    # put the library in the source python package directory, such that setup.py can find it
+    # set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
+    # LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_PYTHON_PKG_DIR})
+    if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
+        # copy file to a regular library name so that catkin does not throw an error, but this file may not
+        # work with Python3 because the filename is lib<name>.so, which does not match the module name.
+        set(LIB_NAME lib${arg_PYBIND_MODULE_NAME}.so)
+        set(DEVEL_LIB_PATH ${ERL_CATKIN_DEVEL_LIB_DIR}/${LIB_NAME})
+        set(INSTALL_LIB_PATH ${ERL_CATKIN_INSTALL_LIB_DIR}/${LIB_NAME})
+
+        add_custom_command(TARGET ${arg_PYBIND_MODULE_NAME}
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${DEVEL_LIB_PATH}
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${INSTALL_LIB_PATH}
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${arg_PYTHON_PKG_DIR}) # copy to source directory for devel
+    endif ()
+endfunction()
+
 # ######################################################################################################################
 # erl_add_python_package
 # ######################################################################################################################
-macro(erl_add_python_package)
+function(erl_add_python_package)
     set(options)
-    set(oneValueArgs PYTHON_PKG_DIR PYBIND_MODULE_NAME)
+    set(oneValueArgs PYTHON_PKG_DIR)
     set(multiValueArgs DEPENDS_PYTHON_PKGS)
     cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -1333,121 +1431,63 @@ macro(erl_add_python_package)
         set(ERL_BUILD_PYTHON_${PROJECT_NAME} OFF)
     endif ()
 
+    if (NOT ERL_BUILD_PYTHON_${PROJECT_NAME})
+        return()
+    endif ()
+
+    message(STATUS "Adding Python package for ${PROJECT_NAME}")
+    erl_setup_python()
+
     # ${PROJECT_NAME}_PYTHON_DIR: <project_dir>/python
     # ${PROJECT_NAME}_PYTHON_PKG_DIR: <project_dir>/python/<py_package_name>
     # ${PROJECT_NAME}_PYTHON_BINDING_DIR: <project_dir>/python/binding
     # ${PROJECT_NAME}_BUILD_DIR: <project_build_dir>
     # ${PROJECT_NAME}_BUILD_PYTHON_DIR: <project_build_dir>/python
     # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
-    if (ERL_BUILD_PYTHON_${PROJECT_NAME})
-        erl_setup_python()
 
-        # get package name
-        get_filename_component(${PROJECT_NAME}_PY_PACKAGE_NAME ${${PROJECT_NAME}_PYTHON_PKG_DIR} NAME)
+    # get package name
+    get_filename_component(${PROJECT_NAME}_PY_PACKAGE_NAME ${${PROJECT_NAME}_PYTHON_PKG_DIR} NAME)
 
-        # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
-        set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${${PROJECT_NAME}_BUILD_PYTHON_DIR}/${${PROJECT_NAME}_PY_PACKAGE_NAME})
+    # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
+    set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${${PROJECT_NAME}_BUILD_PYTHON_DIR}/${${PROJECT_NAME}_PY_PACKAGE_NAME})
 
-        # add a binding library for this package
-        file(GLOB_RECURSE SRC_FILES "${${PROJECT_NAME}_PYTHON_BINDING_DIR}/*.cpp")
+    if (EXISTS ${${PROJECT_NAME}_ROOT_DIR}/setup.py)
+        option(ERL_PYTHON_INSTALL_USER "Install Python package to user directory" OFF)
+        set(erl_pip_install_args "--verbose")
 
-        if (SRC_FILES) # if there is any pybind11_*.cpp file
-            if (NOT DEFINED ${PROJECT_NAME}_PYBIND_MODULE_NAME)
-                set(${PROJECT_NAME}_PYBIND_MODULE_NAME py${PROJECT_NAME})
-                message(STATUS "PYBIND_MODULE_NAME not set, using default value ${${PROJECT_NAME}_PYBIND_MODULE_NAME}")
-            endif ()
-
-            # pybind runtime lib
-            pybind11_add_module(${${PROJECT_NAME}_PYBIND_MODULE_NAME} ${SRC_FILES})
-
-            # # ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
-            # # Use separate rpaths during build and install phases
-            # set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-            # # Don't use the install-rpath during the build phase
-            # set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-            # set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-            # # Automatically add all linked folders that are NOT in the build directory to the rpath (per library?)
-            # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-            if (APPLE)
-                set(CMAKE_MACOSX_RPATH ON)
-                set(_rpath_portable_origin "@loader_path")
-            else ()
-                set(_rpath_portable_origin $ORIGIN)
-            endif ()
-
-            set(_rpath "${_rpath_portable_origin}:${_rpath_portable_origin}/lib/${PROJECT_NAME}")
-
-            # how to check rpath of a library file:
-            # objdump -x <library_name>.so | grep 'R.*PATH'
-            # output: RUNPATH     $ORIGIN:$ORIGIN/lib/<project_name>
-            # how to check shared library dependencies of a library file:
-            # ldd <library_name>.so
-            set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
-                    SKIP_BUILD_RPATH FALSE # Use separate rpaths during build and install phases
-                    BUILD_WITH_INSTALL_RPATH FALSE # Don't use the install-rpath during the build phase
-                    INSTALL_RPATH "${_rpath}" # search in the same directory, or in lib/<project_name>
-                    INSTALL_RPATH_USE_LINK_PATH TRUE)
-            target_compile_definitions(${${PROJECT_NAME}_PYBIND_MODULE_NAME}
-                    PRIVATE PYBIND_MODULE_NAME=${${PROJECT_NAME}_PYBIND_MODULE_NAME})
-            target_include_directories(${${PROJECT_NAME}_PYBIND_MODULE_NAME} SYSTEM PRIVATE ${Python3_INCLUDE_DIRS})
-            target_link_libraries(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PRIVATE ${PROJECT_NAME})
-
-            # put the library in the source python package directory, such that setup.py can find it
-            # set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
-            # LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_PYTHON_PKG_DIR})
-            if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
-                # copy file to a regular library name so that catkin does not throw an error, but this file may not
-                # work with Python3 because the filename is lib<name>.so, which does not match the module name.
-                set(LIB_NAME lib${${PROJECT_NAME}_PYBIND_MODULE_NAME}.so)
-                set(DEVEL_LIB_PATH ${ERL_CATKIN_DEVEL_LIB_DIR}/${LIB_NAME})
-                set(INSTALL_LIB_PATH ${ERL_CATKIN_INSTALL_LIB_DIR}/${LIB_NAME})
-
-                add_custom_command(TARGET ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
-                        POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${DEVEL_LIB_PATH}
-                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${INSTALL_LIB_PATH}
-                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${${PROJECT_NAME}_PYBIND_MODULE_NAME}> ${${PROJECT_NAME}_PYTHON_PKG_DIR}) # copy to source directory for devel
-            endif ()
+        if (ERL_PYTHON_INSTALL_USER)
+            set(erl_pip_install_args "${erl_pip_install_args} --user")
         endif ()
 
-        if (EXISTS ${${PROJECT_NAME}_ROOT_DIR}/setup.py)
-            option(ERL_PYTHON_INSTALL_USER "Install Python package to user directory" OFF)
-            set(erl_pip_install_args "--verbose")
+        add_custom_target(${PROJECT_NAME}_py_wheel
+                COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel
+                WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
+                COMMENT "Building Python wheel for ${PROJECT_NAME}")
+        add_custom_target(${PROJECT_NAME}_py_develop
+                COMMAND ${Python3_EXECUTABLE} -m pip install -e . ${erl_pip_install_args}
+                WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
+                DEPENDS ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
+                COMMENT "Installing Python package ${PROJECT_NAME} in develop mode")
+        add_custom_target(${PROJECT_NAME}_py_install
+                COMMAND ${Python3_EXECUTABLE} -m pip install . ${erl_pip_install_args}
+                WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
+                COMMENT "Installing Python package ${PROJECT_NAME} in install mode")
+        get_filename_component(stubgen_path ${Python3_EXECUTABLE} DIRECTORY)
+        set(stubgen_path ${stubgen_path}/stubgen)
 
-            if (ERL_PYTHON_INSTALL_USER)
-                set(erl_pip_install_args "${erl_pip_install_args} --user")
-            endif ()
-
-            add_custom_target(${PROJECT_NAME}_py_wheel
-                    COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel
+        if (EXISTS ${stubgen_path})
+            add_custom_target(${PROJECT_NAME}_py_stub
+                    COMMAND ${stubgen_path} -o ${CMAKE_CURRENT_BINARY_DIR}/python/stubs -p ${${PROJECT_NAME}_PY_PACKAGE_NAME}.${${PROJECT_NAME}_PYBIND_MODULE_NAME} --verbose
+                    DEPENDS ${PROJECT_NAME}_py_install
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
-                    COMMENT "Building Python wheel for ${PROJECT_NAME}")
-            add_custom_target(${PROJECT_NAME}_py_develop
-                    COMMAND ${Python3_EXECUTABLE} -m pip install -e . ${erl_pip_install_args}
-                    WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
-                    DEPENDS ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
-                    COMMENT "Installing Python package ${PROJECT_NAME} in develop mode")
-            add_custom_target(${PROJECT_NAME}_py_install
-                    COMMAND ${Python3_EXECUTABLE} -m pip install . ${erl_pip_install_args}
-                    WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
-                    COMMENT "Installing Python package ${PROJECT_NAME} in install mode")
-            get_filename_component(stubgen_path ${Python3_EXECUTABLE} DIRECTORY)
-            set(stubgen_path ${stubgen_path}/stubgen)
-
-            if (EXISTS ${stubgen_path})
-                add_custom_target(${PROJECT_NAME}_py_stub
-                        COMMAND ${stubgen_path} -o ${CMAKE_CURRENT_BINARY_DIR}/python/stubs -p ${${PROJECT_NAME}_PY_PACKAGE_NAME}.${${PROJECT_NAME}_PYBIND_MODULE_NAME} --verbose
-                        DEPENDS ${PROJECT_NAME}_py_install
-                        WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
-                        COMMENT "Generating stub files for Python package ${PROJECT_NAME}")
-            endif ()
-
-            unset(erl_pip_install_args)
-        else ()
-            message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR}, rules for Python package ${PROJECT_NAME} will not be generated.")
+                    COMMENT "Generating stub files for Python package ${PROJECT_NAME}")
         endif ()
+
+        unset(erl_pip_install_args)
+    else ()
+        message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR}, rules for Python package ${PROJECT_NAME} will not be generated.")
     endif ()
-endmacro()
+endfunction()
 
 # ######################################################################################################################
 # erl_install
