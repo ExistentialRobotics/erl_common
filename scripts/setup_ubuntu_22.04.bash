@@ -26,7 +26,15 @@ sudo apt install -y \
   libpcl-dev \
   libyaml-cpp-dev \
   pybind11-dev \
-  libepoxy-dev
+  libepoxy-dev \
+  libgl1-mesa-dev \
+  libwayland-dev \
+  libxkbcommon-dev \
+  wayland-protocols \
+  libegl1-mesa-dev \
+  libc++-dev \
+  libglew-dev \
+  ninja-build
 
 # Upgrade pip
 python3 -m pip install --upgrade pip --user
@@ -100,7 +108,7 @@ if [ ! -d "fmt" ]; then
   git clone https://github.com/fmtlib/fmt
 fi
 cd fmt
-git checkout 10.2.0
+git checkout 11.0.2
 mkdir -p build
 cd build
 cmake ..  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON
@@ -139,8 +147,20 @@ cd ../..
 
 # Install Open3D for erl_geometry
 if [ -d "${SCRIPT_DIR}/../../erl_geometry" ]; then  # If erl_geometry is used
+    if [ ! -d "qhull" ]; then
+      git clone --recursive https://github.com/qhull/qhull.git
+    fi
+    cd qhull
+    git checkout 2022.2
+    mkdir -p my_build
+    cd my_build
+    cmake .. -DCMAKE_BUILD_TYPE=Release
+    make -j`nproc`
+    sudo make install
+    cd ../..
+
     if [ ! -d "Open3D" ]; then
-      git clone --recursive git@github.com:isl-org/Open3D.git
+      git clone --recursive https://github.com/isl-org/Open3D.git
     fi
     cd Open3D
     git checkout 0f06a14
@@ -152,6 +172,8 @@ if [ -d "${SCRIPT_DIR}/../../erl_geometry" ]; then  # If erl_geometry is used
     sudo make install
     # sudo make install-pip-package -j`nproc`  # run this command if you want to use Open3D in Python
     cd ../..
+
+    sudo apt install -y libcgal-dev
 fi
 
 # Install libtorch for erl_neural_sddf

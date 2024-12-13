@@ -88,7 +88,8 @@ macro(erl_add_tests)
 
     if (ERL_BUILD_TEST_${PROJECT_NAME})
         # add gtest
-        file(GLOB GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/*.cpp)
+        file(GLOB GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/*.cpp)  # lexicographically sorted
+        list(REVERSE GTEST_SOURCES)
 
         if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1" AND CATKIN_ENABLE_TESTING)
             foreach (file IN LISTS GTEST_SOURCES)
