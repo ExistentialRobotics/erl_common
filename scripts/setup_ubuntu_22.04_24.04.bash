@@ -36,6 +36,11 @@ sudo apt install -y \
   libglew-dev \
   ninja-build
 
+VERSION_ID=$(source /etc/os-release; echo $VERSION_ID)
+if [ "$VERSION_ID" == "24.04" ]; then
+  sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev libc++-14-dev libc++abi-14-dev xinput libxi-dev
+fi
+
 # Upgrade pip
 python3 -m pip install --upgrade pip --user
 
