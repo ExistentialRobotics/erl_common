@@ -7,7 +7,7 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #include "logging.hpp"
 
-#include <Eigen/Core>
+#include <Eigen/Dense>
 
 #include <fstream>
 

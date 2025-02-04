@@ -2,6 +2,7 @@
 # Add this cmake module path to the cmake module path
 # ######################################################################################################################
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} CACHE INTERNAL "CMake module path")
 set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "ERL CMake directory")
 
 # ######################################################################################################################
@@ -759,38 +760,40 @@ macro(erl_setup_lapack)
                 set(MKL_THREADING "intel_thread")
             endif ()
 
-            if (NOT DEFINED MKLROOT)
-                if (NOT DEFINED ENV{MKLROOT})
-                    unset(MKL_INCLUDE_DIRS CACHE)
-                    erl_find_path(
-                            OUTPUT MKL_INCLUDE_DIRS
-                            PACKAGE MKL
-                            mkl.h
-                            PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
-                            REQUIRED
-                            COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
-                            COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
-                    get_filename_component(MKLROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
-                    get_filename_component(MKLROOT ${MKLROOT} REALPATH)
-                else ()
-                    set(MKLROOT $ENV{MKLROOT})
+            if (NOT TARGET MKL::mkl_core)  # suppose MKL is not configured yet.
+                if (NOT DEFINED MKLROOT)
+                    if (NOT DEFINED ENV{MKLROOT})
+                        unset(MKL_INCLUDE_DIRS CACHE)
+                        erl_find_path(
+                                OUTPUT MKL_INCLUDE_DIRS
+                                PACKAGE MKL
+                                mkl.h
+                                PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
+                                REQUIRED
+                                COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
+                                COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
+                        get_filename_component(MKLROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
+                        get_filename_component(MKLROOT ${MKLROOT} REALPATH)
+                    else ()
+                        set(MKLROOT $ENV{MKLROOT})
+                    endif ()
                 endif ()
-            endif ()
-            message(STATUS "MKLROOT is set to ${MKLROOT}")
+                message(STATUS "MKLROOT is set to ${MKLROOT}")
 
-            set(MKL_DIR ${MKLROOT}/lib/cmake/mkl)
-            set(MKL_ARCH "intel64")
-            set(MKL_LINK "dynamic")
-            set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
-            erl_find_package( # We need to find MKL to get MKL_H
-                    PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
-                    REQUIRED GLOBAL
-                    COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
-                    COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
+                set(MKL_DIR ${MKLROOT}/lib/cmake/mkl)
+                set(MKL_ARCH "intel64")
+                set(MKL_LINK "dynamic")
+                set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
+                erl_find_package( # We need to find MKL to get MKL_H
+                        PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
+                        REQUIRED GLOBAL
+                        COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
+                        COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
 
-            if (NOT DEFINED ENV{MKLROOT})
-                set(ENV{MKLROOT} ${MKLROOT})
-                set(ENV_MKLROOT_SHOULD_BE_CLEARED ON)
+                if (NOT DEFINED ENV{MKLROOT})
+                    set(ENV{MKLROOT} ${MKLROOT})
+                    set(ENV_MKLROOT_SHOULD_BE_CLEARED ON)
+                endif ()
             endif ()
 
             erl_find_package( # LAPACK will resolve the full paths of MKL libraries
@@ -915,25 +918,6 @@ macro(erl_setup_common_packages)
             COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
 
-    erl_find_package(
-            PACKAGE absl
-            REQUIRED GLOBAL
-            COMMANDS APPLE "try `brew install abseil`"
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libabseil-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S abseil-cpp`")
-
-    # absl_INCLUDE_DIRS and absl_LIBRARIES are not set by find_package(absl), so we need to set them manually for catkin
-    get_target_property(absl_INCLUDE_DIRS absl::core_headers INTERFACE_INCLUDE_DIRECTORIES)
-    get_target_property(absl_raw_hash_set_path absl::raw_hash_set LOCATION)
-    get_filename_component(absl_LIB_DIR ${absl_raw_hash_set_path} DIRECTORY)
-    unset(absl_raw_hash_set_path)
-    file(GLOB absl_LIBRARIES ${absl_LIB_DIR}/libabsl_*.so.*)
-    file(GLOB exclude_absl_LIBRARIES ${absl_LIB_DIR}/libabsl_*test*.so.*)
-
-    foreach (exclude_absl_LIBRARY ${exclude_absl_LIBRARIES})
-        list(REMOVE_ITEM absl_LIBRARIES ${exclude_absl_LIBRARY})
-    endforeach ()
-
     # There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
     # enable vectorization of Eigen, borrow from https://github.com/dev-cafe/cmake-cookbook/tree/v1.0/chapter-02/recipe-06
     if (ERL_USE_INTEL_MKL)
@@ -1000,26 +984,7 @@ macro(erl_setup_common_packages)
         set(OpenGL_GL_PREFERENCE "LEGACY")
     endif ()
 
-    # pangolin dependencies: OpenGL, EGL, epoxy
-    erl_find_package(
-            PACKAGE OpenGL
-            REQUIRED COMPONENTS OpenGL EGL
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libglvnd-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S libglvnd`")
-    erl_find_package(
-            PACKAGE epoxy
-            REQUIRED
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libepoxy-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S libepoxy`")
-    erl_find_package(
-            PACKAGE Pangolin
-            REQUIRED
-            COMMANDS UBUNTU_LINUX "try install from https://github.com/stevenlovegrove/Pangolin.git"
-            COMMANDS ARCH_LINUX "try `paru -S pangolin-git`")
-
-    # remove pango_python as it is not needed and causes error when loading other python modules
-    list(REMOVE_ITEM Pangolin_LIBRARIES "pango_python")
-    list(REMOVE_ITEM Pangolin_LIBRARY "pango_python")
+    include(${ERL_CMAKE_DIR}/config_pangolin.cmake)
 
     # erl_find_package(
     # PACKAGE PCL
@@ -1041,14 +1006,6 @@ macro(erl_setup_common_packages)
     # PACKAGE Matplot++
     # REQUIRED
     # COMMANDS GENERAL "visit https://github.com/alandefreitas/matplotplusplus")
-
-    if (ERL_USE_TRACY)
-        set(BUILD_SHARED_LIBS ON)
-        add_subdirectory(deps/tracy)
-        set(LEGACY ON)  # use X11 for Tracy
-        add_subdirectory(deps/tracy/profiler)
-        link_libraries(Tracy::TracyClient)  # link Tracy to all targets
-    endif ()
 
     if (ROS_ACTIVATED)
         if (ROS_VERSION STREQUAL "1")
@@ -1304,9 +1261,9 @@ macro(erl_project_setup _name)
         endif ()
     endif ()
 
+    erl_setup_lapack()
+    erl_setup_common_packages()
     if (NOT ERL_PROJECT_SETUP_DONE OR ROS_ACTIVATED)
-        erl_setup_lapack()
-        erl_setup_common_packages()
         erl_setup_python()
 
         if (NOT ROS_ACTIVATED) # if ROS is activated, there is no PARENT_SCOPE when erl_project_setup is called

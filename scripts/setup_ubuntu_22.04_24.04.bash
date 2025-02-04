@@ -65,7 +65,7 @@ if [ ! -d "eigen" ]; then
   git clone https://gitlab.com/libeigen/eigen.git
 fi
 cd eigen
-git checkout 3abe12472ece589e223e5ee50a1da908c97dceb1
+git checkout f679843dc2792349482af0c02e1daf7032d0c791
 mkdir -p build
 cd build
 cmake ..
@@ -120,19 +120,6 @@ cmake ..  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON
 sudo cmake --build . --target install -- -j $(nproc)
 cd ../..
 
-# Install absl
-if [ ! -d "abseil-cpp-20240722.0" ]; then
-  wget https://github.com/abseil/abseil-cpp/releases/download/20240722.0/abseil-cpp-20240722.0.tar.gz
-  tar -xf abseil-cpp-20240722.0.tar.gz
-fi
-cd abseil-cpp-20240722.0
-mkdir -p build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="${CXXFLAGS} -DNDEBUG" -DCMAKE_CXX_STANDARD=17 -DBUILD_SHARED_LIBS=ON -DABSL_PROPAGATE_CXX_STD=ON
-make -j`nproc`
-sudo make install
-cd ../..
-
 # Install Pangolin
 PANGOLIN_VERSION="0.9.2"
 if [ ! -d "Pangolin-${PANGOLIN_VERSION}" ]; then
@@ -152,6 +139,22 @@ cd ../..
 
 # Install Open3D for erl_geometry
 if [ -d "${SCRIPT_DIR}/../../erl_geometry" ]; then  # If erl_geometry is used
+
+    # Install absl
+    ABSEIL_VERSION="20240722.1"
+    if [ ! -d "abseil-cpp-${ABSEIL_VERSION}" ]; then
+      wget https://github.com/abseil/abseil-cpp/releases/download/${ABSEIL_VERSION}/abseil-cpp-${ABSEIL_VERSION}.tar.gz
+      tar -xf abseil-cpp-${ABSEIL_VERSION}.tar.gz
+    fi
+    cd abseil-cpp-${ABSEIL_VERSION}
+    mkdir -p build
+    cd build
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="${CXXFLAGS} -DNDEBUG" \
+      -DCMAKE_CXX_STANDARD=17 -DBUILD_SHARED_LIBS=ON -DABSL_PROPAGATE_CXX_STD=ON
+    make -j`nproc`
+    sudo make install
+    cd ../..
+
     if [ ! -d "qhull" ]; then
       git clone --recursive https://github.com/qhull/qhull.git
     fi
@@ -159,7 +162,10 @@ if [ -d "${SCRIPT_DIR}/../../erl_geometry" ]; then  # If erl_geometry is used
     git checkout 2022.2
     mkdir -p my_build
     cd my_build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
+    cmake .. -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CXX_FLAGS="-fPIC -ffat-lto-objects" \
+      -DCMAKE_C_FLAGS="-fPIC -ffat-lto-objects" \
+      -DCMAKE_SKIP_RPATH=ON
     make -j`nproc`
     sudo make install
     cd ../..

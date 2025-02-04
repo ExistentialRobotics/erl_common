@@ -20,6 +20,13 @@ erl_catkin_package(
         CATKIN_DEPENDS roscpp
         DEPENDS ${${PROJECT_NAME}_DEPENDS}  # non-catkin dependencies are collected via erl_find_package
         CFG_EXTRAS erl_common_tools.cmake)
+if (ERL_USE_TRACY)
+    set(BUILD_SHARED_LIBS ON)
+    add_subdirectory(deps/tracy)
+    set(LEGACY ON)  # use X11 for Tracy
+    add_subdirectory(deps/tracy/profiler)
+    link_libraries(Tracy::TracyClient)  # link Tracy to all targets
+endif ()
 
 #######################################################################################################################
 # BUILD
@@ -43,7 +50,6 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC ${OpenCV_LIBRARIES}
         PUBLIC ${Pangolin_LIBRARIES}
         PUBLIC yaml-cpp nlohmann_json::nlohmann_json
-        PUBLIC ${absl_LIBRARIES}
         PUBLIC Boost::boost Boost::program_options Boost::graph
         PUBLIC pthread OpenMP::OpenMP_CXX
         PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
