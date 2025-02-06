@@ -1,10 +1,5 @@
 #pragma once
-// disable warning when using Eigen
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #include "logging.hpp"
 
 #include <Eigen/Dense>
@@ -417,5 +412,3 @@ namespace erl::common {
         return ss.str();
     }
 }  // namespace erl::common
-
-#pragma GCC diagnostic pop

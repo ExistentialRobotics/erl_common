@@ -138,6 +138,9 @@ namespace erl::common {
 
 inline std::mutex g_print_mutex{};
 
+#define LOGGING_LABELS           fmt::format("{}:{}", __FILE_NAME__, __LINE__)
+#define LOGGING_LABELED_MSG(msg) fmt::format("{}:{}: {}", __FILE_NAME__, __LINE__, msg)
+
 #if defined(ERL_ROS_VERSION_1) || defined(ERL_ROS_VERSION_2)
     #include <ros/assert.h>
     #include <ros/console.h>
@@ -154,26 +157,26 @@ inline std::mutex g_print_mutex{};
             do { ROS_ASSERT_MSG(expr, fmt::format(__VA_ARGS__).c_str()); } while (false)
     #endif
 #else
-    #define ERL_FATAL(...)                                                                          \
-        do {                                                                                        \
-            g_print_mutex.lock();                                                                   \
-            erl::common::Logging::Fatal("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-            g_print_mutex.unlock();                                                                 \
-            exit(1);                                                                                \
+    #define ERL_FATAL(...)                                                                               \
+        do {                                                                                             \
+            g_print_mutex.lock();                                                                        \
+            erl::common::Logging::Fatal("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
+            g_print_mutex.unlock();                                                                      \
+            exit(1);                                                                                     \
         } while (false)
 
-    #define ERL_ERROR(...)                                                                          \
-        do {                                                                                        \
-            g_print_mutex.lock();                                                                   \
-            erl::common::Logging::Error("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-            g_print_mutex.unlock();                                                                 \
+    #define ERL_ERROR(...)                                                                               \
+        do {                                                                                             \
+            g_print_mutex.lock();                                                                        \
+            erl::common::Logging::Error("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
+            g_print_mutex.unlock();                                                                      \
         } while (false)
 
-    #define ERL_WARN(...)                                                                          \
-        do {                                                                                       \
-            g_print_mutex.lock();                                                                  \
-            erl::common::Logging::Warn("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-            g_print_mutex.unlock();                                                                \
+    #define ERL_WARN(...)                                                                               \
+        do {                                                                                            \
+            g_print_mutex.lock();                                                                       \
+            erl::common::Logging::Warn("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
+            g_print_mutex.unlock();                                                                     \
         } while (false)
 
     #define ERL_WARN_ONCE(...)          \
@@ -190,11 +193,11 @@ inline std::mutex g_print_mutex{};
             if (condition) { ERL_WARN(__VA_ARGS__); } \
         } while (false)
 
-    #define ERL_INFO(...)                                                                          \
-        do {                                                                                       \
-            g_print_mutex.lock();                                                                  \
-            erl::common::Logging::Info("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-            g_print_mutex.unlock();                                                                \
+    #define ERL_INFO(...)                                                                               \
+        do {                                                                                            \
+            g_print_mutex.lock();                                                                       \
+            erl::common::Logging::Info("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
+            g_print_mutex.unlock();                                                                     \
         } while (false)
 
     #define ERL_INFO_ONCE(...)          \
@@ -207,11 +210,11 @@ inline std::mutex g_print_mutex{};
         } while (false)
 
     #ifndef NDEBUG
-        #define ERL_DEBUG(...)                                                                          \
-            do {                                                                                        \
-                g_print_mutex.lock();                                                                   \
-                erl::common::Logging::Debug("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-                g_print_mutex.unlock();                                                                 \
+        #define ERL_DEBUG(...)                                                                               \
+            do {                                                                                             \
+                g_print_mutex.lock();                                                                        \
+                erl::common::Logging::Debug("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
+                g_print_mutex.unlock();                                                                      \
             } while (false)
         #define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
     #else
@@ -230,14 +233,15 @@ inline std::mutex g_print_mutex{};
     } while (false)
 
 #ifndef ERL_ASSERTM
-    #define ERL_ASSERTM(expr, ...)                                                                                                                           \
-        do {                                                                                                                                                 \
-            if (!(expr)) {                                                                                                                                   \
-                g_print_mutex.lock();                                                                                                                        \
-                std::string failure_msg = erl::common::Logging::Failure("assertion ({}) at {}:{}: {}", #expr, __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-                g_print_mutex.unlock();                                                                                                                      \
-                throw std::runtime_error(failure_msg);                                                                                                       \
-            }                                                                                                                                                \
+    #define ERL_ASSERTM(expr, ...)                                                                                                          \
+        do {                                                                                                                                \
+            if (!(expr)) {                                                                                                                  \
+                g_print_mutex.lock();                                                                                                       \
+                std::string failure_msg =                                                                                                   \
+                    erl::common::Logging::Failure("assertion ({}) at {}:{}: {}", #expr, __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
+                g_print_mutex.unlock();                                                                                                     \
+                throw std::runtime_error(failure_msg);                                                                                      \
+            }                                                                                                                               \
         } while (false)
 #endif
 

@@ -3,7 +3,7 @@
 namespace erl::common {
 
     void
-    Logging::SetLevel(Level level) {
+    Logging::SetLevel(const Level level) {
         s_level_ = level;
     }
 

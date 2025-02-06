@@ -1,10 +1,5 @@
 #pragma once
-// disable warning when using pybind11
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
@@ -113,5 +108,3 @@ namespace PYBIND11_NAMESPACE {
 }  // namespace PYBIND11_NAMESPACE
 
 PYBIND11_DECLARE_HOLDER_TYPE(T, RawPtrWrapper<T>);
-
-#pragma GCC diagnostic pop

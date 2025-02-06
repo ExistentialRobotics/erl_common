@@ -84,7 +84,7 @@ endmacro()
 macro(erl_add_tests)
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs LIBRARIES)
+    set(multiValueArgs LIBRARIES EXCLUDE_FROM_ALL)
     cmake_parse_arguments(${PROJECT_NAME}_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (ERL_BUILD_TEST_${PROJECT_NAME})
@@ -103,14 +103,13 @@ macro(erl_add_tests)
         else ()
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
-                message(STATUS "Adding gtest ${name}")
                 add_executable(${name} ${file})
 
                 if (${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS)
                     cmake_parse_arguments("${name}" "" "" "${name}_LIBRARIES" ${${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS})
 
                     if (${name}_${name}_LIBRARIES)
-                        message(STATUS "additional LIBRARIES for ${name}: ${${name}_${name}_LIBRARIES}")
+                        message(STATUS "Additional LIBRARIES for ${name}: ${${name}_${name}_LIBRARIES}")
                     endif ()
 
                     if (${name}_UNPARSED_ARGUMENTS)
@@ -120,19 +119,25 @@ macro(erl_add_tests)
 
                 target_link_libraries(${name} ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main ${${name}_${name}_LIBRARIES})
 
-                if (DEFINED ${name}_GTEST_ARGS)
-                    gtest_discover_tests(
-                            ${name}
-                            EXTRA_ARGS ${${name}_GTEST_ARGS}
-                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                            DISCOVERY_TIMEOUT 60
-                    )
+                if (${name} IN_LIST ${PROJECT_NAME}_TEST_EXCLUDE_FROM_ALL)
+                    message(STATUS "Excluding gtest ${name}")
+                    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
                 else ()
-                    gtest_discover_tests(
-                            ${name}
-                            WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                            DISCOVERY_TIMEOUT 60
-                    )
+                    message(STATUS "Adding gtest ${name}")
+                    if (DEFINED ${name}_GTEST_ARGS)
+                        gtest_discover_tests(
+                                ${name}
+                                EXTRA_ARGS ${${name}_GTEST_ARGS}
+                                WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                                DISCOVERY_TIMEOUT 60
+                        )
+                    else ()
+                        gtest_discover_tests(
+                                ${name}
+                                WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                                DISCOVERY_TIMEOUT 60
+                        )
+                    endif ()
                 endif ()
             endforeach ()
         endif ()
@@ -667,7 +672,7 @@ macro(erl_setup_compiler)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra -flto=auto")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--disable-new-dtags")  # disable new DTAGS since it is not supported in Ubuntu
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree -ftrack-macro-expansion=2")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -funroll-loops")
@@ -761,26 +766,33 @@ macro(erl_setup_lapack)
             endif ()
 
             if (NOT TARGET MKL::mkl_core)  # suppose MKL is not configured yet.
-                if (NOT DEFINED MKLROOT)
-                    if (NOT DEFINED ENV{MKLROOT})
-                        unset(MKL_INCLUDE_DIRS CACHE)
-                        erl_find_path(
-                                OUTPUT MKL_INCLUDE_DIRS
-                                PACKAGE MKL
-                                mkl.h
-                                PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
-                                REQUIRED
-                                COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
-                                COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
-                        get_filename_component(MKLROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
-                        get_filename_component(MKLROOT ${MKLROOT} REALPATH)
-                    else ()
-                        set(MKLROOT $ENV{MKLROOT})
-                    endif ()
+                if (NOT DEFINED MKL_ROOT)
+                    unset(MKL_INCLUDE_DIRS CACHE)
+                    erl_find_path(
+                            OUTPUT MKL_INCLUDE_DIRS
+                            PACKAGE MKL
+                            mkl.h
+                            PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
+                            REQUIRED
+                            COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
+                            COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
+                    get_filename_component(MKL_ROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
+                    get_filename_component(MKL_ROOT ${MKL_ROOT} REALPATH)
                 endif ()
-                message(STATUS "MKLROOT is set to ${MKLROOT}")
+                message(STATUS "MKL_ROOT is set to ${MKL_ROOT}")
 
-                set(MKL_DIR ${MKLROOT}/lib/cmake/mkl)
+                if (NOT DEFINED IOMP_ROOT)
+                    erl_find_path(
+                            OUTPUT IOMP_ROOT
+                            libiomp5.so
+                            REQUIRED
+                            PATHS /usr/lib /usr/local/lib /opt/intel/oneapi/compiler/*/lib)
+                    get_filename_component(IOMP_ROOT ${IOMP_ROOT} DIRECTORY)
+                    get_filename_component(IOMP_ROOT ${IOMP_ROOT} REALPATH)
+                endif ()
+                message(STATUS "IOMP_ROOT is set to ${IOMP_ROOT}")
+
+                set(MKL_DIR ${MKL_ROOT}/lib/cmake/mkl)
                 set(MKL_ARCH "intel64")
                 set(MKL_LINK "dynamic")
                 set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
@@ -789,13 +801,10 @@ macro(erl_setup_lapack)
                         REQUIRED GLOBAL
                         COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
                         COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
-
-                if (NOT DEFINED ENV{MKLROOT})
-                    set(ENV{MKLROOT} ${MKLROOT})
-                    set(ENV_MKLROOT_SHOULD_BE_CLEARED ON)
-                endif ()
             endif ()
 
+            list(APPEND BLAS_mkl_MKLROOT ${MKL_ROOT})
+            list(APPEND BLAS_mkl_MKLROOT ${IOMP_ROOT})
             erl_find_package( # LAPACK will resolve the full paths of MKL libraries
                     PACKAGE LAPACK
                     REQUIRED GLOBAL
@@ -822,11 +831,8 @@ macro(erl_setup_lapack)
 
             # we should unset MKL_DIR and MKLROOT in case some other packages have their own FindMKL scripts.
             unset(MKL_DIR)
-            unset(MKLROOT)
-            if (DEFINED ENV_MKLROOT_SHOULD_BE_CLEARED)
-                unset(ENV{MKLROOT})
-                unset(ENV_MKLROOT_SHOULD_BE_CLEARED)
-            endif ()
+            unset(MKL_ROOT)
+            unset(IOMP_ROOT)
         elseif (ERL_USE_AOCL)
             message(STATUS "Use AMD Optimizing CPU Library")
             add_definitions(-DEIGEN_USE_BLAS)
@@ -913,7 +919,7 @@ macro(erl_setup_common_packages)
             COMMANDS ARCH_LINUX "try `sudo pacman -S openmp`")
     erl_find_package(
             PACKAGE Boost
-            REQUIRED GLOBAL COMPONENTS program_options graph
+            REQUIRED CONFIG GLOBAL COMPONENTS program_options graph
             COMMANDS APPLE "try `brew install boost`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
@@ -1315,6 +1321,7 @@ function(erl_add_pybind_module)
     endif ()
 
     # pybind runtime lib
+    set_target_properties(pybind11::module PROPERTIES SYSTEM ON)
     pybind11_add_module(${arg_PYBIND_MODULE_NAME} ${SRC_FILES})
 
     # # ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling

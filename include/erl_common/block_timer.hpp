@@ -1,8 +1,6 @@
 #pragma once
 
-#include "progress_bar.hpp"
-
-#include <fmt/format.h>
+#include "logging.hpp"
 
 #include <chrono>
 
@@ -10,18 +8,24 @@ namespace erl::common {
 
     template<typename Duration>
     struct BlockTimer {
-        const char *label;
+        std::string label;
         double *dt;
-        bool verbose;
         std::chrono::time_point<std::chrono::high_resolution_clock> t1;
 
-        explicit BlockTimer(const char *label, double *dt = nullptr, const bool verbose = true)
-            : label(label),
+        explicit BlockTimer(std::string label, double *dt = nullptr)
+            : label(std::move(label)),
               dt(dt),
-              verbose(verbose),
               t1(std::chrono::high_resolution_clock::now()) {}
 
+        template<typename T, typename Period>
+        T
+        Elapsed() {
+            auto &&t2 = std::chrono::high_resolution_clock::now();
+            return std::chrono::duration<T, Period>(t2 - t1).count();
+        }
+
         ~BlockTimer() {
+            const bool verbose = Logging::GetLevel() <= Logging::Level::kInfo;
             if (this->dt == nullptr && !verbose) { return; }  // No need to measure time and print message
 
             auto &&t2 = std::chrono::high_resolution_clock::now();
@@ -44,10 +48,13 @@ namespace erl::common {
                     unit = " hrs";
                 }
 
-                std::string msg = fmt::format("{}: {:.3f}{}", label, t_diff, unit);
-                if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
-                ProgressBar::Write(msg);
+                Logging::Info("{}: {:.3f}{}", label, t_diff, unit);
             }
         }
     };
 }  // namespace erl::common
+
+#define ERL_BLOCK_TIMER()                 erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__))
+#define ERL_BLOCK_TIMER_TIME(dt)          erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__), &(dt))
+#define ERL_BLOCK_TIMER_MSG(msg)          erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(msg))
+#define ERL_BLOCK_TIMER_MSG_TIME(msg, dt) erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(msg), &(dt))
