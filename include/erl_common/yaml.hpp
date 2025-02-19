@@ -1,8 +1,8 @@
 #pragma once
 
+#include "factory_pattern.hpp"
 #include "logging.hpp"
 #include "opencv.hpp"
-#include "string_utils.hpp"
 
 #include <yaml-cpp/yaml.h>
 
@@ -16,36 +16,20 @@
 namespace erl::common {
 
     struct YamlableBase {
-    protected:
-        inline static std::map<std::string, std::function<std::shared_ptr<YamlableBase>()>> s_class_id_mapping_ = {};
+        using Factory = FactoryPattern<YamlableBase>;
 
-    public:
         virtual ~YamlableBase() = default;
 
         template<typename Derived>
-        static std::enable_if_t<std::is_base_of_v<YamlableBase, Derived>, bool>
-        Register(std::string yamlable_type = "") {
-            if (yamlable_type.empty()) { yamlable_type = demangle(typeid(Derived).name()); }
-            if (s_class_id_mapping_.find(yamlable_type) != s_class_id_mapping_.end()) {
-                ERL_WARN("{} is already registered.", yamlable_type);
-                return false;
-            }
-
-            s_class_id_mapping_[yamlable_type] = []() { return std::make_shared<Derived>(); };
-            ERL_DEBUG("{} is registered.", yamlable_type);
-            return true;
+        static bool
+        Register(const std::string& yamlable_type = "") {
+            return Factory::GetInstance().Register<Derived>(yamlable_type, []() { return std::make_shared<Derived>(); });
         }
 
         template<typename Derived>
         static std::shared_ptr<Derived>
         Create(const std::string& yamlable_type) {
-            const auto it = s_class_id_mapping_.find(yamlable_type);
-            if (it == s_class_id_mapping_.end()) {
-                ERL_WARN("Unknown yamlable type: {}. Here are the registered yamlable types:", yamlable_type);
-                for (const auto& pair: s_class_id_mapping_) { ERL_WARN("  - {}", pair.first); }
-                return nullptr;
-            }
-            return std::reinterpret_pointer_cast<Derived>(it->second());  // reinterpret_pointer_cast is safe here
+            return std::reinterpret_pointer_cast<Derived>(Factory::GetInstance().Create(yamlable_type));
         }
 
         [[nodiscard]] bool
@@ -83,7 +67,7 @@ namespace erl::common {
 
         [[nodiscard]] bool
         FromYamlFile(const std::string& yaml_file) {
-            ERL_DEBUG_ASSERT(std::filesystem::exists(yaml_file), "File does not exist: {}", yaml_file);
+            ERL_ASSERTM(std::filesystem::exists(yaml_file), "File does not exist: {}", yaml_file);
             const auto node = YAML::LoadFile(yaml_file);
             return FromYamlNode(node);
         }

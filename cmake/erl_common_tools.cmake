@@ -528,7 +528,7 @@ macro(erl_set_project_paths)
             CACHE PATH "Root directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include
             CACHE PATH "Include directory of ${PROJECT_NAME}" FORCE)
-    set(${PROJECT_NAME}_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src
+    set(${PROJECT_NAME}_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}   # set to project root because of catkin
             CACHE PATH "Source directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test
             CACHE PATH "Test directory of ${PROJECT_NAME}" FORCE)
@@ -674,7 +674,7 @@ macro(erl_setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--disable-new-dtags")  # disable new DTAGS since it is not supported in Ubuntu
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree -ftrack-macro-expansion=2")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -funroll-loops -g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -funroll-loops")
 
     if (NOT CMAKE_OSX_DEPLOYMENT_TARGET)

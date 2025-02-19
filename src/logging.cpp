@@ -1,6 +1,8 @@
 #include "erl_common/logging.hpp"
 
 namespace erl::common {
+    Logging::Level Logging::s_level_ = kInfo;
+    std::mutex Logging::g_print_mutex;
 
     void
     Logging::SetLevel(const Level level) {

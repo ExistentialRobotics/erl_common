@@ -30,7 +30,7 @@ namespace erl::common {
         };
 
     private:
-        inline static std::vector<std::weak_ptr<const ProgressBar>> s_progress_bars_{};
+        static std::vector<std::weak_ptr<const ProgressBar>> s_progress_bars_;
 
         std::shared_ptr<Setting> m_setting_ = nullptr;
         double m_fraction_ = 0.0;

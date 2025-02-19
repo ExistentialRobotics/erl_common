@@ -22,6 +22,6 @@
     #define ERL_TRACY_RECORD_ALLOC(ptr, size)                           ((void) 0)
     #define ERL_TRACY_RECORD_FREE(ptr)                                  ((void) 0)
     #define ERL_TRACY_SET_THREAD_NAME(name)                             ((void) 0)
-    #define ERL_TRACY_PLOT(name, value)                                 ((void) 0)
+    #define ERL_TRACY_PLOT(name, value)                                 ((void) (value))
     #define ERL_TRACY_PLOT_CONFIG(name, format_type, step, fill, color) ((void) 0)
 #endif

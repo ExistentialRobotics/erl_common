@@ -58,3 +58,8 @@ namespace erl::common {
 #define ERL_BLOCK_TIMER_TIME(dt)          erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__), &(dt))
 #define ERL_BLOCK_TIMER_MSG(msg)          erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(msg))
 #define ERL_BLOCK_TIMER_MSG_TIME(msg, dt) erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(msg), &(dt))
+
+#define ERL_BLOCK_TIMER_MICRO()                 erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__))
+#define ERL_BLOCK_TIMER_MICRO_TIME(dt)          erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__), &(dt))
+#define ERL_BLOCK_TIMER_MICRO_MSG(msg)          erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(msg))
+#define ERL_BLOCK_TIMER_MICRO_MSG_TIME(msg, dt) erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(msg), &(dt))

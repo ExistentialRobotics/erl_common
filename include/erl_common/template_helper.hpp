@@ -35,11 +35,3 @@ NotNull(T ptr, const std::string &msg, Args &&...args) {
     if (ptr == nullptr) { erl::common::Logging::Error(msg, std::forward<Args>(args)...); }
     return ptr;
 }
-
-#define ERL_SMART_PTR_TYPEDEFS(T)                \
-    using Ptr = std::shared_ptr<T>;              \
-    using ConstPtr = std::shared_ptr<const T>;   \
-    using WeakPtr = std::weak_ptr<T>;            \
-    using ConstWeakPtr = std::weak_ptr<const T>; \
-    using UniquePtr = std::unique_ptr<T>;        \
-    using ConstUniquePtr = std::unique_ptr<const T>

@@ -33,7 +33,7 @@ namespace erl::common {
 
     template<typename T>
     std::vector<T>
-    GenerateShuffledIndices(std::size_t num_samples, double ratio) {
+    GenerateShuffledIndices(std::size_t num_samples, const double ratio) {
         std::vector<T> indices(num_samples);
         std::iota(indices.begin(), indices.end(), 0);
         std::shuffle(indices.begin(), indices.end(), g_random_engine);
@@ -45,26 +45,28 @@ namespace erl::common {
         return indices;
     }
 
-    inline Eigen::VectorXd
-    GenerateGaussianNoise(long size, double mean, double scale) {
-        Eigen::VectorXd noise(size);
-        std::normal_distribution<double> distribution(mean, scale);
-        for (long i = 0; i < size; ++i) { noise[i] = distribution(common::g_random_engine); }
+    template<typename Dtype>
+    Eigen::VectorX<Dtype>
+    GenerateGaussianNoise(const long size, const Dtype mean, const Dtype scale) {
+        Eigen::VectorX<Dtype> noise(size);
+        std::normal_distribution<Dtype> distribution(mean, scale);
+        for (long i = 0; i < size; ++i) { noise[i] = distribution(g_random_engine); }
         return noise;
     }
 
-    inline Eigen::MatrixXd
-    GenerateGaussianNoise(long rows, long cols, double mean, double scale) {
-        Eigen::MatrixXd noise(rows, cols);
-        std::normal_distribution<double> distribution(mean, scale);
+    template<typename Dtype>
+    Eigen::MatrixX<Dtype>
+    GenerateGaussianNoise(const long rows, const long cols, const Dtype mean, const Dtype scale) {
+        Eigen::MatrixX<Dtype> noise(rows, cols);
+        std::normal_distribution<Dtype> distribution(mean, scale);
         for (long i = 0; i < rows; ++i) {
-            for (long j = 0; j < cols; ++j) { noise(i, j) = distribution(common::g_random_engine); }
+            for (long j = 0; j < cols; ++j) { noise(i, j) = distribution(g_random_engine); }
         }
         return noise;
     }
 
     inline void
-    SetGlobalRandomSeed(unsigned int seed) {
+    SetGlobalRandomSeed(const unsigned int seed) {
         g_random_engine.seed(seed);
     }
 }  // namespace erl::common
