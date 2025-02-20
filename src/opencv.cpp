@@ -76,33 +76,4 @@ namespace erl::common {
 
         return out_image;
     }
-
-    cv::Mat &
-    DrawTrajectoryInplace(
-        cv::Mat &map,
-        const Eigen::Ref<const Eigen::Matrix2Xd> &trajectory,
-        const std::shared_ptr<GridMapInfo2D> &grid_map_info,
-        const cv::Scalar &color,
-        const int thickness,
-        const bool pixel_based) {
-
-        const long num_points = trajectory.cols();
-        if (num_points == 0) { return map; }
-
-        std::vector<cv::Point2i> points;
-        points.reserve(num_points);
-        if (pixel_based) {
-            for (long i = 0; i < num_points; ++i) {
-                points.emplace_back(
-                    grid_map_info->MeterToGridForValue(trajectory(0, i), 0),
-                    grid_map_info->Shape(1) - grid_map_info->MeterToGridForValue(trajectory(1, i), 1));
-            }
-        } else {
-            for (long i = 0; i < num_points; ++i) {
-                points.emplace_back(grid_map_info->MeterToGridForValue(trajectory(1, i), 1), grid_map_info->MeterToGridForValue(trajectory(0, i), 0));
-            }
-        }
-        cv::polylines(map, points, false, color, thickness);
-        return map;
-    }
 }  // namespace erl::common

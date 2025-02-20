@@ -475,22 +475,44 @@ namespace erl::common {
     cv::Mat
     AlphaBlending(const cv::Mat &foreground, const cv::Mat &background);
 
+    template<typename Dtype>
     cv::Mat &
     DrawTrajectoryInplace(
         cv::Mat &map,
-        const Eigen::Ref<const Eigen::Matrix2Xd> &trajectory,
-        const std::shared_ptr<GridMapInfo2D> &grid_map_info,
+        const Eigen::Ref<const Eigen::Matrix2X<Dtype>> &trajectory,
+        const std::shared_ptr<GridMapInfo2D<Dtype>> &grid_map_info,
         const cv::Scalar &color,
-        int thickness,
-        bool pixel_based);
+        const int thickness,
+        const bool pixel_based) {
 
-    inline cv::Mat &
+        const long num_points = trajectory.cols();
+        if (num_points == 0) { return map; }
+
+        std::vector<cv::Point2i> points;
+        points.reserve(num_points);
+        if (pixel_based) {
+            for (long i = 0; i < num_points; ++i) {
+                points.emplace_back(
+                    grid_map_info->MeterToGridForValue(trajectory(0, i), 0),
+                    grid_map_info->Shape(1) - grid_map_info->MeterToGridForValue(trajectory(1, i), 1));
+            }
+        } else {
+            for (long i = 0; i < num_points; ++i) {
+                points.emplace_back(grid_map_info->MeterToGridForValue(trajectory(1, i), 1), grid_map_info->MeterToGridForValue(trajectory(0, i), 0));
+            }
+        }
+        cv::polylines(map, points, false, color, thickness);
+        return map;
+    }
+
+    template<typename Dtype>
+    cv::Mat &
     DrawLidarScanAreaInplace(
         cv::Mat &map,
-        const Eigen::Ref<const Eigen::Vector2d> &position,
-        const Eigen::Ref<const Eigen::VectorXd> &angles_in_world,
-        const Eigen::Ref<const Eigen::VectorXd> &ranges,
-        const std::shared_ptr<GridMapInfo2D> &grid_map_info,
+        const Eigen::Ref<const Eigen::Vector2<Dtype>> &position,
+        const Eigen::Ref<const Eigen::VectorX<Dtype>> &angles_in_world,
+        const Eigen::Ref<const Eigen::VectorX<Dtype>> &ranges,
+        const std::shared_ptr<GridMapInfo2D<Dtype>> &grid_map_info,
         const cv::Scalar &color) {
 
         const long num_points = angles_in_world.size();
@@ -512,13 +534,14 @@ namespace erl::common {
         return map;
     }
 
-    inline cv::Mat &
+    template<typename Dtype>
+    cv::Mat &
     DrawLidarRaysInplace(
         cv::Mat &map,
-        const Eigen::Ref<const Eigen::Vector2d> &position,
-        const Eigen::Ref<const Eigen::VectorXd> &angles_in_world,
-        const Eigen::Ref<const Eigen::VectorXd> &ranges,
-        const std::shared_ptr<GridMapInfo2D> &grid_map_info,
+        const Eigen::Ref<const Eigen::Vector2<Dtype>> &position,
+        const Eigen::Ref<const Eigen::VectorX<Dtype>> &angles_in_world,
+        const Eigen::Ref<const Eigen::VectorX<Dtype>> &ranges,
+        const std::shared_ptr<GridMapInfo2D<Dtype>> &grid_map_info,
         const cv::Scalar &color,
         const int &ray_thickness) {
 
