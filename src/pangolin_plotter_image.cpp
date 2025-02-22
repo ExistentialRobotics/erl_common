@@ -1,3 +1,4 @@
+#ifndef ERL_NO_PANGOLIN
 #include "erl_common/pangolin_plotter_image.hpp"
 
 namespace erl::common {
@@ -27,3 +28,4 @@ namespace erl::common {
     }
 
 }  // namespace erl::common
+#endif

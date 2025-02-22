@@ -722,7 +722,7 @@ macro(erl_setup_lapack)
     option(ERL_USE_SINGLE_THREADED_BLAS "Use single-threaded BLAS" ON)
 
     if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.24)
-        set(_GLOBAL_STRING "GLOBAL" STRING)
+        set(_GLOBAL_STRING "GLOBAL")
     else()
         # _GLOBAL_STRING is nothing
         message(STATUS "CMake version is too low at ${CMAKE_VERSION}. Will still try, but may not work correctly.")
@@ -876,7 +876,7 @@ macro(erl_setup_lapack)
                         COMMANDS APPLE "try `brew install openblas`"
                         COMMANDS UBUNTU_LINUX "try `bash scripts/install_openblas_seq.bash`"
                         NAMES libopenblas.so
-                        PATHS /opt/OpenBLAS/lib)
+                        PATHS /usr/lib/x86_64-linux-gnu/)
             endif ()
 
             erl_find_package(
@@ -901,6 +901,7 @@ endmacro()
 macro(erl_setup_common_packages)
     option(ERL_USE_TRACY "Use Tracy Profiler" OFF)
     option(ERL_TRACY_PROFILE_MEMORY "Profile memory usage" OFF)
+
     if (ERL_USE_TRACY)
         set(TRACY_ENABLE ON)
         if (ERL_TRACY_PROFILE_MEMORY)
@@ -909,7 +910,7 @@ macro(erl_setup_common_packages)
     endif ()
 
     if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.24)
-        set(_GLOBAL_STRING "GLOBAL" STRING)
+        set(_GLOBAL_STRING "GLOBAL")
     else()
         # _GLOBAL_STRING is nothing
         message(STATUS "CMake version is too low at ${CMAKE_VERSION}. Will still try, but may not work correctly.")
@@ -1009,6 +1010,12 @@ macro(erl_setup_common_packages)
     endif ()
 
     include(${ERL_CMAKE_DIR}/config_pangolin.cmake)
+
+    if (Pangolin_FOUND)
+        message(STATUS "Pangolin is FOUND. Will build with Pangolin")
+    else()
+        message(WARNING "Pangolin is NOT FOUND. Will build without Pangolin")
+    endif()
 
     # erl_find_package(
     # PACKAGE PCL

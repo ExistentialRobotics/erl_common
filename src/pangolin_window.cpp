@@ -1,3 +1,4 @@
+#ifndef ERL_NO_PANGOLIN
 #include "erl_common/pangolin_window.hpp"
 
 #include "erl_common/random.hpp"
@@ -15,3 +16,4 @@ namespace erl::common {
     }
 
 }  // namespace erl::common
+#endif

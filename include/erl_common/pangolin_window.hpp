@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef ERL_NO_PANGOLIN
 #include <pangolin/display/display.h>
 #include <pangolin/pangolin.h>
 
@@ -54,3 +55,4 @@ namespace erl::common {
     };
 
 }  // namespace erl::common
+#endif
