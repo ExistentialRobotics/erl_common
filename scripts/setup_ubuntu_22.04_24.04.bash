@@ -55,22 +55,25 @@ sudo apt install -y cmake
 wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \ | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
 sudo apt update
-sudo apt install -y intel-basekit liblapacke-dev liblapack-dev
+sudo apt install -y intel-basekit-2024.1 liblapacke-dev liblapack-dev
 
 mkdir -p build/3rdparty
 cd build/3rdparty
 
 # Install Eigen3
-if [ ! -d "eigen" ]; then
-  git clone https://gitlab.com/libeigen/eigen.git
+if dpkg --compare-versions ${VERSION_ID} lt 24.04; then   # older than 24.04
+    # before 24.04, Eigen3 is older than 3.4.0
+    if [ ! -d "eigen" ]; then
+      git clone https://gitlab.com/libeigen/eigen.git
+    fi
+    cd eigen
+    git checkout 3.4.0
+    mkdir -p build
+    cd build
+    cmake ..
+    sudo cmake --build . --target install -- -j $(nproc)
+    cd ../..
 fi
-cd eigen
-git checkout f679843dc2792349482af0c02e1daf7032d0c791
-mkdir -p build
-cd build
-cmake ..
-sudo cmake --build . --target install -- -j $(nproc)
-cd ../..
 
 # Install pybind11
 if [ ! -d "pybind11" ]; then
@@ -121,15 +124,12 @@ sudo cmake --build . --target install -- -j $(nproc)
 cd ../..
 
 # Install Pangolin
-PANGOLIN_VERSION="0.9.2"
+PANGOLIN_VERSION="0.9.3"
 if [ ! -d "Pangolin-${PANGOLIN_VERSION}" ]; then
-    tarfile="Pangolin-${PANGOLIN_VERSION}.tar.gz"
-    if [ ! -f "${tarfile}" ]; then
-        wget "https://github.com/stevenlovegrove/Pangolin/archive/refs/tags/v${PANGOLIN_VERSION}.tar.gz" -O ${tarfile}
-    fi
-    tar -xf ${tarfile}
+    git clone https://github.com/stevenlovegrove/Pangolin.git
 fi
-cd Pangolin-${PANGOLIN_VERSION}
+cd Pangolin
+git checkout v${PANGOLIN_VERSION}
 mkdir -p build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -178,7 +178,25 @@ if [ -d "${SCRIPT_DIR}/../../erl_geometry" ]; then  # If erl_geometry is used
     echo y | util/install_deps_ubuntu.sh
     mkdir -p build
     cd build
-    cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
+    cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+        -DUSE_SYSTEM_EIGEN3=ON \
+        -DUSE_SYSTEM_FMT=ON \
+        -DUSE_SYSTEM_GOOGLETEST=ON \
+        -DUSE_SYSTEM_JSONCPP=ON \
+        -DUSE_SYSTEM_NANOFLANN=ON \
+        -DUSE_SYSTEM_PYBIND11=ON \
+        -DUSE_SYSTEM_QHULLCPP=ON \
+        -DUSE_SYSTEM_TBB=ON \
+        -DUSE_SYSTEM_VTK=ON \
+        -DGLIBCXX_USE_CXX11_ABI=ON \
+        -DBUILD_EXAMPLES=OFF \
+        -DBUILD_UNIT_TESTS=OFF \
+        -DBUILD_BENCHMARKS=OFF \
+        -DOPEN3D_USE_ONEAPI_PACKAGES=ON
+        -DCMAKE_FIND_ROOT_PATH=/opt/intel/oneapi/tbb/latest/lib/cmake/tbb
+        -DoneDPL_DIR=/opt/intel/oneapi/dpl/latest/lib/cmake/oneDPL
+        -DMKL_DIR=/opt/intel/oneapi/mkl/latest/lib/cmake/mkl
+
     make -j`nproc`
     sudo make install
     # sudo make install-pip-package -j`nproc`  # run this command if you want to use Open3D in Python
