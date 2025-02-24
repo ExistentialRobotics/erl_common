@@ -12,28 +12,30 @@
 
 namespace erl::common {
 
-    template<typename T, int Dim, bool RowMajor = true>
+    template<typename T, int Dim, bool RowMajor = true, typename InfoDtype = double>
     struct GridMap {  // for 2D, row-axis is x, column-axis is y
+        typedef GridMapInfo<InfoDtype, Dim> _GridMapInfo;
+        typedef std::shared_ptr<_GridMapInfo> _GridMapInfoPtr;
         Tensor<T, Dim, RowMajor> data;
-        std::shared_ptr<GridMapInfo<Dim>> info;
+        _GridMapInfoPtr info;
 
-        explicit GridMap(std::shared_ptr<GridMapInfo<Dim>> grid_map_info)
+        explicit GridMap(_GridMapInfoPtr grid_map_info)
             : data(grid_map_info->Shape()),
               info(std::move(grid_map_info)) {}
 
-        GridMap(std::shared_ptr<GridMapInfo<Dim>> grid_map_info, T value)
+        GridMap(_GridMapInfoPtr grid_map_info, T value)
             : data(grid_map_info->Shape(), value),
               info(std::move(grid_map_info)) {}
 
-        GridMap(std::shared_ptr<GridMapInfo<Dim>> grid_map_info, Tensor<T, Dim, RowMajor> data)
+        GridMap(_GridMapInfoPtr grid_map_info, Tensor<T, Dim, RowMajor> data)
             : data(std::move(data)),
               info(std::move(grid_map_info)) {}
 
-        GridMap(std::shared_ptr<GridMapInfo<Dim>> grid_map_info, Eigen::VectorX<T> data)
+        GridMap(_GridMapInfoPtr grid_map_info, Eigen::VectorX<T> data)
             : data(grid_map_info->Shape(), data),
               info(std::move(grid_map_info)) {}
 
-        GridMap(std::shared_ptr<GridMapInfo<Dim>> grid_map_info, const std::function<T(void)> &data_init_func)
+        GridMap(_GridMapInfoPtr grid_map_info, const std::function<T(void)> &data_init_func)
             : data(grid_map_info->Shape(), data_init_func),
               info(std::move(grid_map_info)) {}
     };
@@ -58,9 +60,13 @@ namespace erl::common {
     using GridMapIntXd = GridMapX<int>;
     using GridMapUnsignedXd = GridMapX<uint8_t>;
 
-    template<typename T>
+    template<typename T, typename InfoDtype = double>
     class IncrementalGridMap2D {
-        std::shared_ptr<GridMapInfo2D> m_grid_map_info_;
+    public:
+        typedef GridMapInfo2D<InfoDtype> _GridMapInfo;
+        typedef std::shared_ptr<_GridMapInfo> _GridMapInfoPtr;
+    private:
+        _GridMapInfoPtr m_grid_map_info_;
         Eigen::MatrixX<T> m_data_;
         std::function<T()> m_data_init_func_;
         mutable std::shared_mutex m_mutex_;  // mutable for const methods, m_mutex_ is for thread-safe of m_data_
@@ -80,14 +86,14 @@ namespace erl::common {
     public:
         IncrementalGridMap2D() = delete;
 
-        explicit IncrementalGridMap2D(std::shared_ptr<GridMapInfo2D> grid_map_info, const std::function<T()> &data_init_func = {})
+        explicit IncrementalGridMap2D(_GridMapInfoPtr grid_map_info, const std::function<T()> &data_init_func = {})
             : m_grid_map_info_(std::move(grid_map_info)),
               m_data_(m_grid_map_info_->Shape(0), m_grid_map_info_->Shape(1)),
               m_data_init_func_(data_init_func) {
             ERL_ASSERTM(m_data_.cols() > 0 && m_data_.rows() > 0, "The shape of the grid map must be positive.");
         }
 
-        [[nodiscard]] std::shared_ptr<GridMapInfo2D>
+        [[nodiscard]] _GridMapInfoPtr
         GetGridMapInfo() const {
             return m_grid_map_info_;
         }
@@ -100,7 +106,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] Eigen::MatrixX8U
-        AsImage(const std::shared_ptr<GridMapInfo2D> &grid_map_info, const std::function<uint8_t(const T &)> &cast_func) const {
+        AsImage(const _GridMapInfoPtr &grid_map_info, const std::function<uint8_t(const T &)> &cast_func) const {
             Eigen::MatrixX8U image;
             const long n_rows = m_data_.rows();
             const long n_cols = m_data_.cols();
@@ -347,7 +353,7 @@ namespace erl::common {
             }
             long n_rows = m_data_.rows();
             long n_cols = m_data_.cols();
-            auto new_grid_map_info = std::make_shared<GridMapInfo2D>(
+            auto new_grid_map_info = std::make_shared<_GridMapInfo>(
                 Eigen::Vector2i(n_rows * 2 + 1, n_cols * 2 + 1),
                 Eigen::Vector2d(new_x_min, new_y_min),
                 Eigen::Vector2d(new_x_max, new_y_max));

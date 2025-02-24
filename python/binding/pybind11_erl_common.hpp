@@ -1,37 +1,38 @@
 #pragma once
 
 #include "erl_common/grid_map.hpp"
+#include "erl_common/grid_map_drawer_2d.hpp"
 #include "erl_common/pybind11.hpp"
 
 namespace py = pybind11;
 
 namespace erl::common {
-    template<int Dim>
+    template<typename Dtype, int Dim>
     auto
     BindGridMapInfo(py::module &m, const std::string &name) {
-        using Self = GridMapInfo<Dim>;
+        using Self = GridMapInfo<Dtype, Dim>;
         return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
             .def(
-                py::init<const Eigen::Vector<double, Dim> &, const Eigen::Vector<double, Dim> &, const Eigen::Vector<double, Dim> &, Eigen::Vector<int, Dim>>(),
+                py::init<const Eigen::Vector<Dtype, Dim> &, const Eigen::Vector<Dtype, Dim> &, const Eigen::Vector<Dtype, Dim> &, Eigen::Vector<int, Dim>>(),
                 py::arg("min"),
                 py::arg("max"),
                 py::arg("resolution"),
                 py::arg("padding"))
             .def(
-                py::init<Eigen::Vector<int, Dim>, const Eigen::Vector<double, Dim> &, const Eigen::Vector<double, Dim> &>(),
+                py::init<Eigen::Vector<int, Dim>, const Eigen::Vector<Dtype, Dim> &, const Eigen::Vector<Dtype, Dim> &>(),
                 py::arg("map_shape"),
                 py::arg("min"),
                 py::arg("max"))
             .def(
                 "extend",
-                py::overload_cast<int, double, double, int>(&Self::Extend, py::const_),
+                py::overload_cast<int, Dtype, Dtype, int>(&Self::Extend, py::const_),
                 py::arg("size"),
                 py::arg("min"),
                 py::arg("max"),
                 py::arg("dim"))
             .def(
                 "extend",
-                py::overload_cast<double, double, double, int, int>(&Self::Extend, py::const_),
+                py::overload_cast<Dtype, Dtype, Dtype, int, int>(&Self::Extend, py::const_),
                 py::arg("min"),
                 py::arg("max"),
                 py::arg("resolution"),
@@ -169,15 +170,16 @@ namespace erl::common {
     typename std::enable_if<py::SupportedByNumpy<T>::value, py::class_<GridMap<T, Dim>, std::shared_ptr<GridMap<T, Dim>>>>::type
     BindGridMap(py::module &m, const std::string &name) {
         using Self = GridMap<T, Dim>;
+        using GridMapInfoPtr = typename GridMap<T, Dim>::_GridMapInfoPtr;
         auto py_class =
             py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
-                .def(py::init<std::shared_ptr<GridMapInfo<Dim>>>(), py::arg("grid_map_info"))
-                .def(py::init<std::shared_ptr<GridMapInfo<Dim>>, T>(), py::arg("grid_map_info"), py::arg("value"))
-                .def(py::init<std::shared_ptr<GridMapInfo<Dim>>, Tensor<T, Dim>>(), py::arg("grid_map_info"), py::arg("data"))
-                .def(py::init<std::shared_ptr<GridMapInfo<Dim>>, const std::function<T(void)> &>(), py::arg("grid_map_info"), py::arg("data_init_func"))
+                .def(py::init<GridMapInfoPtr>(), py::arg("grid_map_info"))
+                .def(py::init<GridMapInfoPtr, T>(), py::arg("grid_map_info"), py::arg("value"))
+                .def(py::init<GridMapInfoPtr, Tensor<T, Dim>>(), py::arg("grid_map_info"), py::arg("data"))
+                .def(py::init<GridMapInfoPtr, const std::function<T(void)> &>(), py::arg("grid_map_info"), py::arg("data_init_func"))
                 .def_readwrite("data", &Self::data)
                 .def_readwrite("info", &Self::info);
-        py_class.def(py::init<std::shared_ptr<GridMapInfo<Dim>>, Eigen::VectorX<T>>(), py::arg("grid_map_info"), py::arg("data"));
+        py_class.def(py::init<GridMapInfoPtr, Eigen::VectorX<T>>(), py::arg("grid_map_info"), py::arg("data"));
         return py_class;
     }
 
@@ -185,16 +187,17 @@ namespace erl::common {
     typename std::enable_if<!py::SupportedByNumpy<T>::value, py::class_<GridMap<T, Dim>, std::shared_ptr<GridMap<T, Dim>>>>::type
     BindGridMap(py::module &m, const std::string &name) {
         using Self = GridMap<T, Dim>;
+        using GridMapInfoPtr = typename GridMap<T, Dim>::_GridMapInfoPtr;
         auto py_class =
             py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
-                .def(py::init<std::shared_ptr<GridMapInfo<Dim>>>(), py::arg("grid_map_info"))
-                .def(py::init<std::shared_ptr<GridMapInfo<Dim>>, T>(), py::arg("grid_map_info"), py::arg("value"))
-                .def(py::init<std::shared_ptr<GridMapInfo<Dim>>, Tensor<T, Dim>>(), py::arg("grid_map_info"), py::arg("data"))
-                .def(py::init<std::shared_ptr<GridMapInfo<Dim>>, const std::function<T(void)> &>(), py::arg("grid_map_info"), py::arg("data_init_func"))
+                .def(py::init<GridMapInfoPtr>(), py::arg("grid_map_info"))
+                .def(py::init<GridMapInfoPtr, T>(), py::arg("grid_map_info"), py::arg("value"))
+                .def(py::init<GridMapInfoPtr, Tensor<T, Dim>>(), py::arg("grid_map_info"), py::arg("data"))
+                .def(py::init<GridMapInfoPtr, const std::function<T(void)> &>(), py::arg("grid_map_info"), py::arg("data_init_func"))
                 .def_readwrite("data", &Self::data)
                 .def_readwrite("info", &Self::info);
         py_class.def(
-            py::init<>([](std::shared_ptr<GridMapInfo<Dim>> grid_map_info, const std::vector<T> &data) {
+            py::init<>([](GridMapInfoPtr grid_map_info, const std::vector<T> &data) {
                 Eigen::Map<const Eigen::VectorX<T>> data_map(data.data(), data.size());
                 return std::make_shared<Self>(grid_map_info, Eigen::VectorX<T>(data_map));
             }),
@@ -207,9 +210,10 @@ namespace erl::common {
     typename std::enable_if<py::SupportedByNumpy<T>::value, py::class_<IncrementalGridMap2D<T>>>::type
     BindIncrementalGridMap2D(py::module &m, const std::string &name) {
         using Self = IncrementalGridMap2D<T>;
+        using GridMapInfoPtr = typename IncrementalGridMap2D<T>::_GridMapInfoPtr;
         return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
             .def(
-                py::init<>([](std::shared_ptr<GridMapInfo2D> grid_map_info, const std::function<T(void)> &data_init_func) {
+                py::init<>([](GridMapInfoPtr grid_map_info, const std::function<T(void)> &data_init_func) {
                     return std::make_shared<Self>(grid_map_info, data_init_func);
                 }),
                 py::arg("grid_map_info"),
@@ -218,7 +222,7 @@ namespace erl::common {
             .def("get_canonical_metric_coords", &Self::GetCanonicalMetricCoords, py::arg("metric_coords"))
             .def(
                 "as_image",
-                py::overload_cast<const std::shared_ptr<GridMapInfo2D> &, const std::function<uint8_t(const T &)> &>(&Self::AsImage, py::const_),
+                py::overload_cast<const GridMapInfoPtr &, const std::function<uint8_t(const T &)> &>(&Self::AsImage, py::const_),
                 py::arg("grid_map_info"),
                 py::arg("cast_func").none(false))
             .def("__call__", py::overload_cast<int, int>(&Self::operator(), py::const_), py::arg("x_grid"), py::arg("y_grid"))
@@ -276,9 +280,11 @@ namespace erl::common {
     typename std::enable_if<!py::SupportedByNumpy<T>::value, py::class_<IncrementalGridMap2D<T>>>::type
     BindIncrementalGridMap2D(py::module &m, const std::string &name) {
         using Self = IncrementalGridMap2D<T>;
+        using GridMapInfoPtr = typename IncrementalGridMap2D<T>::_GridMapInfoPtr;
+        // typedef typename IncrementalGridMap2D<T>::_GridMapInfoPtr GridMapInfoPtr;
         return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
             .def(
-                py::init<>([](std::shared_ptr<GridMapInfo2D> grid_map_info, const std::function<T(void)> &data_init_func) {
+                py::init<>([](GridMapInfoPtr grid_map_info, const std::function<T(void)> &data_init_func) {
                     return std::make_shared<Self>(grid_map_info, data_init_func);
                 }),
                 py::arg("grid_map_info"),
@@ -287,7 +293,7 @@ namespace erl::common {
             .def("get_canonical_metric_coords", &Self::GetCanonicalMetricCoords, py::arg("metric_coords"))
             .def(
                 "as_image",
-                py::overload_cast<const std::shared_ptr<GridMapInfo2D> &, const std::function<uint8_t(const T &)> &>(&Self::AsImage, py::const_),
+                py::overload_cast<const GridMapInfoPtr &, const std::function<uint8_t(const T &)> &>(&Self::AsImage, py::const_),
                 py::arg("grid_map_info"),
                 py::arg("cast_func").none(false))
             .def("__call__", py::overload_cast<int, int>(&Self::operator(), py::const_), py::arg("x_grid"), py::arg("y_grid"))
@@ -373,5 +379,43 @@ namespace erl::common {
                 },
                 py::arg("metric_min"),
                 py::arg("metric_max"));
+    }
+
+    template<typename InfoDtype>
+    typename std::enable_if<py::SupportedByNumpy<InfoDtype>::value, py::class_<GridMapDrawer2D<InfoDtype>>>::type
+    BindGridMapDrawer2D(py::module& m, const std::string& name) {
+        using Self = GridMapDrawer2D<InfoDtype>;
+        using GridMapPtr = typename Self::_GridMapInfoPtr;
+        return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
+            .def(py::init<const GridMapPtr &>(), py::arg("grid_map_info"))
+            .def_readwrite("grid_map_info", &Self::grid_map_info)
+            .def_property(
+                "image",
+                [](const Self &self) { return self.image; },
+                [](Self &self, const cv::Mat &image) { image.copyTo(self.image); })
+            .def("reset_image", &Self::ResetImage)
+            .def(
+                "draw_segments_inplace",
+                &Self::DrawSegmentsInplace,
+                py::arg("mat"),
+                py::arg("color"),
+                py::arg("thickness"),
+                py::arg("starts"),
+                py::arg("ends"))
+            .def("draw_segments", &Self::DrawSegments, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
+            .def("draw_rays_inplace", &Self::DrawRaysInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
+            .def("draw_rays", &Self::DrawRays, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
+            .def(
+                "draw_polyline_inplace",
+                &Self::DrawPolylineInplace,
+                py::arg("mat"),
+                py::arg("color"),
+                py::arg("thickness"),
+                py::arg("closed"),
+                py::arg("points"))
+            .def("draw_polyline", &Self::DrawPolyline, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("closed"), py::arg("points"))
+            .def("draw_contour_inplace", &Self::DrawContourInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("contour"))
+            .def("draw_contour", &Self::DrawContour, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("contour"))
+            .def("show_image", &Self::ShowImage, py::arg("title"));
     }
 }  // namespace erl::common

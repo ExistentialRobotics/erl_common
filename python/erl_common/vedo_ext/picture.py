@@ -1,6 +1,12 @@
 import numpy as np
 import numpy.typing as npt
-from vedo import Picture, Grid
+from vedo import Grid
+
+# vedo.Picture changes to vedo.Image
+try:
+    from vedo import Picture:
+except ImportError:
+    from vedo import Image as Picture
 
 
 def image_mesh(pic: Picture, x_coords: np.ndarray, y_coords: np.ndarray) -> Grid:

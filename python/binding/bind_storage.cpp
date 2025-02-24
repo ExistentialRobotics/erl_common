@@ -30,48 +30,48 @@ BindStorage(py::module &m) {
             py::arg("shape"),
             py::arg("item_size"));
 
-    BindGridMapInfo<Eigen::Dynamic>(submodule, "GridMapInfoXd")
-        .def("grid_to_pixel_for_points", &GridMapInfoXd::GridToPixelForPoints<Eigen::Dynamic>, py::arg("grid_points"))
-        .def("pixel_to_grid_for_points", &GridMapInfoXd::PixelToGridForPoints<Eigen::Dynamic>, py::arg("pixel_points"))
-        .def("meter_to_pixel_for_points", &GridMapInfoXd::MeterToPixelForPoints<Eigen::Dynamic>, py::arg("meter_points"))
-        .def("pixel_to_meter_for_points", &GridMapInfoXd::PixelToMeterForPoints<Eigen::Dynamic>, py::arg("pixel_points"))
-        .def("grid_to_pixel_for_vectors", &GridMapInfoXd::GridToPixelForVectors<Eigen::Dynamic>, py::arg("grid_vectors"))
-        .def("pixel_to_grid_for_vectors", &GridMapInfoXd::PixelToGridForVectors<Eigen::Dynamic>, py::arg("pixel_vectors"))
-        .def("meter_to_pixel_for_vectors", &GridMapInfoXd::MeterToPixelForVectors<Eigen::Dynamic>, py::arg("meter_vectors"))
-        .def("pixel_to_meter_for_vectors", &GridMapInfoXd::PixelToMeterForVectors<Eigen::Dynamic>, py::arg("pixel_vectors"))
-        .def("pixel_to_index", &GridMapInfoXd::PixelToIndex<Eigen::Dynamic>, py::arg("pixel"), py::arg("c_stride"))
-        .def("index_to_pixel", &GridMapInfoXd::IndexToPixel<Eigen::Dynamic>, py::arg("index"), py::arg("c_stride"))
+    BindGridMapInfo<double, Eigen::Dynamic>(submodule, "GridMapInfoXd")
+        .def("grid_to_pixel_for_points", &GridMapInfoXDd::GridToPixelForPoints<Eigen::Dynamic>, py::arg("grid_points"))
+        .def("pixel_to_grid_for_points", &GridMapInfoXDd::PixelToGridForPoints<Eigen::Dynamic>, py::arg("pixel_points"))
+        .def("meter_to_pixel_for_points", &GridMapInfoXDd::MeterToPixelForPoints<Eigen::Dynamic>, py::arg("meter_points"))
+        .def("pixel_to_meter_for_points", &GridMapInfoXDd::PixelToMeterForPoints<Eigen::Dynamic>, py::arg("pixel_points"))
+        .def("grid_to_pixel_for_vectors", &GridMapInfoXDd::GridToPixelForVectors<Eigen::Dynamic>, py::arg("grid_vectors"))
+        .def("pixel_to_grid_for_vectors", &GridMapInfoXDd::PixelToGridForVectors<Eigen::Dynamic>, py::arg("pixel_vectors"))
+        .def("meter_to_pixel_for_vectors", &GridMapInfoXDd::MeterToPixelForVectors<Eigen::Dynamic>, py::arg("meter_vectors"))
+        .def("pixel_to_meter_for_vectors", &GridMapInfoXDd::PixelToMeterForVectors<Eigen::Dynamic>, py::arg("pixel_vectors"))
+        .def("pixel_to_index", &GridMapInfoXDd::PixelToIndex<Eigen::Dynamic>, py::arg("pixel"), py::arg("c_stride"))
+        .def("index_to_pixel", &GridMapInfoXDd::IndexToPixel<Eigen::Dynamic>, py::arg("index"), py::arg("c_stride"))
         .def(
             "get_metric_coordinates_of_filled_metric_polygon",
-            &GridMapInfoXd::GetMetricCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
+            &GridMapInfoXDd::GetMetricCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
             py::arg("polygon_metric_vertices"))
         .def(
             "get_grid_coordinates_of_filled_metric_polygon",
-            &GridMapInfoXd::GetGridCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
+            &GridMapInfoXDd::GetGridCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
             py::arg("polygon_metric_vertices"))
         .def(
             "get_pixel_coordinates_of_filled_metric_polygon",
-            &GridMapInfoXd::GetPixelCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
+            &GridMapInfoXDd::GetPixelCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
             py::arg("polygon_metric_vertices"));
-    BindGridMapInfo<2>(submodule, "GridMapInfo2D")
-        .def("grid_to_pixel_for_points", &GridMapInfo2D::GridToPixelForPoints<2>, py::arg("grid_points"))
-        .def("pixel_to_grid_for_points", &GridMapInfo2D::PixelToGridForPoints<2>, py::arg("pixel_points"))
-        .def("meter_to_pixel_for_points", &GridMapInfo2D::MeterToPixelForPoints<2>, py::arg("meter_points"))
-        .def("pixel_to_meter_for_points", &GridMapInfo2D::PixelToMeterForPoints<2>, py::arg("pixel_points"))
-        .def("grid_to_pixel_for_vectors", &GridMapInfo2D::GridToPixelForVectors<2>, py::arg("grid_vectors"))
-        .def("pixel_to_grid_for_vectors", &GridMapInfo2D::PixelToGridForVectors<2>, py::arg("pixel_vectors"))
-        .def("meter_to_pixel_for_vectors", &GridMapInfo2D::MeterToPixelForVectors<2>, py::arg("meter_vectors"))
-        .def("pixel_to_meter_for_vectors", &GridMapInfo2D::PixelToMeterForVectors<2>, py::arg("pixel_vectors"))
-        .def("pixel_to_index", &GridMapInfo2D::PixelToIndex<2>, py::arg("pixel"), py::arg("c_stride"))
-        .def("index_to_pixel", &GridMapInfo2D::IndexToPixel<2>, py::arg("index"), py::arg("c_stride"))
+    BindGridMapInfo<double, 2>(submodule, "GridMapInfo2D")
+        .def("grid_to_pixel_for_points", &GridMapInfo2Dd::GridToPixelForPoints<2>, py::arg("grid_points"))
+        .def("pixel_to_grid_for_points", &GridMapInfo2Dd::PixelToGridForPoints<2>, py::arg("pixel_points"))
+        .def("meter_to_pixel_for_points", &GridMapInfo2Dd::MeterToPixelForPoints<2>, py::arg("meter_points"))
+        .def("pixel_to_meter_for_points", &GridMapInfo2Dd::PixelToMeterForPoints<2>, py::arg("pixel_points"))
+        .def("grid_to_pixel_for_vectors", &GridMapInfo2Dd::GridToPixelForVectors<2>, py::arg("grid_vectors"))
+        .def("pixel_to_grid_for_vectors", &GridMapInfo2Dd::PixelToGridForVectors<2>, py::arg("pixel_vectors"))
+        .def("meter_to_pixel_for_vectors", &GridMapInfo2Dd::MeterToPixelForVectors<2>, py::arg("meter_vectors"))
+        .def("pixel_to_meter_for_vectors", &GridMapInfo2Dd::PixelToMeterForVectors<2>, py::arg("pixel_vectors"))
+        .def("pixel_to_index", &GridMapInfo2Dd::PixelToIndex<2>, py::arg("pixel"), py::arg("c_stride"))
+        .def("index_to_pixel", &GridMapInfo2Dd::IndexToPixel<2>, py::arg("index"), py::arg("c_stride"))
         .def(
             "get_metric_coordinates_of_filled_metric_polygon",
-            &GridMapInfo2D::GetMetricCoordinatesOfFilledMetricPolygon<2>,
+            &GridMapInfo2Dd::GetMetricCoordinatesOfFilledMetricPolygon<2>,
             py::arg("polygon_metric_vertices"))
-        .def("get_grid_coordinates_of_filled_metric_polygon", &GridMapInfo2D::GetGridCoordinatesOfFilledMetricPolygon<2>, py::arg("polygon_metric_vertices"))
-        .def("get_pixel_coordinates_of_filled_metric_polygon", &GridMapInfo2D::GetPixelCoordinatesOfFilledMetricPolygon<2>, py::arg("polygon_metric_vertices"));
+        .def("get_grid_coordinates_of_filled_metric_polygon", &GridMapInfo2Dd::GetGridCoordinatesOfFilledMetricPolygon<2>, py::arg("polygon_metric_vertices"))
+        .def("get_pixel_coordinates_of_filled_metric_polygon", &GridMapInfo2Dd::GetPixelCoordinatesOfFilledMetricPolygon<2>, py::arg("polygon_metric_vertices"));
 
-    BindGridMapInfo<3>(submodule, "GridMapInfo3D");
+    BindGridMapInfo<double, 3>(submodule, "GridMapInfo3D");
 
     BindTensor<double, 2>(submodule, "TensorDouble2D");
     BindTensor<double, 3>(submodule, "TensorDouble3D");
@@ -93,35 +93,5 @@ BindStorage(py::module &m) {
     BindGridMap<uint8_t, 3>(submodule, "GridMapUnsigned3D");
     BindGridMap<uint8_t, Eigen::Dynamic>(submodule, "GridMapUnsignedXd");
 
-    py::class_<GridMapDrawer2D>(submodule, "GridMapDrawer2D")
-        .def(py::init<const std::shared_ptr<GridMapInfo2D> &>(), py::arg("grid_map_info"))
-        .def_readwrite("grid_map_info", &GridMapDrawer2D::grid_map_info)
-        .def_property(
-            "image",
-            [](const GridMapDrawer2D &self) { return self.image; },
-            [](GridMapDrawer2D &self, const cv::Mat &image) { image.copyTo(self.image); })
-        .def("reset_image", &GridMapDrawer2D::ResetImage)
-        .def(
-            "draw_segments_inplace",
-            &GridMapDrawer2D::DrawSegmentsInplace,
-            py::arg("mat"),
-            py::arg("color"),
-            py::arg("thickness"),
-            py::arg("starts"),
-            py::arg("ends"))
-        .def("draw_segments", &GridMapDrawer2D::DrawSegments, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
-        .def("draw_rays_inplace", &GridMapDrawer2D::DrawRaysInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
-        .def("draw_rays", &GridMapDrawer2D::DrawRays, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
-        .def(
-            "draw_polyline_inplace",
-            &GridMapDrawer2D::DrawPolylineInplace,
-            py::arg("mat"),
-            py::arg("color"),
-            py::arg("thickness"),
-            py::arg("closed"),
-            py::arg("points"))
-        .def("draw_polyline", &GridMapDrawer2D::DrawPolyline, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("closed"), py::arg("points"))
-        .def("draw_contour_inplace", &GridMapDrawer2D::DrawContourInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("contour"))
-        .def("draw_contour", &GridMapDrawer2D::DrawContour, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("contour"))
-        .def("show_image", &GridMapDrawer2D::ShowImage, py::arg("title"));
+    BindGridMapDrawer2D<double>(submodule, "GridMapDrawer2D");
 }

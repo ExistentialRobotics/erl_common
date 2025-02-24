@@ -59,7 +59,7 @@ namespace erl::common {
               m_min_(min),
               m_max_(max),
               m_center_((m_min_ + m_max_) * 0.5),
-              m_center_grid_(m_map_shape_.array() * 0.5) {
+              m_center_grid_(m_map_shape_.array() / 2) {
             if (Dim == Eigen::Dynamic) {
                 ERL_DEBUG_ASSERT(m_map_shape_.size() > 0, "0-dim map is not allowed!");
                 ERL_DEBUG_ASSERT(Size() > 0, "0-element map is not allowed!");
@@ -72,7 +72,7 @@ namespace erl::common {
               m_min_(origin),
               m_max_(origin.array() + resolution.array() * map_shape.template cast<Dtype>().array()),
               m_center_((m_min_ + m_max_) * 0.5),
-              m_center_grid_(m_map_shape_.array() * 0.5) {}
+              m_center_grid_(m_map_shape_.array() / 2) {}
 
         explicit GridMapInfo(const GridMapInfo<Dtype, Eigen::Dynamic>& info)
             : m_map_shape_(info.Shape()),

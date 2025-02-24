@@ -10,12 +10,17 @@
 
 namespace erl::common {
 
+    template <typename InfoDtype>
     struct GridMapDrawer2D {
-
-        std::shared_ptr<GridMapInfo2D> grid_map_info;
+        using _Matrix2X = Eigen::Matrix<InfoDtype, 2, Eigen::Dynamic>;
+        using _Vector2 = Eigen::Vector<InfoDtype, 2>;
+        typedef GridMapInfo2D<InfoDtype> _GridMapInfo;
+        typedef std::shared_ptr<_GridMapInfo> _GridMapInfoPtr;
+        _GridMapInfoPtr grid_map_info;
         cv::Mat image;
 
-        explicit GridMapDrawer2D(const std::shared_ptr<GridMapInfo2D> &grid_map_info)
+        // TODO: Do we need to specialize?
+        explicit GridMapDrawer2D(const _GridMapInfoPtr &grid_map_info)
             : grid_map_info(grid_map_info),
               image(cv::Mat(grid_map_info->Height(), grid_map_info->Width(), CV_8UC3, cv::Scalar(0, 0, 0))) {}
 
@@ -29,8 +34,8 @@ namespace erl::common {
             cv::Mat &mat,
             const cv::Scalar &color,
             const int thickness,
-            const Eigen::Ref<const Eigen::Matrix2Xd> &starts,
-            const Eigen::Ref<const Eigen::Matrix2Xd> &ends) const {
+            const Eigen::Ref<const _Matrix2X > &starts,
+            const Eigen::Ref<const _Matrix2X > &ends) const {
             ERL_DEBUG_ASSERT(starts.cols() == ends.cols(), "starts and ends should have the same number of columns.");
             const long num_segments = starts.cols();
             for (long i = 0; i < num_segments; ++i) {
@@ -45,8 +50,8 @@ namespace erl::common {
             const cv::Mat &mat,
             const cv::Scalar &color,
             const int thickness,
-            const Eigen::Ref<const Eigen::Matrix2Xd> &starts,
-            const Eigen::Ref<const Eigen::Matrix2Xd> &ends) const {
+            const Eigen::Ref<const _Matrix2X> &starts,
+            const Eigen::Ref<const _Matrix2X> &ends) const {
 
             cv::Mat result = mat.clone();
             DrawSegmentsInplace(result, color, thickness, starts, ends);
@@ -58,8 +63,8 @@ namespace erl::common {
             cv::Mat &mat,
             const cv::Scalar &color,
             const int thickness,
-            const Eigen::Ref<const Eigen::Vector2d> &start,
-            const Eigen::Ref<const Eigen::Matrix2Xd> &ends) const {
+            const Eigen::Ref<const _Vector2> &start,
+            const Eigen::Ref<const _Matrix2X> &ends) const {
 
             const Eigen::Vector2i start_pixel = grid_map_info->MeterToPixelForPoints(start);
             const cv::Point2i cv_start_pixel(start_pixel(0), start_pixel(1));
@@ -76,8 +81,8 @@ namespace erl::common {
             const cv::Mat &mat,
             const cv::Scalar &color,
             const int thickness,
-            const Eigen::Ref<const Eigen::Vector2d> &start,
-            const Eigen::Ref<const Eigen::Matrix2Xd> &ends) const {
+            const Eigen::Ref<const _Vector2> &start,
+            const Eigen::Ref<const _Matrix2X> &ends) const {
             cv::Mat result = mat.clone();
             DrawRaysInplace(result, color, thickness, start, ends);
             return result;
@@ -89,7 +94,7 @@ namespace erl::common {
             const cv::Scalar &color,
             const int thickness,
             const bool closed,
-            const Eigen::Ref<const Eigen::Matrix2Xd> &points) const {
+            const Eigen::Ref<const _Matrix2X> &points) const {
             std::vector<cv::Point2i> cv_points;
             const long num_points = points.cols();
             cv_points.resize(num_points);
@@ -99,7 +104,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] cv::Mat
-        DrawPolyline(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const bool closed, const Eigen::Ref<const Eigen::Matrix2Xd> &points)
+        DrawPolyline(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const bool closed, const Eigen::Ref<const _Matrix2X> &points)
             const {
             cv::Mat result = mat.clone();
             DrawPolylineInplace(result, color, thickness, closed, points);
@@ -107,7 +112,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] cv::Mat
-        DrawContour(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const Eigen::Ref<const Eigen::Matrix2Xd> &contour) const {
+        DrawContour(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const Eigen::Ref<const _Matrix2X> &contour) const {
             cv::Mat result = mat.clone();
             DrawContourInplace(result, color, thickness, contour);
             return result;
