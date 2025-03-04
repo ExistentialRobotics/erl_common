@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef ERL_NO_PANGOLIN
 #include "pangolin_window.hpp"
 
 #include <opencv2/opencv.hpp>
@@ -31,3 +32,4 @@ namespace erl::common {
         Render() const;
     };
 }  // namespace erl::common
+#endif

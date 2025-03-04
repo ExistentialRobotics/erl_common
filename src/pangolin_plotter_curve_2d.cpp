@@ -1,3 +1,4 @@
+#ifndef ERL_NO_PANGOLIN
 #include "erl_common/pangolin_plotter_curve_2d.hpp"
 
 #include "erl_common/logging.hpp"
@@ -65,3 +66,4 @@ namespace erl::common {
         m_plotter_.SetViewSmooth(range);
     }
 }  // namespace erl::common
+#endif

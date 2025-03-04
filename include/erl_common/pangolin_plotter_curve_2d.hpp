@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef ERL_NO_PANGOLIN
 #include "pangolin_window.hpp"
 
 #include <pangolin/display/image_view.h>
@@ -67,3 +68,4 @@ namespace erl::common {
     };
 
 }  // namespace erl::common
+#endif

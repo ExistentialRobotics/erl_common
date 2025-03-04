@@ -164,6 +164,11 @@ namespace erl::common {
             do { ROS_ASSERT_MSG(expr, fmt::format(__VA_ARGS__).c_str()); } while (false)
     #endif
 #else
+
+    #ifndef __FILE_NAME__
+    #define __FILE_NAME__ __FILE__
+    #endif
+
     #define ERL_FATAL(...)                                                                               \
         do {                                                                                             \
             erl::common::Logging::Fatal("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
