@@ -1,5 +1,5 @@
 import numpy as np
-from erl_common.common.storage import TensorDouble2D
+from erl_common.storage import TensorDouble2D
 import unittest
 
 
