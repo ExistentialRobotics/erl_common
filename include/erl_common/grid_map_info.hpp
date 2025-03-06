@@ -50,7 +50,7 @@ namespace erl::common {
               m_resolution_((max - min).array() / (m_map_shape_.array() - 2 * padding.array()).template cast<Dtype>().array()),
               m_min_(min.array() - m_resolution_.array() * padding.template cast<Dtype>().array()),
               m_max_(max.array() + m_resolution_.array() * padding.template cast<Dtype>().array()),
-              m_center_((m_min_ + m_max_) / 2.0),
+              m_center_((m_min_ + m_max_) * 0.5),
               m_center_grid_(m_map_shape_.array() / 2) {}
 
         GridMapInfo(const Eigen::Vector<int, Dim>& map_shape, const Eigen::Vector<Dtype, Dim>& min, const Eigen::Vector<Dtype, Dim>& max)
@@ -81,6 +81,22 @@ namespace erl::common {
               m_max_(info.Max()),
               m_center_(info.Center()),
               m_center_grid_(info.CenterGrid()) {}
+
+        template<typename Dtype2>
+        GridMapInfo<Dtype2, Dim>
+        Cast() const {
+            return {
+                m_map_shape_,
+                m_min_.template cast<Dtype2>(),
+                m_max_.template cast<Dtype2>(),
+            };
+        }
+
+        template<typename Dtype2>
+        std::shared_ptr<GridMapInfo<Dtype2, Dim>>
+        CastSharedPtr() const {
+            return std::make_shared<GridMapInfo<Dtype2, Dim>>(m_map_shape_, m_min_.template cast<Dtype2>(), m_max_.template cast<Dtype2>());
+        }
 
         [[nodiscard]] GridMapInfo<Dtype, Eigen::Dynamic>
         Extend(int size, const Dtype min, const Dtype max, const int dim) const {

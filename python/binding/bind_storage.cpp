@@ -1,8 +1,5 @@
 #include "pybind11_erl_common.hpp"
 
-#include "erl_common/grid_map_drawer_2d.hpp"
-#include "erl_common/grid_map_info.hpp"
-
 void
 BindStorage(py::module &m) {
     using namespace erl::common;
@@ -30,68 +27,39 @@ BindStorage(py::module &m) {
             py::arg("shape"),
             py::arg("item_size"));
 
-    BindGridMapInfo<double, Eigen::Dynamic>(submodule, "GridMapInfoXd")
-        .def("grid_to_pixel_for_points", &GridMapInfoXDd::GridToPixelForPoints<Eigen::Dynamic>, py::arg("grid_points"))
-        .def("pixel_to_grid_for_points", &GridMapInfoXDd::PixelToGridForPoints<Eigen::Dynamic>, py::arg("pixel_points"))
-        .def("meter_to_pixel_for_points", &GridMapInfoXDd::MeterToPixelForPoints<Eigen::Dynamic>, py::arg("meter_points"))
-        .def("pixel_to_meter_for_points", &GridMapInfoXDd::PixelToMeterForPoints<Eigen::Dynamic>, py::arg("pixel_points"))
-        .def("grid_to_pixel_for_vectors", &GridMapInfoXDd::GridToPixelForVectors<Eigen::Dynamic>, py::arg("grid_vectors"))
-        .def("pixel_to_grid_for_vectors", &GridMapInfoXDd::PixelToGridForVectors<Eigen::Dynamic>, py::arg("pixel_vectors"))
-        .def("meter_to_pixel_for_vectors", &GridMapInfoXDd::MeterToPixelForVectors<Eigen::Dynamic>, py::arg("meter_vectors"))
-        .def("pixel_to_meter_for_vectors", &GridMapInfoXDd::PixelToMeterForVectors<Eigen::Dynamic>, py::arg("pixel_vectors"))
-        .def("pixel_to_index", &GridMapInfoXDd::PixelToIndex<Eigen::Dynamic>, py::arg("pixel"), py::arg("c_stride"))
-        .def("index_to_pixel", &GridMapInfoXDd::IndexToPixel<Eigen::Dynamic>, py::arg("index"), py::arg("c_stride"))
-        .def(
-            "get_metric_coordinates_of_filled_metric_polygon",
-            &GridMapInfoXDd::GetMetricCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
-            py::arg("polygon_metric_vertices"))
-        .def(
-            "get_grid_coordinates_of_filled_metric_polygon",
-            &GridMapInfoXDd::GetGridCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
-            py::arg("polygon_metric_vertices"))
-        .def(
-            "get_pixel_coordinates_of_filled_metric_polygon",
-            &GridMapInfoXDd::GetPixelCoordinatesOfFilledMetricPolygon<Eigen::Dynamic>,
-            py::arg("polygon_metric_vertices"));
-    BindGridMapInfo<double, 2>(submodule, "GridMapInfo2D")
-        .def("grid_to_pixel_for_points", &GridMapInfo2Dd::GridToPixelForPoints<2>, py::arg("grid_points"))
-        .def("pixel_to_grid_for_points", &GridMapInfo2Dd::PixelToGridForPoints<2>, py::arg("pixel_points"))
-        .def("meter_to_pixel_for_points", &GridMapInfo2Dd::MeterToPixelForPoints<2>, py::arg("meter_points"))
-        .def("pixel_to_meter_for_points", &GridMapInfo2Dd::PixelToMeterForPoints<2>, py::arg("pixel_points"))
-        .def("grid_to_pixel_for_vectors", &GridMapInfo2Dd::GridToPixelForVectors<2>, py::arg("grid_vectors"))
-        .def("pixel_to_grid_for_vectors", &GridMapInfo2Dd::PixelToGridForVectors<2>, py::arg("pixel_vectors"))
-        .def("meter_to_pixel_for_vectors", &GridMapInfo2Dd::MeterToPixelForVectors<2>, py::arg("meter_vectors"))
-        .def("pixel_to_meter_for_vectors", &GridMapInfo2Dd::PixelToMeterForVectors<2>, py::arg("pixel_vectors"))
-        .def("pixel_to_index", &GridMapInfo2Dd::PixelToIndex<2>, py::arg("pixel"), py::arg("c_stride"))
-        .def("index_to_pixel", &GridMapInfo2Dd::IndexToPixel<2>, py::arg("index"), py::arg("c_stride"))
-        .def(
-            "get_metric_coordinates_of_filled_metric_polygon",
-            &GridMapInfo2Dd::GetMetricCoordinatesOfFilledMetricPolygon<2>,
-            py::arg("polygon_metric_vertices"))
-        .def("get_grid_coordinates_of_filled_metric_polygon", &GridMapInfo2Dd::GetGridCoordinatesOfFilledMetricPolygon<2>, py::arg("polygon_metric_vertices"))
-        .def("get_pixel_coordinates_of_filled_metric_polygon", &GridMapInfo2Dd::GetPixelCoordinatesOfFilledMetricPolygon<2>, py::arg("polygon_metric_vertices"));
+    BindGridMapInfo<double, Eigen::Dynamic>(submodule, "GridMapInfoXDd");
+    BindGridMapInfo<float, Eigen::Dynamic>(submodule, "GridMapInfoXDf");
+    BindGridMapInfo<double, 2>(submodule, "GridMapInfo2Dd");
+    BindGridMapInfo<float, 2>(submodule, "GridMapInfo2Df");
+    BindGridMapInfo<double, 3>(submodule, "GridMapInfo3Dd");
+    BindGridMapInfo<float, 3>(submodule, "GridMapInfo3Df");
 
-    BindGridMapInfo<double, 3>(submodule, "GridMapInfo3D");
+    BindTensor<double, 2>(submodule, "Tensor2Dd");
+    BindTensor<float, 2>(submodule, "Tensor2Df");
+    BindTensor<double, 3>(submodule, "Tensor3Dd");
+    BindTensor<float, 3>(submodule, "Tensor3Df");
+    BindTensor<double, Eigen::Dynamic>(submodule, "TensorXDd");
+    BindTensor<float, Eigen::Dynamic>(submodule, "TensorXDf");
+    BindTensor<int, 2>(submodule, "Tensor2Di");
+    BindTensor<int, 3>(submodule, "Tensor3Di");
+    BindTensor<int, Eigen::Dynamic>(submodule, "TensorXDi");
+    BindTensor<uint8_t, 2>(submodule, "Tensor2D8u");
+    BindTensor<uint8_t, 3>(submodule, "Tensor3D8u");
+    BindTensor<uint8_t, Eigen::Dynamic>(submodule, "TensorXD8u");
 
-    BindTensor<double, 2>(submodule, "TensorDouble2D");
-    BindTensor<double, 3>(submodule, "TensorDouble3D");
-    BindTensor<double, Eigen::Dynamic>(submodule, "TensorDoubleXd");
-    BindTensor<int, 2>(submodule, "TensorInt2D");
-    BindTensor<int, 3>(submodule, "TensorInt3D");
-    BindTensor<int, Eigen::Dynamic>(submodule, "TensorIntXd");
-    BindTensor<uint8_t, 2>(submodule, "TensorUnsigned2D");
-    BindTensor<uint8_t, 3>(submodule, "TensorUnsigned3D");
-    BindTensor<uint8_t, Eigen::Dynamic>(submodule, "TensorUnsignedXd");
+    BindGridMap<double, double, 2>(submodule, "GridMap2Dd");
+    BindGridMap<float, float, 2>(submodule, "GridMap2Df");
+    BindGridMap<int, float, 2>(submodule, "GridMap2Di");
+    BindGridMap<uint8_t, float, 2>(submodule, "GridMap2D8u");
+    BindGridMap<double, double, 3>(submodule, "GridMap3Dd");
+    BindGridMap<float, float, 3>(submodule, "GridMap3Df");
+    BindGridMap<int, float, 3>(submodule, "GridMap3Di");
+    BindGridMap<uint8_t, float, 3>(submodule, "GridMap3D8u");
+    BindGridMap<double, double, Eigen::Dynamic>(submodule, "GridMapXDd");
+    BindGridMap<float, float, Eigen::Dynamic>(submodule, "GridMapXDf");
+    BindGridMap<int, float, Eigen::Dynamic>(submodule, "GridMapXDi");
+    BindGridMap<uint8_t, float, Eigen::Dynamic>(submodule, "GridMapXD8u");
 
-    BindGridMap<double, 2>(submodule, "GridMapDouble2D");
-    BindGridMap<double, 3>(submodule, "GridMapDouble3D");
-    BindGridMap<double, Eigen::Dynamic>(submodule, "GridMapDoubleXd");
-    BindGridMap<int, 2>(submodule, "GridMapInt2D");
-    BindGridMap<int, 3>(submodule, "GridMapInt3D");
-    BindGridMap<int, Eigen::Dynamic>(submodule, "GridMapIntXd");
-    BindGridMap<uint8_t, 2>(submodule, "GridMapUnsigned2D");
-    BindGridMap<uint8_t, 3>(submodule, "GridMapUnsigned3D");
-    BindGridMap<uint8_t, Eigen::Dynamic>(submodule, "GridMapUnsignedXd");
-
-    BindGridMapDrawer2D<double>(submodule, "GridMapDrawer2D");
+    BindGridMapDrawer2D<double>(submodule, "GridMapDrawer2Dd");
+    BindGridMapDrawer2D<float>(submodule, "GridMapDrawer2Df");
 }

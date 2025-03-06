@@ -721,13 +721,6 @@ macro(erl_setup_lapack)
     option(ERL_USE_AOCL "Use AMD Optimizing CPU Library" OFF)
     option(ERL_USE_SINGLE_THREADED_BLAS "Use single-threaded BLAS" ON)
 
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.24)
-        set(_GLOBAL_STRING "GLOBAL")
-    else()
-        # _GLOBAL_STRING is nothing
-        message(STATUS "CMake version is too low at ${CMAKE_VERSION}. Will still try, but may not work correctly.")
-    endif()
-
     if (ERL_USE_INTEL_MKL AND ERL_USE_AOCL)
         message(FATAL_ERROR "ERL_USE_INTEL_MKL and ERL_USE_AOCL cannot be both ON")
     endif ()
@@ -805,7 +798,7 @@ macro(erl_setup_lapack)
                 set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
                 erl_find_package( # We need to find MKL to get MKL_H
                         PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
-                        REQUIRED ${_GLOBAL_STRING}
+                        REQUIRED
                         COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
                         COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
             endif ()
@@ -814,7 +807,7 @@ macro(erl_setup_lapack)
             list(APPEND BLAS_mkl_MKLROOT ${IOMP_ROOT})
             erl_find_package( # LAPACK will resolve the full paths of MKL libraries
                     PACKAGE LAPACK
-                    REQUIRED ${_GLOBAL_STRING}
+                    REQUIRED
                     COMMANDS APPLE "try `brew install lapack`"
                     COMMANDS UBUNTU_LINUX "try `sudo apt install liblapack-dev`"
                     COMMANDS ARCH_LINUX "try `sudo pacman -S lapack`")
@@ -876,7 +869,7 @@ macro(erl_setup_lapack)
                         COMMANDS APPLE "try `brew install openblas`"
                         COMMANDS UBUNTU_LINUX "try `bash scripts/install_openblas_seq.bash`"
                         NAMES libopenblas.so
-                        PATHS /usr/lib/x86_64-linux-gnu/)
+                        PATHS /usr/lib/x86_64-linux-gnu /opt/OpenBLAS/lib)
             endif ()
 
             erl_find_package(
@@ -909,34 +902,27 @@ macro(erl_setup_common_packages)
         endif ()
     endif ()
 
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.24)
-        set(_GLOBAL_STRING "GLOBAL")
-    else()
-        # _GLOBAL_STRING is nothing
-        message(STATUS "CMake version is too low at ${CMAKE_VERSION}. Will still try, but may not work correctly.")
-    endif()
-
     erl_find_package(
             PACKAGE fmt
-            REQUIRED ${_GLOBAL_STRING}
+            REQUIRED
             COMMANDS ARCH_LINUX "try `sudo pacman -S fmt`"
     )
-    set_target_properties(fmt::fmt PROPERTIES SYSTEM ON)
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.24)
+    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.25)
+        set_target_properties(fmt::fmt PROPERTIES SYSTEM ON)
         set_target_properties(fmt::fmt-header-only PROPERTIES SYSTEM ON)
-    endif()
+    endif ()
     get_target_property(fmt_INCLUDE_DIRS fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
     get_target_property(fmt_LIBRARIES fmt::fmt IMPORTED_LOCATION_RELEASE)
 
     erl_find_package(
             PACKAGE OpenMP
-            REQUIRED ${_GLOBAL_STRING}
+            REQUIRED
             COMMANDS APPLE "try `brew install libomp`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libomp-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S openmp`")
     erl_find_package(
             PACKAGE Boost
-            REQUIRED CONFIG ${_GLOBAL_STRING} COMPONENTS program_options graph
+            REQUIRED CONFIG COMPONENTS program_options graph
             COMMANDS APPLE "try `brew install boost`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
@@ -968,13 +954,13 @@ macro(erl_setup_common_packages)
         # set(EIGEN3_VERSION_STRING "3.4.90" CACHE STRING "Eigen3 version" FORCE)  # some other packages may read this variable.
         erl_find_package(
                 PACKAGE Eigen3
-                ${EIGEN3_VERSION_STRING} REQUIRED CONFIG ${_GLOBAL_STRING} # in case some other packages define FindEigen3.cmake
+                ${EIGEN3_VERSION_STRING} REQUIRED CONFIG # in case some other packages define FindEigen3.cmake
                 COMMANDS ARCH_LINUX "try `paru -S eigen-git`"
                 COMMANDS GENERAL "visit https://gitlab.com/libeigen/eigen to install the required version")
     else ()
         erl_find_package(
                 PACKAGE Eigen3
-                REQUIRED CONFIG ${_GLOBAL_STRING} # in case some other packages define FindEigen3.cmake
+                REQUIRED CONFIG  # in case some other packages define FindEigen3.cmake
                 COMMANDS APPLE "try `brew install eigen`"
                 COMMANDS UBUNTU_LINUX "try `sudo apt install libeigen3-dev`"
                 COMMANDS ARCH_LINUX "try `sudo pacman -S eigen`")
@@ -986,19 +972,19 @@ macro(erl_setup_common_packages)
         message(FATAL_ERROR "Eigen3 version must be at least 3.4.0")
     endif ()
 
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.24.0)
+    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.25)
         set_target_properties(Eigen3::Eigen PROPERTIES SYSTEM ON)
-    endif()
+    endif ()
 
     erl_find_package(
             PACKAGE nlohmann_json
-            REQUIRED ${_GLOBAL_STRING}
+            REQUIRED
             COMMANDS APPLE "try `brew install nlohmann-json`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install nlohmann-json3-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S nlohmann-json`")
     erl_find_package(
             PACKAGE OpenCV
-            REQUIRED ${_GLOBAL_STRING} COMPONENTS core imgproc highgui
+            REQUIRED COMPONENTS core imgproc highgui
             COMMANDS APPLE "run scripts/install_opencv.bash"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libopencv-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S opencv`")
@@ -1011,12 +997,6 @@ macro(erl_setup_common_packages)
 
     include(${ERL_CMAKE_DIR}/config_pangolin.cmake)
 
-    if (Pangolin_FOUND)
-        message(STATUS "Pangolin is FOUND. Will build with Pangolin")
-    else()
-        message(WARNING "Pangolin is NOT FOUND. Will build without Pangolin")
-    endif()
-
     # erl_find_package(
     # PACKAGE PCL
     # REQUIRED
@@ -1024,12 +1004,12 @@ macro(erl_setup_common_packages)
     # COMMANDS ARCH_LINUX "try `paru -S pcl` or install from https://github.com/daizhirui/pcl-git.git")
     erl_find_package(
             PACKAGE nanoflann
-            REQUIRED ${_GLOBAL_STRING}
+            REQUIRED
             COMMANDS UBUNTU_LINUX "try `sudo apt install libnanoflann-dev`"
             COMMANDS ARCH_LINUX "try `paru -S nanoflann`")
     erl_find_package(
             PACKAGE yaml-cpp
-            REQUIRED ${_GLOBAL_STRING}
+            REQUIRED
             COMMANDS UBUNTU_LINUX "try `sudo apt install libyaml-cpp-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S yaml-cpp`")
 
@@ -1117,7 +1097,7 @@ macro(erl_setup_test)
             # we need to use GTest::GTest and GTest::Main in other subprojects
             erl_find_package(
                     PACKAGE GTest
-                    REQUIRED ${_GLOBAL_STRING}
+                    REQUIRED
                     COMMANDS UBUNTU_LINUX "try `sudo apt install libgtest-dev`"
                     COMMANDS ARCH_LINUX "try `sudo pacman -S gtest`")
             include(GoogleTest)

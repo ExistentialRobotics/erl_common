@@ -186,16 +186,10 @@ if [ -d "${SCRIPT_DIR}/../../erl_geometry" ]; then  # If erl_geometry is used
         -DUSE_SYSTEM_NANOFLANN=ON \
         -DUSE_SYSTEM_PYBIND11=ON \
         -DUSE_SYSTEM_QHULLCPP=ON \
-        -DUSE_SYSTEM_TBB=ON \
-        -DUSE_SYSTEM_VTK=ON \
         -DGLIBCXX_USE_CXX11_ABI=ON \
         -DBUILD_EXAMPLES=OFF \
         -DBUILD_UNIT_TESTS=OFF \
-        -DBUILD_BENCHMARKS=OFF \
-        -DOPEN3D_USE_ONEAPI_PACKAGES=ON
-        -DCMAKE_FIND_ROOT_PATH=/opt/intel/oneapi/tbb/latest/lib/cmake/tbb
-        -DoneDPL_DIR=/opt/intel/oneapi/dpl/latest/lib/cmake/oneDPL
-        -DMKL_DIR=/opt/intel/oneapi/mkl/latest/lib/cmake/mkl
+        -DBUILD_BENCHMARKS=OFF
 
     make -j`nproc`
     sudo make install

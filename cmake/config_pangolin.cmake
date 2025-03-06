@@ -16,8 +16,10 @@ erl_find_package(
 
 # remove pango_python as it is not needed and causes error when loading other python modules
 if (Pangolin_FOUND)
-        list(REMOVE_ITEM Pangolin_LIBRARIES "pango_python")
-        list(REMOVE_ITEM Pangolin_LIBRARY "pango_python")
-else()
-        add_definitions("-DERL_NO_PANGOLIN")
-endif()
+    list(REMOVE_ITEM Pangolin_LIBRARIES "pango_python")
+    list(REMOVE_ITEM Pangolin_LIBRARY "pango_python")
+    message(STATUS "Pangolin is FOUND. Will build with Pangolin")
+else ()
+    add_definitions("-DERL_NO_PANGOLIN")
+    message(WARNING "Pangolin is NOT FOUND. Will build without Pangolin")
+endif ()

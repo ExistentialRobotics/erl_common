@@ -179,16 +179,19 @@ namespace erl::common {
     }
 
     template<typename T, bool RowMajor = true>
-    using TensorX = Tensor<T, Eigen::Dynamic, RowMajor>;
+    using TensorXD = Tensor<T, Eigen::Dynamic, RowMajor>;
 
-    using TensorDouble2D = Tensor<double, 2>;
-    using TensorDouble3D = Tensor<double, 3>;
-    using TensorDoubleXd = TensorX<double>;
-    using TensorInt2D = Tensor<int, 2>;
-    using TensorInt3D = Tensor<int, 3>;
-    using TensorIntXd = TensorX<int>;
-    using TensorUnsigned2D = Tensor<uint8_t, 2>;
-    using TensorUnsigned3D = Tensor<uint8_t, 3>;
-    using TensorUnsignedXd = TensorX<uint8_t>;
+    using Tensor2Dd = Tensor<double, 2>;
+    using Tensor2Df = Tensor<float, 2>;
+    using Tensor2Di = Tensor<int, 2>;
+    using Tensor2D8u = Tensor<uint8_t, 2>;
+    using Tensor3Dd = Tensor<double, 3>;
+    using Tensor3Df = Tensor<float, 3>;
+    using Tensor3Di = Tensor<int, 3>;
+    using Tensor3D8u = Tensor<uint8_t, 3>;
+    using TensorXDd = TensorXD<double>;
+    using TensorXDf = TensorXD<float>;
+    using TensorXDi = TensorXD<int>;
+    using TensorXD8u = TensorXD<uint8_t>;
 
 }  // namespace erl::common

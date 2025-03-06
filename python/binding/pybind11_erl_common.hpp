@@ -7,87 +7,123 @@
 namespace py = pybind11;
 
 namespace erl::common {
+
     template<typename Dtype, int Dim>
-    auto
-    BindGridMapInfo(py::module &m, const std::string &name) {
-        using Self = GridMapInfo<Dtype, Dim>;
-        return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
+    std::enable_if_t<Dim == 2 || Dim == Eigen::Dynamic, py::class_<GridMapInfo<Dtype, Dim>, std::shared_ptr<GridMapInfo<Dtype, Dim>>>>
+    BindGridMapInfoExtra(py::class_<GridMapInfo<Dtype, Dim>, std::shared_ptr<GridMapInfo<Dtype, Dim>>> cls) {
+        using Info = GridMapInfo<Dtype, Dim>;
+
+        cls.def("grid_to_pixel_for_points", &Info::template GridToPixelForPoints<Dim>, py::arg("grid_points"))
+            .def("pixel_to_grid_for_points", &Info::template PixelToGridForPoints<Dim>, py::arg("pixel_points"))
+            .def("meter_to_pixel_for_points", &Info::template MeterToPixelForPoints<Dim>, py::arg("meter_points"))
+            .def("pixel_to_meter_for_points", &Info::template PixelToMeterForPoints<Dim>, py::arg("pixel_points"))
+            .def("grid_to_pixel_for_vectors", &Info::template GridToPixelForVectors<Dim>, py::arg("grid_vectors"))
+            .def("pixel_to_grid_for_vectors", &Info::template PixelToGridForVectors<Dim>, py::arg("pixel_vectors"))
+            .def("meter_to_pixel_for_vectors", &Info::template MeterToPixelForVectors<Dim>, py::arg("meter_vectors"))
+            .def("pixel_to_meter_for_vectors", &Info::template PixelToMeterForVectors<Dim>, py::arg("pixel_vectors"))
+            .def("pixel_to_index", &Info::template PixelToIndex<Dim>, py::arg("pixel"), py::arg("c_stride"))
+            .def("index_to_pixel", &Info::template IndexToPixel<Dim>, py::arg("index"), py::arg("c_stride"))
             .def(
-                py::init<const Eigen::Vector<Dtype, Dim> &, const Eigen::Vector<Dtype, Dim> &, const Eigen::Vector<Dtype, Dim> &, Eigen::Vector<int, Dim>>(),
-                py::arg("min"),
-                py::arg("max"),
-                py::arg("resolution"),
-                py::arg("padding"))
+                "get_metric_coordinates_of_filled_metric_polygon",
+                &Info::template GetMetricCoordinatesOfFilledMetricPolygon<Dim>,
+                py::arg("polygon_metric_vertices"))
             .def(
-                py::init<Eigen::Vector<int, Dim>, const Eigen::Vector<Dtype, Dim> &, const Eigen::Vector<Dtype, Dim> &>(),
-                py::arg("map_shape"),
-                py::arg("min"),
-                py::arg("max"))
+                "get_grid_coordinates_of_filled_metric_polygon",
+                &Info::template GetGridCoordinatesOfFilledMetricPolygon<Dim>,
+                py::arg("polygon_metric_vertices"))
             .def(
-                "extend",
-                py::overload_cast<int, Dtype, Dtype, int>(&Self::Extend, py::const_),
-                py::arg("size"),
-                py::arg("min"),
-                py::arg("max"),
-                py::arg("dim"))
-            .def(
-                "extend",
-                py::overload_cast<Dtype, Dtype, Dtype, int, int>(&Self::Extend, py::const_),
-                py::arg("min"),
-                py::arg("max"),
-                py::arg("resolution"),
-                py::arg("padding"),
-                py::arg("dim"))
-            .def("squeeze", &Self::Squeeze, py::arg("dim"))
-            .def_property_readonly("dims", &Self::Dims)
-            .def_property_readonly("shape", py::overload_cast<>(&Self::Shape, py::const_))
-            .def("shape_at", py::overload_cast<int>(&Self::Shape, py::const_), py::arg("dim"))
-            .def_property_readonly("size", &Self::Size)
-            .def_property_readonly("height", &Self::Height)
-            .def_property_readonly("width", &Self::Width)
-            .def_property_readonly("length", &Self::Length)
-            .def_property_readonly("min", py::overload_cast<>(&Self::Min, py::const_))
-            .def("min_at", py::overload_cast<int>(&Self::Min, py::const_), py::arg("dim"))
-            .def_property_readonly("max", py::overload_cast<>(&Self::Max, py::const_))
-            .def("max_at", py::overload_cast<int>(&Self::Max, py::const_), py::arg("dim"))
-            .def_property_readonly("resolution", py::overload_cast<>(&Self::Resolution, py::const_))
-            .def("resolution_at", py::overload_cast<int>(&Self::Resolution, py::const_), py::arg("dim"))
-            .def_property_readonly("center", &Self::Center)
-            .def_property_readonly("center_grid", &Self::CenterGrid)
-            .def("get_dim_lin_space", &Self::GetDimLinSpace, py::arg("dim"))
-            .def("grid_to_meter_for_value", &Self::GridToMeterForValue, py::arg("grid_value"), py::arg("dim"))
-            .def("grid_to_meter_for_values", &Self::GridToMeterForValues, py::arg("grid_values"), py::arg("dim"))
-            .def("meter_to_grid_for_value", &Self::MeterToGridForValue, py::arg("meter_value"), py::arg("dim"))
-            .def("meter_to_grid_for_values", &Self::MeterToGridForValues, py::arg("meter_values"), py::arg("dim"))
-            .def("grid_to_meter_for_points", &Self::GridToMeterForPoints, py::arg("grid_points"))
-            .def("meter_to_grid_for_points", &Self::MeterToGridForPoints, py::arg("meter_points"))
-            .def("grid_to_meter_for_vectors", &Self::GridToMeterForVectors, py::arg("grid_vectors"))
-            .def("meter_to_grid_for_vectors", &Self::MeterToGridForVectors, py::arg("meter_vectors"))
-            .def("in_map", &Self::InMap, py::arg("meter_point"))
-            .def("in_grids", &Self::InGrids, py::arg("grid_point"))
-            .def("grid_to_index", &Self::GridToIndex, py::arg("grid"), py::arg("c_stride"))
-            .def("index_to_grid", &Self::IndexToGrid, py::arg("index"), py::arg("c_stride"))
-            .def("generate_grid_coordinates", &Self::GenerateGridCoordinates, py::arg("c_stride"))
-            .def("generate_meter_coordinates", &Self::GenerateMeterCoordinates, py::arg("c_stride"))
-            .def("ray_casting", &Self::RayCasting, py::arg("start"), py::arg("end"));
+                "get_pixel_coordinates_of_filled_metric_polygon",
+                &Info::template GetPixelCoordinatesOfFilledMetricPolygon<Dim>,
+                py::arg("polygon_metric_vertices"));
+        return cls;
     }
 
-    // T must be POD or arithmetic type, which is required by pybind11's NumPy interface
-    template<typename T, int Rank>
-    typename std::enable_if<py::SupportedByNumpy<T>::value, py::class_<Tensor<T, Rank>>>::type
-    BindTensor(py::module &m, const std::string &name) {
-        using Self = Tensor<T, Rank>;
-        return py::class_<Self>(m, name.c_str(), py::buffer_protocol())
-            .def(py::init([&](const py::array_t<T, py::array::c_style> &b) {
+    template<typename Dtype, int Dim>
+    std::enable_if_t<Dim != 2 && Dim != Eigen::Dynamic, py::class_<GridMapInfo<Dtype, Dim>, std::shared_ptr<GridMapInfo<Dtype, Dim>>>>
+    BindGridMapInfoExtra(py::class_<GridMapInfo<Dtype, Dim>, std::shared_ptr<GridMapInfo<Dtype, Dim>>> cls) {
+        return cls;
+    }
+
+    template<typename Dtype, int Dim>
+    auto
+    BindGridMapInfo(py::module &m, const char *name) {
+        using Self = GridMapInfo<Dtype, Dim>;
+        using VectorD = const Eigen::Vector<Dtype, Dim>;
+
+        return BindGridMapInfoExtra<Dtype, Dim>(
+            py::class_<Self, std::shared_ptr<Self>>(m, name)
+                .def(
+                    py::init<const VectorD &, const VectorD &, const VectorD &, Eigen::Vector<int, Dim>>(),
+                    py::arg("min"),
+                    py::arg("max"),
+                    py::arg("resolution"),
+                    py::arg("padding"))
+                .def(py::init<Eigen::Vector<int, Dim>, VectorD &, VectorD &>(), py::arg("map_shape"), py::arg("min"), py::arg("max"))
+                .def(
+                    "extend",
+                    py::overload_cast<int, Dtype, Dtype, int>(&Self::Extend, py::const_),
+                    py::arg("size"),
+                    py::arg("min"),
+                    py::arg("max"),
+                    py::arg("dim"))
+                .def(
+                    "extend",
+                    py::overload_cast<Dtype, Dtype, Dtype, int, int>(&Self::Extend, py::const_),
+                    py::arg("min"),
+                    py::arg("max"),
+                    py::arg("resolution"),
+                    py::arg("padding"),
+                    py::arg("dim"))
+                .def("squeeze", &Self::Squeeze, py::arg("dim"))
+                .def_property_readonly("dims", &Self::Dims)
+                .def_property_readonly("shape", py::overload_cast<>(&Self::Shape, py::const_))
+                .def("shape_at", py::overload_cast<int>(&Self::Shape, py::const_), py::arg("dim"))
+                .def_property_readonly("size", &Self::Size)
+                .def_property_readonly("height", &Self::Height)
+                .def_property_readonly("width", &Self::Width)
+                .def_property_readonly("length", &Self::Length)
+                .def_property_readonly("min", py::overload_cast<>(&Self::Min, py::const_))
+                .def("min_at", py::overload_cast<int>(&Self::Min, py::const_), py::arg("dim"))
+                .def_property_readonly("max", py::overload_cast<>(&Self::Max, py::const_))
+                .def("max_at", py::overload_cast<int>(&Self::Max, py::const_), py::arg("dim"))
+                .def_property_readonly("resolution", py::overload_cast<>(&Self::Resolution, py::const_))
+                .def("resolution_at", py::overload_cast<int>(&Self::Resolution, py::const_), py::arg("dim"))
+                .def_property_readonly("center", &Self::Center)
+                .def_property_readonly("center_grid", &Self::CenterGrid)
+                .def("get_dim_lin_space", &Self::GetDimLinSpace, py::arg("dim"))
+                .def("grid_to_meter_for_value", &Self::GridToMeterForValue, py::arg("grid_value"), py::arg("dim"))
+                .def("grid_to_meter_for_values", &Self::GridToMeterForValues, py::arg("grid_values"), py::arg("dim"))
+                .def("meter_to_grid_for_value", &Self::MeterToGridForValue, py::arg("meter_value"), py::arg("dim"))
+                .def("meter_to_grid_for_values", &Self::MeterToGridForValues, py::arg("meter_values"), py::arg("dim"))
+                .def("grid_to_meter_for_points", &Self::GridToMeterForPoints, py::arg("grid_points"))
+                .def("meter_to_grid_for_points", &Self::MeterToGridForPoints, py::arg("meter_points"))
+                .def("grid_to_meter_for_vectors", &Self::GridToMeterForVectors, py::arg("grid_vectors"))
+                .def("meter_to_grid_for_vectors", &Self::MeterToGridForVectors, py::arg("meter_vectors"))
+                .def("in_map", &Self::InMap, py::arg("meter_point"))
+                .def("in_grids", &Self::InGrids, py::arg("grid_point"))
+                .def("grid_to_index", &Self::GridToIndex, py::arg("grid"), py::arg("c_stride"))
+                .def("index_to_grid", &Self::IndexToGrid, py::arg("index"), py::arg("c_stride"))
+                .def("generate_grid_coordinates", &Self::GenerateGridCoordinates, py::arg("c_stride"))
+                .def("generate_meter_coordinates", &Self::GenerateMeterCoordinates, py::arg("c_stride"))
+                .def("ray_casting", &Self::RayCasting, py::arg("start"), py::arg("end")));
+    }
+
+    // Dtype must be POD or arithmetic type, which is required by pybind11's NumPy interface
+    template<typename Dtype, int Rank>
+    std::enable_if_t<py::SupportedByNumpy<Dtype>::value, py::class_<Tensor<Dtype, Rank>>>
+    BindTensor(py::module &m, const char *name) {
+        using Self = Tensor<Dtype, Rank>;
+        return py::class_<Self>(m, name, py::buffer_protocol())
+            .def(py::init([&](const py::array_t<Dtype, py::array::c_style> &b) {
                 py::buffer_info info = b.request();
                 std::string buffer_format = info.format;
-                std::string expected_format = py::format_descriptor<T>::format();
+                std::string expected_format = py::format_descriptor<Dtype>::format();
                 if (buffer_format != expected_format) { throw std::runtime_error("Incompatible format: " + buffer_format + " vs " + expected_format); }
-                if (Rank != -1) { ERL_ASSERTM(Rank == info.ndim, "Incompatible ndim for %s: {}", name.c_str(), info.ndim); }
+                if (Rank != -1) { ERL_ASSERTM(Rank == info.ndim, "Incompatible ndim for %s: {}", name, info.ndim); }
                 Eigen::VectorXi tensor_shape(info.ndim);
-                for (int i = 0; i < Rank; ++i) { tensor_shape[i] = int(info.shape[i]); }
-                Eigen::VectorX<T> data(info.size);
-                auto ptr = static_cast<T *>(info.ptr);
+                for (int i = 0; i < Rank; ++i) { tensor_shape[i] = static_cast<int>(info.shape[i]); }
+                Eigen::VectorX<Dtype> data(info.size);
+                auto ptr = static_cast<Dtype *>(info.ptr);
                 std::copy(ptr, ptr + info.size, data.begin());
                 Self tensor(tensor_shape, data);
                 return tensor;
@@ -96,12 +132,12 @@ namespace erl::common {
                 auto shape = tensor.Shape();
                 std::vector<py::ssize_t> array_shape(shape.size());
                 std::copy(shape.begin(), shape.end(), array_shape.begin());
-                std::vector<py::ssize_t> strides = ComputeCStrides<py::ssize_t>(array_shape, sizeof(T));
-                return {tensor.GetMutableDataPtr(), sizeof(T), py::format_descriptor<T>::format(), tensor.Dims(), array_shape, strides};
+                std::vector<py::ssize_t> strides = ComputeCStrides<py::ssize_t>(array_shape, sizeof(Dtype));
+                return {tensor.GetMutableDataPtr(), sizeof(Dtype), py::format_descriptor<Dtype>::format(), tensor.Dims(), array_shape, strides};
             })
-            .def(py::init<Eigen::VectorXi, const T &>(), py::arg("shape"), py::arg("constant"))
-            .def(py::init<Eigen::VectorXi, Eigen::VectorX<T>>(), py::arg("shape"), py::arg("data"))
-            .def(py::init<Eigen::VectorXi, const std::function<T(void)> &>(), py::arg("shape"), py::arg("data_init_func"))
+            .def(py::init<Eigen::VectorXi, const Dtype &>(), py::arg("shape"), py::arg("constant"))
+            .def(py::init<Eigen::VectorXi, Eigen::VectorX<Dtype>>(), py::arg("shape"), py::arg("data"))
+            .def(py::init<Eigen::VectorXi, const std::function<Dtype(void)> &>(), py::arg("shape"), py::arg("data_init_func"))
             .def_property_readonly("dims", &Self::Dims)
             .def_property_readonly("shape", &Self::Shape)
             .def_property_readonly("size", &Self::Size)
@@ -109,13 +145,13 @@ namespace erl::common {
             .def("fill", &Self::Fill, py::arg("value"))
             .def(
                 "__setitem__",
-                [](Self &tensor, const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords, T value) { tensor[coords] = value; },
+                [](Self &tensor, const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords, Dtype value) { tensor[coords] = value; },
                 py::arg("coords"),
                 py::arg("value"))
             .def("__getitem__", py::overload_cast<const Eigen::Ref<const Eigen::Vector<int, Rank>> &>(&Self::operator[], py::const_), py::arg("coords"))
             .def(
                 "__setitem__",
-                [](Self &tensor, int index, T value) { tensor[index] = value; },
+                [](Self &tensor, int index, Dtype value) { tensor[index] = value; },
                 py::arg("index"),
                 py::arg("value"))
             .def("__getitem__", py::overload_cast<int>(&Self::operator[], py::const_), py::arg("index"))
@@ -127,20 +163,20 @@ namespace erl::common {
             });
     }
 
-    template<typename T, int Rank>
-    typename std::enable_if<!py::SupportedByNumpy<T>::value, py::class_<Tensor<T, Rank>>>::type
-    BindTensor(py::module &m, const std::string &name) {
-        using Self = Tensor<T, Rank>;
-        return py::class_<Self>(m, name.c_str())
-            .def(py::init<Eigen::VectorXi, const T &>(), py::arg("shape"), py::arg("constant"))
+    template<typename Dtype, int Rank>
+    std::enable_if_t<!py::SupportedByNumpy<Dtype>::value, py::class_<Tensor<Dtype, Rank>>>
+    BindTensor(py::module &m, const char *name) {
+        using Self = Tensor<Dtype, Rank>;
+        return py::class_<Self>(m, name)
+            .def(py::init<Eigen::VectorXi, const Dtype &>(), py::arg("shape"), py::arg("constant"))
             .def(
-                py::init<>([](Eigen::VectorXi shape, const std::vector<T> &data) {
-                    Eigen::Map<const Eigen::VectorX<T>> data_map(data.data(), data.size());
-                    return Self(shape, Eigen::VectorX<T>(data_map));
+                py::init<>([](Eigen::VectorXi shape, const std::vector<Dtype> &data) {
+                    Eigen::Map<const Eigen::VectorX<Dtype>> data_map(data.data(), data.size());
+                    return Self(shape, Eigen::VectorX<Dtype>(data_map));
                 }),
                 py::arg("shape"),
                 py::arg("data"))
-            .def(py::init<Eigen::VectorXi, const std::function<T(void)> &>(), py::arg("shape"), py::arg("data_init_func"))
+            .def(py::init<Eigen::VectorXi, const std::function<Dtype(void)> &>(), py::arg("shape"), py::arg("data_init_func"))
             .def_property_readonly("dims", &Self::Dims)
             .def_property_readonly("shape", &Self::Shape)
             .def_property_readonly("size", &Self::Size)
@@ -148,13 +184,13 @@ namespace erl::common {
             .def("fill", &Self::Fill, py::arg("value"))
             .def(
                 "__setitem__",
-                [](Self &tensor, const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords, T value) { tensor[coords] = value; },
+                [](Self &tensor, const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords, Dtype value) { tensor[coords] = value; },
                 py::arg("coords"),
                 py::arg("value"))
             .def("__getitem__", py::overload_cast<const Eigen::Ref<const Eigen::Vector<int, Rank>> &>(&Self::operator[], py::const_), py::arg("coords"))
             .def(
                 "__setitem__",
-                [](Self &tensor, int index, T value) { tensor[index] = value; },
+                [](Self &tensor, int index, Dtype value) { tensor[index] = value; },
                 py::arg("index"),
                 py::arg("value"))
             .def("__getitem__", py::overload_cast<int>(&Self::operator[], py::const_), py::arg("index"))
@@ -166,54 +202,54 @@ namespace erl::common {
             });
     }
 
-    template<typename T, int Dim>  // T is supported by NumPy interface provided by pybind11
-    typename std::enable_if<py::SupportedByNumpy<T>::value, py::class_<GridMap<T, Dim>, std::shared_ptr<GridMap<T, Dim>>>>::type
-    BindGridMap(py::module &m, const std::string &name) {
-        using Self = GridMap<T, Dim>;
-        using GridMapInfoPtr = typename GridMap<T, Dim>::_GridMapInfoPtr;
-        auto py_class =
-            py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
-                .def(py::init<GridMapInfoPtr>(), py::arg("grid_map_info"))
-                .def(py::init<GridMapInfoPtr, T>(), py::arg("grid_map_info"), py::arg("value"))
-                .def(py::init<GridMapInfoPtr, Tensor<T, Dim>>(), py::arg("grid_map_info"), py::arg("data"))
-                .def(py::init<GridMapInfoPtr, const std::function<T(void)> &>(), py::arg("grid_map_info"), py::arg("data_init_func"))
-                .def_readwrite("data", &Self::data)
-                .def_readwrite("info", &Self::info);
-        py_class.def(py::init<GridMapInfoPtr, Eigen::VectorX<T>>(), py::arg("grid_map_info"), py::arg("data"));
+    template<typename MapDtype, typename InfoDtype, int Dim>  // T is supported by NumPy interface provided by pybind11
+    std::enable_if_t<py::SupportedByNumpy<MapDtype>::value, py::class_<GridMap<MapDtype, InfoDtype, Dim>, std::shared_ptr<GridMap<MapDtype, InfoDtype, Dim>>>>
+    BindGridMap(py::module &m, const char *name) {
+        using Self = GridMap<MapDtype, InfoDtype, Dim>;
+        using Info = GridMapInfo<InfoDtype, Dim>;
+        auto py_class = py::class_<Self, std::shared_ptr<Self>>(m, name)
+                            .def(py::init<std::shared_ptr<Info>>(), py::arg("grid_map_info"))
+                            .def(py::init<std::shared_ptr<Info>, MapDtype>(), py::arg("grid_map_info"), py::arg("value"))
+                            .def(py::init<std::shared_ptr<Info>, Tensor<MapDtype, Dim>>(), py::arg("grid_map_info"), py::arg("data"))
+                            .def(py::init<std::shared_ptr<Info>, const std::function<MapDtype(void)> &>(), py::arg("grid_map_info"), py::arg("data_init_func"))
+                            .def_readwrite("data", &Self::data)
+                            .def_readwrite("info", &Self::info);
+        py_class.def(py::init<std::shared_ptr<Info>, Eigen::VectorX<MapDtype>>(), py::arg("grid_map_info"), py::arg("data"));
         return py_class;
     }
 
-    template<typename T, int Dim>
-    typename std::enable_if<!py::SupportedByNumpy<T>::value, py::class_<GridMap<T, Dim>, std::shared_ptr<GridMap<T, Dim>>>>::type
-    BindGridMap(py::module &m, const std::string &name) {
-        using Self = GridMap<T, Dim>;
-        using GridMapInfoPtr = typename GridMap<T, Dim>::_GridMapInfoPtr;
-        auto py_class =
-            py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
-                .def(py::init<GridMapInfoPtr>(), py::arg("grid_map_info"))
-                .def(py::init<GridMapInfoPtr, T>(), py::arg("grid_map_info"), py::arg("value"))
-                .def(py::init<GridMapInfoPtr, Tensor<T, Dim>>(), py::arg("grid_map_info"), py::arg("data"))
-                .def(py::init<GridMapInfoPtr, const std::function<T(void)> &>(), py::arg("grid_map_info"), py::arg("data_init_func"))
-                .def_readwrite("data", &Self::data)
-                .def_readwrite("info", &Self::info);
+    template<typename MapDtype, typename InfoDtype, int Dim>
+    std::enable_if_t<!py::SupportedByNumpy<MapDtype>::value, py::class_<GridMap<MapDtype, InfoDtype, Dim>, std::shared_ptr<GridMap<MapDtype, InfoDtype, Dim>>>>
+    BindGridMap(py::module &m, const char *name) {
+        using Self = GridMap<MapDtype, InfoDtype, Dim>;
+        using Info = GridMapInfo<InfoDtype, Dim>;
+        auto py_class = py::class_<Self, std::shared_ptr<Self>>(m, name)
+                            .def(py::init<std::shared_ptr<Info>>(), py::arg("grid_map_info"))
+                            .def(py::init<std::shared_ptr<Info>, MapDtype>(), py::arg("grid_map_info"), py::arg("value"))
+                            .def(py::init<std::shared_ptr<Info>, Tensor<MapDtype, Dim>>(), py::arg("grid_map_info"), py::arg("data"))
+                            .def(py::init<std::shared_ptr<Info>, const std::function<MapDtype()> &>(), py::arg("grid_map_info"), py::arg("data_init_func"))
+                            .def_readwrite("data", &Self::data)
+                            .def_readwrite("info", &Self::info);
         py_class.def(
-            py::init<>([](GridMapInfoPtr grid_map_info, const std::vector<T> &data) {
-                Eigen::Map<const Eigen::VectorX<T>> data_map(data.data(), data.size());
-                return std::make_shared<Self>(grid_map_info, Eigen::VectorX<T>(data_map));
+            py::init<>([](std::shared_ptr<Info> grid_map_info, const std::vector<MapDtype> &data) {
+                Eigen::Map<const Eigen::VectorX<MapDtype>> data_map(data.data(), data.size());
+                return std::make_shared<Self>(grid_map_info, Eigen::VectorX<MapDtype>(data_map));
             }),
             py::arg("grid_map_info"),
             py::arg("data"));
         return py_class;
     }
 
-    template<typename T>
-    typename std::enable_if<py::SupportedByNumpy<T>::value, py::class_<IncrementalGridMap2D<T>>>::type
-    BindIncrementalGridMap2D(py::module &m, const std::string &name) {
-        using Self = IncrementalGridMap2D<T>;
-        using GridMapInfoPtr = typename IncrementalGridMap2D<T>::_GridMapInfoPtr;
-        return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
+    template<typename Dtype>
+    std::enable_if_t<py::SupportedByNumpy<Dtype>::value, py::class_<IncrementalGridMap2D<Dtype>>>
+    BindIncrementalGridMap2D(py::module &m, const char *name) {
+        using Self = IncrementalGridMap2D<Dtype>;
+        using Info = GridMapInfo2D<Dtype>;
+        using Vector2 = Eigen::Vector2<Dtype>;
+
+        return py::class_<Self, std::shared_ptr<Self>>(m, name)
             .def(
-                py::init<>([](GridMapInfoPtr grid_map_info, const std::function<T(void)> &data_init_func) {
+                py::init<>([](std::shared_ptr<Info> grid_map_info, const std::function<Dtype(void)> &data_init_func) {
                     return std::make_shared<Self>(grid_map_info, data_init_func);
                 }),
                 py::arg("grid_map_info"),
@@ -222,27 +258,27 @@ namespace erl::common {
             .def("get_canonical_metric_coords", &Self::GetCanonicalMetricCoords, py::arg("metric_coords"))
             .def(
                 "as_image",
-                py::overload_cast<const GridMapInfoPtr &, const std::function<uint8_t(const T &)> &>(&Self::AsImage, py::const_),
+                py::overload_cast<const std::shared_ptr<Info> &, const std::function<uint8_t(const Dtype &)> &>(&Self::AsImage, py::const_),
                 py::arg("grid_map_info"),
                 py::arg("cast_func").none(false))
             .def("__call__", py::overload_cast<int, int>(&Self::operator(), py::const_), py::arg("x_grid"), py::arg("y_grid"))
-            .def("__call__", py::overload_cast<double, double>(&Self::operator(), py::const_), py::arg("x"), py::arg("y"))
+            .def("__call__", py::overload_cast<Dtype, Dtype>(&Self::operator(), py::const_), py::arg("x"), py::arg("y"))
             .def("__getitem__", py::overload_cast<const Eigen::Ref<const Eigen::Vector2i> &>(&Self::operator[], py::const_), py::arg("grid_coords"))
-            .def("__getitem__", py::overload_cast<const Eigen::Ref<const Eigen::Vector2d> &>(&Self::operator[], py::const_), py::arg("metric_coords"))
+            .def("__getitem__", py::overload_cast<const Eigen::Ref<const Vector2> &>(&Self::operator[], py::const_), py::arg("metric_coords"))
             .def(
                 "__setitem__",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2i> &grid_coords, const T data) { self.GetMutableData(grid_coords) = data; },
+                [](Self &self, const Eigen::Ref<const Eigen::Vector2i> &grid_coords, const Dtype data) { self.GetMutableData(grid_coords) = data; },
                 py::arg("grid_coords"),
                 py::arg("data_container"))
             .def(
                 "__setitem__",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_coords, const T data) { self.GetMutableData(metric_coords) = data; },
+                [](Self &self, const Eigen::Ref<const Vector2> &metric_coords, const Dtype data) { self.GetMutableData(metric_coords) = data; },
                 py::arg("metric_coords"),
                 py::arg("data_container"))
             .def("get_block", py::overload_cast<int, int, int, int>(&Self::GetBlock), py::arg("x_grid"), py::arg("y_grid"), py::arg("height"), py::arg("width"))
             .def(
                 "get_block",
-                py::overload_cast<double, double, double, double, bool>(&Self::GetBlock),
+                py::overload_cast<Dtype, Dtype, Dtype, Dtype, bool>(&Self::GetBlock),
                 py::arg("x_min"),
                 py::arg("y_min"),
                 py::arg("x_max"),
@@ -250,14 +286,14 @@ namespace erl::common {
                 py::arg("safe_crop") = true)
             .def(
                 "get_block",
-                py::overload_cast<const Eigen::Ref<const Eigen::Vector2d> &, const Eigen::Ref<const Eigen::Vector2d> &, bool>(&Self::GetBlock),
+                py::overload_cast<const Eigen::Ref<const Vector2> &, const Eigen::Ref<const Vector2> &, bool>(&Self::GetBlock),
                 py::arg("metric_min"),
                 py::arg("metric_max"),
                 py::arg("safe_crop") = true)
             .def(
                 "collect_non_zero_data",
-                [](Self &self, double x_min, double y_min, double x_max, double y_max) {
-                    std::vector<T> data;
+                [](Self &self, Dtype x_min, Dtype y_min, Dtype x_max, Dtype y_max) {
+                    std::vector<Dtype> data;
                     self.CollectNonZeroData(x_min, y_min, x_max, y_max, data);
                     return data;
                 },
@@ -267,8 +303,8 @@ namespace erl::common {
                 py::arg("y_max"))
             .def(
                 "collect_non_zero_data",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_min, const Eigen::Ref<const Eigen::Vector2d> &metric_max) {
-                    std::vector<T> data;
+                [](Self &self, const Eigen::Ref<const Vector2> &metric_min, const Eigen::Ref<const Vector2> &metric_max) {
+                    std::vector<Dtype> data;
                     self.CollectNonZeroData(metric_min, metric_max, data);
                     return data;
                 },
@@ -276,15 +312,16 @@ namespace erl::common {
                 py::arg("metric_max"));
     }
 
-    template<typename T>
-    typename std::enable_if<!py::SupportedByNumpy<T>::value, py::class_<IncrementalGridMap2D<T>>>::type
-    BindIncrementalGridMap2D(py::module &m, const std::string &name) {
-        using Self = IncrementalGridMap2D<T>;
-        using GridMapInfoPtr = typename IncrementalGridMap2D<T>::_GridMapInfoPtr;
-        // typedef typename IncrementalGridMap2D<T>::_GridMapInfoPtr GridMapInfoPtr;
-        return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
+    template<typename Dtype>
+    std::enable_if_t<!py::SupportedByNumpy<Dtype>::value, py::class_<IncrementalGridMap2D<Dtype>>>
+    BindIncrementalGridMap2D(py::module &m, const char *name) {
+        using Self = IncrementalGridMap2D<Dtype>;
+        using Info = GridMapInfo2D<Dtype>;
+        using Vector2 = Eigen::Vector2<Dtype>;
+
+        return py::class_<Self, std::shared_ptr<Self>>(m, name)
             .def(
-                py::init<>([](GridMapInfoPtr grid_map_info, const std::function<T(void)> &data_init_func) {
+                py::init<>([](std::shared_ptr<Info> grid_map_info, const std::function<Dtype(void)> &data_init_func) {
                     return std::make_shared<Self>(grid_map_info, data_init_func);
                 }),
                 py::arg("grid_map_info"),
@@ -293,28 +330,28 @@ namespace erl::common {
             .def("get_canonical_metric_coords", &Self::GetCanonicalMetricCoords, py::arg("metric_coords"))
             .def(
                 "as_image",
-                py::overload_cast<const GridMapInfoPtr &, const std::function<uint8_t(const T &)> &>(&Self::AsImage, py::const_),
+                py::overload_cast<const std::shared_ptr<Info> &, const std::function<uint8_t(const Dtype &)> &>(&Self::AsImage, py::const_),
                 py::arg("grid_map_info"),
                 py::arg("cast_func").none(false))
             .def("__call__", py::overload_cast<int, int>(&Self::operator(), py::const_), py::arg("x_grid"), py::arg("y_grid"))
-            .def("__call__", py::overload_cast<double, double>(&Self::operator(), py::const_), py::arg("x"), py::arg("y"))
+            .def("__call__", py::overload_cast<Dtype, Dtype>(&Self::operator(), py::const_), py::arg("x"), py::arg("y"))
             .def("__getitem__", py::overload_cast<const Eigen::Ref<const Eigen::Vector2i> &>(&Self::operator[], py::const_), py::arg("grid_coords"))
-            .def("__getitem__", py::overload_cast<const Eigen::Ref<const Eigen::Vector2d> &>(&Self::operator[], py::const_), py::arg("metric_coords"))
+            .def("__getitem__", py::overload_cast<const Eigen::Ref<const Vector2> &>(&Self::operator[], py::const_), py::arg("metric_coords"))
             .def(
                 "__setitem__",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2i> &grid_coords, const T data) { self.GetMutableData(grid_coords) = data; },
+                [](Self &self, const Eigen::Ref<const Eigen::Vector2i> &grid_coords, const Dtype data) { self.GetMutableData(grid_coords) = data; },
                 py::arg("grid_coords"),
                 py::arg("data_container"))
             .def(
                 "__setitem__",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_coords, const T data) { self.GetMutableData(metric_coords) = data; },
+                [](Self &self, const Eigen::Ref<const Vector2> &metric_coords, const Dtype data) { self.GetMutableData(metric_coords) = data; },
                 py::arg("metric_coords"),
                 py::arg("data_container"))
             .def(
                 "get_block",
                 [](Self &self, int x_grid, int y_grid, int height, int width) {
                     auto block = self.GetBlock(x_grid, y_grid, height, width);
-                    std::vector<std::vector<T>> data(height);
+                    std::vector<std::vector<Dtype>> data(height);
                     for (int i = 0; i < height; ++i) {
                         data[i].resize(width);
                         for (int j = 0; j < width; ++j) { data[i][j] = block(i, j); }
@@ -327,11 +364,11 @@ namespace erl::common {
                 py::arg("width"))
             .def(
                 "get_block",
-                [](Self &self, double x_min, double y_min, double x_max, double y_max, bool safe_crop) {
+                [](Self &self, Dtype x_min, Dtype y_min, Dtype x_max, Dtype y_max, bool safe_crop) {
                     auto block = self.GetBlock(x_min, y_min, x_max, y_max, safe_crop);
                     long height = block.rows();
                     long width = block.cols();
-                    std::vector<std::vector<T>> data(height);
+                    std::vector<std::vector<Dtype>> data(height);
                     for (int i = 0; i < height; ++i) {
                         data[i].resize(width);
                         for (int j = 0; j < width; ++j) { data[i][j] = block(i, j); }
@@ -345,11 +382,11 @@ namespace erl::common {
                 py::arg("safe_crop") = true)
             .def(
                 "get_block",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_min, const Eigen::Ref<const Eigen::Vector2d> &metric_max, bool safe_crop) {
+                [](Self &self, const Eigen::Ref<const Vector2> &metric_min, const Eigen::Ref<const Vector2> &metric_max, bool safe_crop) {
                     auto block = self.GetBlock(metric_min, metric_max, safe_crop);
                     long height = block.rows();
                     long width = block.cols();
-                    std::vector<std::vector<T>> data(height);
+                    std::vector<std::vector<Dtype>> data(height);
                     for (int i = 0; i < height; ++i) {
                         data[i].resize(width);
                         for (int j = 0; j < width; ++j) { data[i][j] = block(i, j); }
@@ -361,8 +398,8 @@ namespace erl::common {
                 py::arg("safe_crop") = true)
             .def(
                 "collect_non_zero_data",
-                [](Self &self, double x_min, double y_min, double x_max, double y_max) {
-                    std::vector<T> data;
+                [](Self &self, Dtype x_min, Dtype y_min, Dtype x_max, Dtype y_max) {
+                    std::vector<Dtype> data;
                     self.CollectNonZeroData(x_min, y_min, x_max, y_max, data);
                     return data;
                 },
@@ -372,8 +409,8 @@ namespace erl::common {
                 py::arg("y_max"))
             .def(
                 "collect_non_zero_data",
-                [](Self &self, const Eigen::Ref<const Eigen::Vector2d> &metric_min, const Eigen::Ref<const Eigen::Vector2d> &metric_max) {
-                    std::vector<T> data;
+                [](Self &self, const Eigen::Ref<const Vector2> &metric_min, const Eigen::Ref<const Vector2> &metric_max) {
+                    std::vector<Dtype> data;
                     self.CollectNonZeroData(metric_min, metric_max, data);
                     return data;
                 },
@@ -381,41 +418,28 @@ namespace erl::common {
                 py::arg("metric_max"));
     }
 
-    template<typename InfoDtype>
-    typename std::enable_if<py::SupportedByNumpy<InfoDtype>::value, py::class_<GridMapDrawer2D<InfoDtype>>>::type
-    BindGridMapDrawer2D(py::module& m, const std::string& name) {
-        using Self = GridMapDrawer2D<InfoDtype>;
-        using GridMapPtr = typename Self::_GridMapInfoPtr;
-        return py::class_<Self, std::shared_ptr<Self>>(m, name.c_str())
-            .def(py::init<const GridMapPtr &>(), py::arg("grid_map_info"))
-            .def_readwrite("grid_map_info", &Self::grid_map_info)
+    template<typename Dtype>
+    void
+    BindGridMapDrawer2D(const py::module &m, const char *name) {
+        using T = GridMapDrawer2D<Dtype>;
+        using Info = GridMapInfo2D<Dtype>;
+
+        py::class_<T>(m, name)
+            .def(py::init<const std::shared_ptr<Info> &>(), py::arg("grid_map_info"))
+            .def_readwrite("grid_map_info", &T::grid_map_info)
             .def_property(
                 "image",
-                [](const Self &self) { return self.image; },
-                [](Self &self, const cv::Mat &image) { image.copyTo(self.image); })
-            .def("reset_image", &Self::ResetImage)
-            .def(
-                "draw_segments_inplace",
-                &Self::DrawSegmentsInplace,
-                py::arg("mat"),
-                py::arg("color"),
-                py::arg("thickness"),
-                py::arg("starts"),
-                py::arg("ends"))
-            .def("draw_segments", &Self::DrawSegments, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
-            .def("draw_rays_inplace", &Self::DrawRaysInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
-            .def("draw_rays", &Self::DrawRays, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
-            .def(
-                "draw_polyline_inplace",
-                &Self::DrawPolylineInplace,
-                py::arg("mat"),
-                py::arg("color"),
-                py::arg("thickness"),
-                py::arg("closed"),
-                py::arg("points"))
-            .def("draw_polyline", &Self::DrawPolyline, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("closed"), py::arg("points"))
-            .def("draw_contour_inplace", &Self::DrawContourInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("contour"))
-            .def("draw_contour", &Self::DrawContour, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("contour"))
-            .def("show_image", &Self::ShowImage, py::arg("title"));
+                [](const T &self) { return self.image; },
+                [](T &self, const cv::Mat &image) { image.copyTo(self.image); })
+            .def("reset_image", &T::ResetImage)
+            .def("draw_segments_inplace", &T::DrawSegmentsInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
+            .def("draw_segments", &T::DrawSegments, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
+            .def("draw_rays_inplace", &T::DrawRaysInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
+            .def("draw_rays", &T::DrawRays, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
+            .def("draw_polyline_inplace", &T::DrawPolylineInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("closed"), py::arg("points"))
+            .def("draw_polyline", &T::DrawPolyline, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("closed"), py::arg("points"))
+            .def("draw_contour_inplace", &T::DrawContourInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("contour"))
+            .def("draw_contour", &T::DrawContour, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("contour"))
+            .def("show_image", &T::ShowImage, py::arg("title"));
     }
 }  // namespace erl::common

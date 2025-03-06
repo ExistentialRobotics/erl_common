@@ -117,7 +117,7 @@ namespace erl::common {
         }
     };
 
-#define ERL_REGISTER_YAMLABLE(Derived) inline const volatile bool kRegistered##Derived = erl::common::YamlableBase::Register<Derived>()
+    // #define ERL_REGISTER_YAMLABLE(Derived) inline const volatile bool kRegistered##Derived = erl::common::YamlableBase::Register<Derived>()
 }  // namespace erl::common
 
 namespace YAML {
