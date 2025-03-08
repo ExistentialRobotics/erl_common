@@ -37,7 +37,7 @@ namespace erl::common {
         template<typename Derived>
         std::enable_if_t<std::is_base_of_v<Base, Derived>, bool>
         Register(std::string class_id, InitFunction init_function) {
-            if (class_id.empty()) { class_id = demangle(typeid(Derived).name()); }
+            if (class_id.empty()) { class_id = type_name<Derived>(); }
             if (m_class_id_mapping_.count(class_id)) {
                 ERL_WARN("{} is already registered to the factory.", class_id, type_name<FactoryPattern>());
                 return false;

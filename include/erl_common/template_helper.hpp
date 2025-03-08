@@ -31,7 +31,10 @@ using IsSmartPtr = std::disjunction<IsSharedPtr<T>, IsUniquePtr<T>, IsWeakPtr<T>
 /// assert if pointer is null
 template<typename T, typename... Args>
 T
-NotNull(T ptr, const std::string &msg, Args &&...args) {
-    if (ptr == nullptr) { erl::common::Logging::Error(msg, std::forward<Args>(args)...); }
+NotNull(T ptr, const bool fatal, const std::string &msg, Args &&...args) {
+    if (ptr == nullptr) {
+        if (fatal) { erl::common::Logging::Fatal(msg, std::forward<Args>(args)...); }
+        erl::common::Logging::Error(msg, std::forward<Args>(args)...);
+    }
     return ptr;
 }
