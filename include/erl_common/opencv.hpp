@@ -480,7 +480,7 @@ namespace erl::common {
     DrawTrajectoryInplace(
         cv::Mat &map,
         const Eigen::Ref<const Eigen::Matrix2X<Dtype>> &trajectory,
-        const std::shared_ptr<GridMapInfo2D<Dtype>> &grid_map_info,
+        const std::shared_ptr<const GridMapInfo2D<Dtype>> &grid_map_info,
         const cv::Scalar &color,
         const int thickness,
         const bool pixel_based) {

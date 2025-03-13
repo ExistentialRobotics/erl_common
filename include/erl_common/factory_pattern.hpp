@@ -20,8 +20,16 @@ namespace erl::common {
 
     private:
         std::map<std::string, InitFunction> m_class_id_mapping_ = {};
+        FactoryPattern() = default;
 
     public:
+        FactoryPattern(const FactoryPattern &) = delete;
+        FactoryPattern(FactoryPattern &&) = delete;
+        FactoryPattern &
+        operator=(const FactoryPattern &) = delete;
+        FactoryPattern &
+        operator=(FactoryPattern &&) = delete;
+
         static FactoryPattern &
         GetInstance() {
             static FactoryPattern instance;
