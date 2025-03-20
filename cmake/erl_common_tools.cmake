@@ -818,6 +818,14 @@ macro(erl_setup_lapack)
             elseif (MKL_INCLUDE)
                 set(MKL_INCLUDE_DIRS ${MKL_INCLUDE} CACHE PATH "Path to MKL include directory" FORCE)
             endif ()
+            # some packages depending on MKL may use MKL_LIBRARIES, which is set by MKLConfig.cmake
+            # MKL_LIBRARIES is a list of library names, not full paths, which will not work correctly without MKL_LIBRARY_DIR
+            if (NOT DEFINED MKL_LIBRARY_DIR)
+                get_filename_component(mkl_dir ${MKL_INCLUDE_DIRS} DIRECTORY)
+                set(MKL_LIBRARY_DIR ${mkl_dir}/lib CACHE PATH "Path to MKL library directory" FORCE)
+                unset(mkl_dir)  # remove temporary variable
+                message(STATUS "Set MKL_LIBRARY_DIR to ${MKL_LIBRARY_DIR}")
+            endif ()
 
             # Update: Since Intel-MKL 2024.02, don't set or use MKL_LIBRARIES since it is used by MKLConfig.cmake
             # internally. Instead, we should use MKL::MKL and MKL::<library_name>. MKL::MKL is a target that holds only

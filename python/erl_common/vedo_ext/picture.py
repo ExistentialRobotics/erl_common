@@ -4,7 +4,7 @@ from vedo import Grid
 
 # vedo.Picture changes to vedo.Image
 try:
-    from vedo import Picture:
+    from vedo import Picture
 except ImportError:
     from vedo import Image as Picture
 
