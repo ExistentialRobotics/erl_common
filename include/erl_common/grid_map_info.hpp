@@ -43,7 +43,7 @@ namespace erl::common {
             const Eigen::Vector<Dtype, Dim>& min,
             const Eigen::Vector<Dtype, Dim>& max,
             const Eigen::Vector<Dtype, Dim>& resolution,
-            Eigen::Vector<int, Dim> padding)
+            const Eigen::Vector<int, Dim>& padding)
             : m_map_shape_(Eigen::Vector<int, Dim>(
                   ((max - min).array() / resolution.array()).ceil().template cast<int>().unaryExpr([](const int& x) { return x % 2 ? x + 1 : x; }).array() + 1 +
                   2 * padding.array())),

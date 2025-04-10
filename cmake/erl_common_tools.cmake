@@ -670,12 +670,15 @@ macro(erl_setup_compiler)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -H")
     endif ()
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra -flto=auto")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--disable-new-dtags")  # disable new DTAGS since it is not supported in Ubuntu
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--disable-new-dtags")  # pass arguments to the linker
+    # disable new DTAGS (DT_RUNPATH) since it is not supported in Ubuntu
+    # old DTAGS (DT_RPATH) is used to specify paths for libraries that are directly linked to the executable
+    # new DTAGS (DT_RUNPATH) is used to specify paths for libraries that are transitively linked to the executable
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree -ftrack-macro-expansion=2")
-    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -funroll-loops -g")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -funroll-loops")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -funroll-loops -flto=auto")
 
     if (NOT CMAKE_OSX_DEPLOYMENT_TARGET)
         set(CMAKE_OSX_DEPLOYMENT_TARGET 13.0)

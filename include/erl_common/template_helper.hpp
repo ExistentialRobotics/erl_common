@@ -38,3 +38,82 @@ NotNull(T ptr, const bool fatal, const std::string &msg, Args &&...args) {
     }
     return ptr;
 }
+
+template<typename T1, typename T2>
+struct Zip {
+    using type = std::pair<const T1 &, const T2 &>;
+
+    Zip(const std::vector<T1> &v1, const std::vector<T2> &v2)
+        : m_v1_(v1.data()),
+          m_v2_(v2.data()),
+          m_size_(std::min(v1.size(), v2.size())) {}
+
+    struct Iterator {
+        explicit Iterator(const Zip *zip, const std::size_t index = 0)
+            : m_zip_(zip),
+              m_index_(index) {}
+
+        T1 &
+        first() {
+            return m_zip_->m_v1_[m_index_];
+        }
+
+        const T1 &
+        first() const {
+            return m_zip_->m_v1_[m_index_];
+        }
+
+        T2 &
+        second() {
+            return m_zip_->m_v2_[m_index_];
+        }
+
+        const T2 &
+        second() const {
+            return m_zip_->m_v2_[m_index_];
+        }
+
+        const Iterator &
+        operator++() {  // prefix increment, i.e. ++it
+            ++m_index_;
+            if (m_index_ >= m_zip_->m_size_) { m_index_ = m_zip_->m_size_; }
+            return *this;
+        }
+
+        Iterator
+        operator++(int) {  // postfix increment, i.e. it++
+            std::size_t index = m_index_;
+            ++m_index_;
+            return {m_zip_, index};
+        }
+
+        [[nodiscard]] bool
+        operator==(const Iterator &other) const {
+            return m_index_ == other.m_index_ && m_zip_ == other.m_zip_;
+        }
+
+        [[nodiscard]] bool
+        operator!=(const Iterator &other) const {
+            return !(*this == other);
+        }
+
+    private:
+        Zip *m_zip_;
+        std::size_t m_index_;
+    };
+
+    Iterator
+    begin() const {
+        return {this, 0};
+    }
+
+    Iterator
+    end() const {
+        return {this, m_size_};
+    }
+
+private:
+    T1 *m_v1_;
+    T2 *m_v2_;
+    std::size_t m_size_;
+};

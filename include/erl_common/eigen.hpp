@@ -15,6 +15,14 @@ mkl_serv_intel_cpu_true();
 }
 
 namespace Eigen {
+
+#if !EIGEN_VERSION_AT_LEAST(3, 4, 0)  // the eigen version is older
+    template<typename T>
+    using MatrixX = Matrix<T, Dynamic, Dynamic, ColMajor>;
+    template<typename T>
+    using VectorX = Matrix<T, Dynamic, 1, ColMajor>;
+#endif
+
     // MATRIX
     using MatrixXl = MatrixX<long>;
     using MatrixXb = MatrixX<bool>;
