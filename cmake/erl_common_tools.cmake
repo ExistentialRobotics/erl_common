@@ -980,7 +980,7 @@ macro(erl_setup_common_packages)
     set(EIGEN3_VERSION_STRING ${Eigen3_VERSION} CACHE STRING "Eigen3 version" FORCE)
 
     if (EIGEN3_VERSION_STRING VERSION_LESS "3.4.0")
-        message(FATAL_ERROR "Eigen3 version must be at least 3.4.0")
+        message(WARNING "Eigen3 version is older than 3.4.0")
     endif ()
 
     if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.25)
