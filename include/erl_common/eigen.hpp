@@ -19,8 +19,12 @@ namespace Eigen {
 #if !EIGEN_VERSION_AT_LEAST(3, 4, 0)  // the eigen version is older
     template<typename T>
     using MatrixX = Matrix<T, Dynamic, Dynamic, ColMajor>;
+    template<typename T, int Size>
+    using Vector = Matrix<T, Size, 1, ColMajor>;
     template<typename T>
-    using VectorX = Matrix<T, Dynamic, 1, ColMajor>;
+    using Vector2 = Vector<T, 2>;
+    template<typename T>
+    using VectorX = Vector<T, Dynamic>;
 #endif
 
     // MATRIX

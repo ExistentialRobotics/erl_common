@@ -145,8 +145,8 @@ namespace erl::common {
     };
 }  // namespace erl::common
 
-#define LOGGING_LABELS           fmt::format("{}:{}", __FILE_NAME__, __LINE__)
-#define LOGGING_LABELED_MSG(msg) fmt::format("{}:{}: {}", __FILE_NAME__, __LINE__, msg)
+#define LOGGING_LABELS           fmt::format("{}:{}", __FILE__, __LINE__)
+#define LOGGING_LABELED_MSG(msg) fmt::format("{}:{}: {}", __FILE__, __LINE__, msg)
 
 #if defined(ERL_ROS_VERSION_1) || defined(ERL_ROS_VERSION_2)
     #include <ros/assert.h>
@@ -165,21 +165,17 @@ namespace erl::common {
     #endif
 #else
 
-    #ifndef __FILE_NAME__
-    #define __FILE_NAME__ __FILE__
-    #endif
-
-    #define ERL_FATAL(...)                                                                               \
-        do {                                                                                             \
-            erl::common::Logging::Fatal("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
-            exit(1);                                                                                     \
+    #define ERL_FATAL(...)                                                                          \
+        do {                                                                                        \
+            erl::common::Logging::Fatal("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+            exit(1);                                                                                \
         } while (false)
 
     #define ERL_ERROR(...) \
-        do { erl::common::Logging::Error("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
+        do { erl::common::Logging::Error("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
 
     #define ERL_WARN(...) \
-        do { erl::common::Logging::Warn("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
+        do { erl::common::Logging::Warn("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
 
     #define ERL_WARN_ONCE(...)          \
         do {                            \
@@ -196,7 +192,7 @@ namespace erl::common {
         } while (false)
 
     #define ERL_INFO(...) \
-        do { erl::common::Logging::Info("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
+        do { erl::common::Logging::Info("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
 
     #define ERL_INFO_ONCE(...)          \
         do {                            \
@@ -209,7 +205,7 @@ namespace erl::common {
 
     #ifndef NDEBUG
         #define ERL_DEBUG(...) \
-            do { erl::common::Logging::Debug("{}:{}: {}", __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
+            do { erl::common::Logging::Debug("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
         #define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
     #else
         #define ERL_DEBUG(...)              ((void) 0)
@@ -227,13 +223,12 @@ namespace erl::common {
     } while (false)
 
 #ifndef ERL_ASSERTM
-    #define ERL_ASSERTM(expr, ...)                                                                                                          \
-        do {                                                                                                                                \
-            if (!(expr)) {                                                                                                                  \
-                std::string failure_msg =                                                                                                   \
-                    erl::common::Logging::Failure("assertion ({}) at {}:{}: {}", #expr, __FILE_NAME__, __LINE__, fmt::format(__VA_ARGS__)); \
-                throw std::runtime_error(failure_msg);                                                                                      \
-            }                                                                                                                               \
+    #define ERL_ASSERTM(expr, ...)                                                                                                                           \
+        do {                                                                                                                                                 \
+            if (!(expr)) {                                                                                                                                   \
+                std::string failure_msg = erl::common::Logging::Failure("assertion ({}) at {}:{}: {}", #expr, __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+                throw std::runtime_error(failure_msg);                                                                                                       \
+            }                                                                                                                                                \
         } while (false)
 #endif
 
