@@ -474,7 +474,8 @@ namespace erl::common {
                 const int dim_size = Shape(i);
                 const int n_copies = size / dim_size;
                 Eigen::MatrixXi coords = Eigen::VectorXi::LinSpaced(dim_size, 0, dim_size - 1).transpose().replicate(stride, n_copies / stride);
-                grid_coords.row(i) << coords.reshaped(size, 1).transpose();
+                Eigen::Map<Eigen::Matrix<int, 1, Eigen::Dynamic>> coords_reshaped(coords.data(), 1, size);
+                grid_coords.row(i) << coords_reshaped;
             }
 
             return grid_coords;
@@ -506,7 +507,8 @@ namespace erl::common {
                 Dtype min = Min(i) + half_res;
                 Dtype max = Max(i) - half_res;
                 Eigen::MatrixX<Dtype> coords = Eigen::VectorX<Dtype>::LinSpaced(dim_size, min, max).transpose().replicate(stride, n_copies / stride);
-                meter_coords.row(i) << coords.reshaped(size, 1).transpose();
+                Eigen::Map<Eigen::Matrix<Dtype, 1, Eigen::Dynamic>> coords_reshaped(coords.data(), 1, size);
+                meter_coords.row(i) << coords_reshaped;
             }
 
             return meter_coords;

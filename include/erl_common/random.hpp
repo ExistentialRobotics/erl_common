@@ -1,8 +1,7 @@
 #pragma once
 
+#include "eigen.hpp"
 #include "logging.hpp"
-
-#include <Eigen/Dense>
 
 #include <algorithm>
 #include <numeric>
