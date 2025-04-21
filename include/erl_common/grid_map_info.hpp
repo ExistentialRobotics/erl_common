@@ -101,7 +101,7 @@ namespace erl::common {
         [[nodiscard]] GridMapInfo<Dtype, Eigen::Dynamic>
         Extend(int size, const Dtype min, const Dtype max, const int dim) const {
 
-            int n_dims = Dims();
+            const int n_dims = Dims();
             ERL_DEBUG_ASSERT(dim >= 0 && dim <= n_dims, "dim = %d is out of range [%d, %d].", dim, 0, n_dims);
 
             Eigen::VectorXi new_shape(n_dims + 1);
@@ -161,7 +161,7 @@ namespace erl::common {
 
         [[nodiscard]] GridMapInfo<Dtype, Eigen::Dynamic>
         Squeeze(const int dim) const {
-            int n_dims = Dims();
+            const int n_dims = Dims();
             ERL_DEBUG_ASSERT(dim >= 0 && dim < n_dims, "dim = %d is out of range [%d, %d)", dim, 0, n_dims);
 
             Eigen::VectorXi new_map_shape(n_dims - 1);

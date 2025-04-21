@@ -3,6 +3,7 @@
 #include "logging.hpp"
 
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 #include <fstream>
 
