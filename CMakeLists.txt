@@ -54,17 +54,24 @@ target_include_directories(${PROJECT_NAME}
         $<BUILD_INTERFACE:${${PROJECT_NAME}_INCLUDE_DIR}>
         $<INSTALL_INTERFACE:${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}>)
 target_include_directories(${PROJECT_NAME} SYSTEM
-        PUBLIC ${MKL_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+        PUBLIC ${MKL_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${cairomm-1.0_INCLUDE_DIRS})
 # https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
 target_link_libraries(${PROJECT_NAME}
         PUBLIC fmt::fmt
         PUBLIC ${OpenCV_LIBRARIES}
-        PUBLIC ${Pangolin_LIBRARIES}
         PUBLIC yaml-cpp nlohmann_json::nlohmann_json
         PUBLIC Boost::boost Boost::program_options Boost::graph
         PUBLIC pthread OpenMP::OpenMP_CXX
         PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
         PUBLIC ${catkin_LIBRARIES})
+if (Pangolin_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${Pangolin_LIBRARIES})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DERL_USE_PANGOLIN)
+endif ()
+if (plplot_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC PLPLOT::plplot PLPLOT::plplotcxx ${cairomm-1.0_LIBRARIES})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC "ERL_USE_PLPLOT")
+endif ()
 
 ###################
 # Python bindings #

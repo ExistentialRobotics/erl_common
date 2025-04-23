@@ -1,9 +1,9 @@
-#ifndef ERL_NO_PANGOLIN
-#include "erl_common/pangolin_plotter_curve_2d.hpp"
+#ifdef ERL_USE_PANGOLIN
+    #include "erl_common/pangolin_plotter_curve_2d.hpp"
 
-#include "erl_common/logging.hpp"
+    #include "erl_common/logging.hpp"
 
-#include <utility>
+    #include <utility>
 
 namespace erl::common {
 

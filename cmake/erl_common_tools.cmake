@@ -877,10 +877,10 @@ macro(erl_setup_lapack)
                         OUTPUT BLAS_LIB_DIR
                         PACKAGE OpenBLAS
                         REQUIRED
-                        COMMANDS APPLE "try `brew install openblas`"
-                        COMMANDS UBUNTU_LINUX "try `bash scripts/install_openblas_seq.bash`"
                         NAMES libopenblas.so
-                        PATHS /usr/lib/x86_64-linux-gnu /opt/OpenBLAS/lib)
+                        PATHS /usr/lib/x86_64-linux-gnu /opt/OpenBLAS/lib
+                        COMMANDS APPLE "try `brew install openblas`"
+                        COMMANDS UBUNTU_LINUX "try `bash scripts/install_openblas_seq.bash`")
             endif ()
 
             erl_find_package(
@@ -1007,6 +1007,7 @@ macro(erl_setup_common_packages)
     endif ()
 
     include(${ERL_CMAKE_DIR}/config_pangolin.cmake)
+    include(${ERL_CMAKE_DIR}/config_plplot.cmake)
 
     # erl_find_package(
     # PACKAGE PCL
@@ -1023,11 +1024,6 @@ macro(erl_setup_common_packages)
             REQUIRED
             COMMANDS UBUNTU_LINUX "try `sudo apt install libyaml-cpp-dev`"
             COMMANDS ARCH_LINUX "try `sudo pacman -S yaml-cpp`")
-
-    # erl_find_package(
-    # PACKAGE Matplot++
-    # REQUIRED
-    # COMMANDS GENERAL "visit https://github.com/alandefreitas/matplotplusplus")
 
     if (ROS_ACTIVATED)
         if (ROS_VERSION STREQUAL "1")

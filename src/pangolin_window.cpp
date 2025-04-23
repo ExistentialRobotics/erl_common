@@ -1,7 +1,7 @@
-#ifndef ERL_NO_PANGOLIN
-#include "erl_common/pangolin_window.hpp"
+#ifdef ERL_USE_PANGOLIN
+    #include "erl_common/pangolin_window.hpp"
 
-#include "erl_common/random.hpp"
+    #include "erl_common/random.hpp"
 
 namespace erl::common {
     PangolinWindow::PangolinWindow(const std::string &window_name, const int window_width, const int window_height, int window_x, int window_y)

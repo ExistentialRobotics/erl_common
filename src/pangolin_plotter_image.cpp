@@ -1,5 +1,5 @@
-#ifndef ERL_NO_PANGOLIN
-#include "erl_common/pangolin_plotter_image.hpp"
+#ifdef ERL_USE_PANGOLIN
+    #include "erl_common/pangolin_plotter_image.hpp"
 
 namespace erl::common {
     PangolinPlotterImage::PangolinPlotterImage(std::shared_ptr<PangolinWindow> window, int image_height, int image_width, int format, int dtype)

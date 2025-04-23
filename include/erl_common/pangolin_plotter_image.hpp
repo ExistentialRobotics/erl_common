@@ -1,9 +1,9 @@
 #pragma once
 
-#ifndef ERL_NO_PANGOLIN
-#include "pangolin_window.hpp"
+#ifdef ERL_USE_PANGOLIN
+    #include "pangolin_window.hpp"
 
-#include <opencv2/opencv.hpp>
+    #include <opencv2/opencv.hpp>
 
 namespace erl::common {
     /**

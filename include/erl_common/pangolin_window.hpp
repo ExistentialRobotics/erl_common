@@ -1,10 +1,10 @@
 #pragma once
 
-#ifndef ERL_NO_PANGOLIN
-#include <pangolin/display/display.h>
-#include <pangolin/pangolin.h>
+#ifdef ERL_USE_PANGOLIN
+    #include <pangolin/display/display.h>
+    #include <pangolin/pangolin.h>
 
-#include <map>
+    #include <map>
 
 namespace erl::common {
 
