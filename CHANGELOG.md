@@ -1,3 +1,13 @@
+# 2025-04-23
+
+- Add: use plplot to draw graphs. Enabled by default. Use `-DERL_USE_PLPLOT=OFF` to disable it.
+- Add: FactoryPattern
+- Add: DataBufferManager
+- Add: float precision selection
+- Improve MKL configuration
+- Improve support to Eigen < 3.4
+- Fix python binding
+
 # 2024-11-14
 
 - Add: a function to cast `Eigen::Matrix<Eigen::Vector<T, M>>` to Numpy array of shape `(W, H, M)`.
