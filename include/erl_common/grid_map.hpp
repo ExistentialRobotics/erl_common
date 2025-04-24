@@ -51,11 +51,11 @@ namespace erl::common {
     template<typename MapDtype, typename InfoDtype, bool RowMajor = true>
     using GridMapX = GridMap<MapDtype, InfoDtype, Eigen::Dynamic, RowMajor>;
 
-    template<typename Dtype>
+    template<typename Dtype, typename InfoDtype = Dtype>
     class IncrementalGridMap2D {
     public:
-        using Info = GridMapInfo<Dtype, 2>;
-        using Vector2 = Eigen::Vector2<Dtype>;
+        using Info = GridMapInfo<InfoDtype, 2>;
+        using MetricCoords = Eigen::Vector2<InfoDtype>;
 
     private:
         std::shared_ptr<Info> m_grid_map_info_;
@@ -90,8 +90,8 @@ namespace erl::common {
             return m_grid_map_info_;
         }
 
-        [[nodiscard]] Vector2
-        GetCanonicalMetricCoords(const Eigen::Ref<const Vector2> &metric_coords) const {
+        [[nodiscard]] MetricCoords
+        GetCanonicalMetricCoords(const Eigen::Ref<const MetricCoords> &metric_coords) const {
             return {
                 m_grid_map_info_->GridToMeterForValue(m_grid_map_info_->MeterToGridForValue(metric_coords[0], 0), 0),
                 m_grid_map_info_->GridToMeterForValue(m_grid_map_info_->MeterToGridForValue(metric_coords[1], 1), 1)};
@@ -114,12 +114,12 @@ namespace erl::common {
             } else {
                 image.setConstant(grid_map_info->Shape(0), grid_map_info->Shape(1), 0);
                 for (int i = 0; i < n_rows; ++i) {
-                    double x = m_grid_map_info_->GridToMeterForValue(i, 0);
+                    InfoDtype x = m_grid_map_info_->GridToMeterForValue(i, 0);
                     const int ii = grid_map_info->MeterToGridForValue(x, 0);
                     for (int j = 0; j < n_cols; ++j) {
                         auto &data = m_data_(i, j);
-                        double y = m_grid_map_info_->GridToMeterForValue(j, 1);
-                        if (!grid_map_info->InMap(Vector2(x, y))) { continue; }
+                        InfoDtype y = m_grid_map_info_->GridToMeterForValue(j, 1);
+                        if (!grid_map_info->InMap(MetricCoords(x, y))) { continue; }
                         const int jj = grid_map_info->MeterToGridForValue(y, 1);
                         image(ii, jj) = cast_func(data);
                     }
@@ -156,7 +156,7 @@ namespace erl::common {
         }
 
         Dtype
-        operator()(const double x, const double y) const {
+        operator()(const InfoDtype x, const InfoDtype y) const {
             return operator()(m_grid_map_info_->MeterToGridForValue(x, 0), m_grid_map_info_->MeterToGridForValue(y, 1));
         }
 
@@ -167,7 +167,7 @@ namespace erl::common {
          * @return
          */
         Dtype
-        operator[](const Eigen::Ref<const Vector2> &metric_coords) const {
+        operator[](const Eigen::Ref<const MetricCoords> &metric_coords) const {
             return operator()(metric_coords[0], metric_coords[1]);
         }
 
@@ -200,7 +200,7 @@ namespace erl::common {
         }
 
         Dtype &
-        GetMutableData(const Eigen::Ref<const Vector2> &metric_coords) {
+        GetMutableData(const Eigen::Ref<const MetricCoords> &metric_coords) {
             return GetMutableData(metric_coords[0], metric_coords[1]);
         }
 
@@ -211,7 +211,7 @@ namespace erl::common {
         }
 
         Dtype &
-        GetMutableDataThreadSafe(const Eigen::Ref<const Vector2> &metric_coords) {
+        GetMutableDataThreadSafe(const Eigen::Ref<const MetricCoords> &metric_coords) {
             return GetMutableDataThreadSafe(metric_coords[0], metric_coords[1]);
         }
 
@@ -243,7 +243,7 @@ namespace erl::common {
         }
 
         Eigen::Ref<Eigen::MatrixX<Dtype>>
-        GetBlock(const Eigen::Ref<const Vector2> &metric_min, const Eigen::Ref<const Vector2> &metric_max, const bool &safe_crop = true) {
+        GetBlock(const Eigen::Ref<const MetricCoords> &metric_min, const Eigen::Ref<const MetricCoords> &metric_max, const bool &safe_crop = true) {
             return GetBlock(metric_min[0], metric_min[1], metric_max[0], metric_max[1], safe_crop);
         }
 
@@ -266,7 +266,7 @@ namespace erl::common {
         }
 
         void
-        CollectNonZeroData(const Eigen::Ref<const Vector2> &metric_min, const Eigen::Ref<const Vector2> &metric_max, std::vector<Dtype> &data) {
+        CollectNonZeroData(const Eigen::Ref<const MetricCoords> &metric_min, const Eigen::Ref<const MetricCoords> &metric_max, std::vector<Dtype> &data) {
             CollectNonZeroData(metric_min[0], metric_min[1], metric_max[0], metric_max[1], data);
         }
 
@@ -346,13 +346,13 @@ namespace erl::common {
             long n_rows = m_data_.rows();
             long n_cols = m_data_.cols();
             auto new_grid_map_info =
-                std::make_shared<Info>(Eigen::Vector2i(n_rows * 2 + 1, n_cols * 2 + 1), Vector2(new_x_min, new_y_min), Vector2(new_x_max, new_y_max));
+                std::make_shared<Info>(Eigen::Vector2i(n_rows * 2 + 1, n_cols * 2 + 1), MetricCoords(new_x_min, new_y_min), MetricCoords(new_x_max, new_y_max));
             ERL_ASSERTM(std::abs(new_grid_map_info->Resolution(0) - x_res) < 1.e-10, "x resolution is not equal.");
             ERL_ASSERTM(std::abs(new_grid_map_info->Resolution(1) - y_res) < 1.e-10, "y resolution is not equal.");
 
             Eigen::MatrixX<Dtype> new_data(new_grid_map_info->Shape(0), new_grid_map_info->Shape(1));
             // copy the old data matrix to the new data matrix
-            Eigen::Vector2i loc = new_grid_map_info->MeterToGridForPoints(Vector2(x_min, y_min));
+            Eigen::Vector2i loc = new_grid_map_info->MeterToGridForPoints(MetricCoords(x_min, y_min));
             new_data.block(loc[0], loc[1], n_rows, n_cols) = m_data_;
 
             // swap the results

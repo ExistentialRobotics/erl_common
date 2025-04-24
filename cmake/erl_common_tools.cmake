@@ -388,25 +388,19 @@ endfunction()
 # erl_find_package
 # ######################################################################################################################
 macro(erl_find_package)
-    set(options NO_RECORD)
-    set(oneValueArgs PACKAGE PKGCONFIG)
+    set(options NO_RECORD QUIET REQUIRED PKGCONFIG)
+    set(oneValueArgs PACKAGE)
     set(multiValueArgs COMMANDS)
     cmake_parse_arguments(ERL "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (QUIET IN_LIST ERL_UNPARSED_ARGUMENTS)
-        set(ERL_QUIET ON)
-    else ()
+    if (NOT ERL_QUIET)
         if (NOT DEFINED ${ERL_PACKAGE}_VERBOSE_ONCE) # avoid printing multiple times
-            set(ERL_QUIET OFF)
             set(${ERL_PACKAGE}_VERBOSE_ONCE ON CACHE BOOL "Flag of whether print detailed logs for ${ERL_PACKAGE}" FORCE)
         else ()
             set(ERL_QUIET ON)
         endif ()
-    endif ()
 
-    if (NOT ERL_QUIET)
         message(STATUS "=================================================================================================")
-
         if (ERL_PACKAGE STREQUAL "Python3")
             message(STATUS "To specify python interpreter, run `cmake -DPython3_ROOT_DIR=/path/to/python3_bin_folder ..`")
             message(STATUS "With CLion, Python_EXECUTABLE is set to the selected python interpreter")
@@ -422,17 +416,20 @@ macro(erl_find_package)
                 MESSAGES ${ERL_COMMANDS})
     endif ()
 
+    unset(_args)
+    if (ERL_REQUIRED)
+        list(APPEND _args REQUIRED)
+    endif ()
+    if (ERL_QUIET)
+        list(APPEND _args QUIET)
+    endif ()
+    list(APPEND _args ${ERL_UNPARSED_ARGUMENTS})
+
     if (ERL_PKGCONFIG)
         find_package(PkgConfig REQUIRED)
-        pkg_check_modules(${ERL_PACKAGE} ${ERL_UNPARSED_ARGUMENTS})
+        pkg_check_modules(${ERL_PACKAGE} ${_args})
     else ()
-        find_package(${ERL_PACKAGE} ${ERL_UNPARSED_ARGUMENTS})
-    endif ()
-
-    if (REQUIRED IN_LIST ERL_UNPARSED_ARGUMENTS)
-        set(MSG_TYPE "FATAL_ERROR")
-    else ()
-        set(MSG_TYPE "WARNING")
+        find_package(${ERL_PACKAGE} ${_args})
     endif ()
 
     if (${ERL_PACKAGE}_FOUND AND NOT ERL_QUIET)
@@ -451,8 +448,11 @@ macro(erl_find_package)
         list(APPEND ${PROJECT_NAME}_DEPENDS ${ERL_PACKAGE})
     endif ()
 
+    unset(_args)
     unset(ERL_PKGCONFIG)
     unset(ERL_NO_RECORD)
+    unset(ERL_QUIET)
+    unset(ERL_REQUIRED)
     unset(ERL_PACKAGE)
     unset(ERL_COMMANDS)
     unset(ERL_UNPARSED_ARGUMENTS)
@@ -775,7 +775,7 @@ macro(erl_setup_lapack)
                             OUTPUT MKL_INCLUDE_DIRS
                             PACKAGE MKL
                             mkl.h
-                            PATHS /usr/include /usr/local/include /opt/intel/oneapi/mkl/*/include
+                            PATHS /usr/include /usr/include/mkl /usr/local/include /usr/local/include/mkl /opt/intel/oneapi/mkl/*/include
                             REQUIRED
                             COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
                             COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
@@ -789,13 +789,18 @@ macro(erl_setup_lapack)
                             OUTPUT IOMP_ROOT
                             libiomp5.so
                             REQUIRED
-                            PATHS /usr/lib /usr/local/lib /opt/intel/oneapi/compiler/*/lib)
+                            PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib /opt/intel/oneapi/compiler/*/lib)
                     get_filename_component(IOMP_ROOT ${IOMP_ROOT} DIRECTORY)
                     get_filename_component(IOMP_ROOT ${IOMP_ROOT} REALPATH)
                 endif ()
                 message(STATUS "IOMP_ROOT is set to ${IOMP_ROOT}")
 
                 set(MKL_DIR ${MKL_ROOT}/lib/cmake/mkl)
+                if (NOT EXISTS ${MKL_DIR}/MKLConfig.cmake)
+                    set(MKL_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/modules)
+                    message(STATUS "MKLConfig.cmake is not found, using local MKLConfig.cmake")
+                    message(STATUS "MKL_DIR is set to ${MKL_DIR}")
+                endif ()
                 set(MKL_ARCH "intel64")
                 set(MKL_LINK "dynamic")
                 set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
@@ -1084,7 +1089,10 @@ macro(erl_setup_python)
 
         foreach (item IN ITEMS python_link_helper python_headers headers module embed windows_extras thin_lto lto opt_size)
             if (TARGET pybind11::${item})
-                set_target_properties(pybind11::${item} PROPERTIES SYSTEM ON)
+                get_target_property(item_type pybind11::${item} TYPE)
+                if (NOT item_type STREQUAL "INTERFACE_LIBRARY")  # check if it is an interface library
+                    set_target_properties(pybind11::${item} PROPERTIES SYSTEM ON)
+                endif ()
             endif ()
         endforeach ()
     endif ()
@@ -1333,7 +1341,10 @@ function(erl_add_pybind_module)
     endif ()
 
     # pybind runtime lib
-    set_target_properties(pybind11::module PROPERTIES SYSTEM ON)
+    get_target_property(lib_type pybind11::module TYPE)
+    if (NOT lib_type STREQUAL "INTERFACE_LIBRARY") # check if it is an interface library
+        set_target_properties(pybind11::module PROPERTIES SYSTEM ON)
+    endif ()
     pybind11_add_module(${arg_PYBIND_MODULE_NAME} ${SRC_FILES})
 
     # # ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling

@@ -2,6 +2,52 @@
 
 #include <pybind11/pybind11.h>  // must be included first
 // https://github.com/pybind/pybind11/blob/d2e7e8c68711d1ebfb02e2f20bd1cb3bfc5647c0/docs/basics.rst#L81-L86
+//
+// #if PYBIND11_VERSION_MAJOR < 2 || (PYBIND11_VERSION_MAJOR == 2 && PYBIND11_VERSION_MINOR < 12)
+//     #include <pybind11/pytypes.h>
+//
+// namespace PYBIND11_NAMESPACE {
+//     namespace typing {
+//         template<typename T>
+//         class Iterator : public iterator {
+//             using iterator::iterator;
+//         };
+//     }  // namespace typing
+//
+//     namespace detail {
+//         template<typename Access, return_value_policy Policy, typename Iterator, typename Sentinel, typename ValueType, typename... Extra>
+//         iterator
+//         make_iterator_impl(Iterator first, Sentinel last, Extra&&... extra) {
+//             using state = detail::iterator_state<Iterator, Sentinel, false, Policy>;
+//
+//             if (!detail::get_type_info(typeid(state), false)) {
+//                 class_<state>(handle(), "iterator", pybind11::module_local())
+//                     .def("__iter__", [](state& s) -> state& { return s; })
+//                     .def(
+//                         "__next__",
+//                         [](state& s) -> ValueType {
+//                             if (!s.first_or_done) {
+//                                 ++s.it;
+//                             } else {
+//                                 s.first_or_done = false;
+//                             }
+//                             if (s.it == s.end) {
+//                                 s.first_or_done = true;
+//                                 throw stop_iteration();
+//                             }
+//                             return Access()(s.it);
+//                             // NOLINTNEXTLINE(readability-const-return-type) // PR #3263
+//                         },
+//                         std::forward<Extra>(extra)...,
+//                         Policy);
+//             }
+//
+//             return cast(state{std::forward<Iterator>(first), std::forward<Sentinel>(last), true});
+//         }
+//     }  // namespace detail
+// }  // namespace PYBIND11_NAMESPACE
+//
+// #endif
 
 namespace py = pybind11;
 
@@ -93,6 +139,7 @@ namespace PYBIND11_NAMESPACE {
         };
     }  // namespace detail
 
+#if PYBIND11_VERSION_MAJOR >= 2 && PYBIND11_VERSION_MINOR >= 12
     template<
         return_value_policy Policy = return_value_policy::reference_internal,
         typename Iterator,
@@ -106,6 +153,7 @@ namespace PYBIND11_NAMESPACE {
             std::forward<Sentinel>(last),
             std::forward<Extra>(extra)...);
     }
+#endif
 }  // namespace PYBIND11_NAMESPACE
 
 PYBIND11_DECLARE_HOLDER_TYPE(T, RawPtrWrapper<T>);

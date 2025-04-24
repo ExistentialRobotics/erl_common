@@ -5,14 +5,33 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #pragma GCC diagnostic ignored "-Wunused-variable"
+
 #include <opencv2/core.hpp>
 #include <pybind11/pybind11.h>
 
+// include after pybind11/pybind11.h
+#include <pybind11/numpy.h>
+
 namespace pybind11::detail {
+
+    namespace compatible {  // not available when < 2.9.2
+
+        template<size_t N>
+        constexpr descr<N - 1>
+        const_name(char const (&text)[N]) {
+            return descr<N - 1>(text);
+        }
+
+        constexpr descr<0>
+        const_name(char const (&)[1]) {
+            return {};
+        }
+    }  // namespace compatible
+
     template<>
     class type_caster<cv::Scalar> {
     public:
-        PYBIND11_TYPE_CASTER(cv::Scalar, const_name("Scalar"));
+        PYBIND11_TYPE_CASTER(cv::Scalar, compatible::const_name("Scalar"));
 
         // Python -> C++
         bool
@@ -49,7 +68,7 @@ namespace pybind11::detail {
     template<>
     class type_caster<cv::Mat> {
     public:
-        PYBIND11_TYPE_CASTER(cv::Mat, const_name("Mat"));
+        PYBIND11_TYPE_CASTER(cv::Mat, compatible::const_name("Mat"));
 
         // Python -> C++
         bool
@@ -94,20 +113,20 @@ namespace pybind11::detail {
             if (num_channels > 1) { shape.push_back(num_channels); }
             switch (mat.depth()) {
                 case CV_8U:  // NOLINT(*-branch-clone)
-                    return array_t(shape, c_strides(shape, sizeof(uint8_t)), reinterpret_cast<uint8_t *>(mat.data)).release();
+                    return array_t<uint8_t>(shape, reinterpret_cast<uint8_t *>(mat.data)).release();
                 case CV_8S:
-                    return array_t(shape, c_strides(shape, sizeof(int8_t)), reinterpret_cast<int8_t *>(mat.data)).release();
+                    return array_t<int8_t>(shape, reinterpret_cast<int8_t *>(mat.data)).release();
                 case CV_32S:
-                    return array_t(shape, c_strides(shape, sizeof(int32_t)), reinterpret_cast<int32_t *>(mat.data)).release();
+                    return array_t<int32_t>(shape, reinterpret_cast<int32_t *>(mat.data)).release();
                 case CV_32F:
-                    return array_t(shape, c_strides(shape, sizeof(float)), reinterpret_cast<float *>(mat.data)).release();
+                    return array_t<float>(shape, reinterpret_cast<float *>(mat.data)).release();
                 case CV_64F:
-                    return array_t(shape, c_strides(shape, sizeof(double)), reinterpret_cast<double *>(mat.data)).release();
+                    return array_t<double>(shape, reinterpret_cast<double *>(mat.data)).release();
 #if CV_MAJOR_VERSION >= 4
                 case CV_16U:
-                    return array_t(shape, c_strides(shape, sizeof(uint16_t)), reinterpret_cast<uint16_t *>(mat.data)).release();
+                    return array_t<uint16_t>(shape, reinterpret_cast<uint16_t *>(mat.data)).release();
                 case CV_16S:
-                    return array_t(shape, c_strides(shape, sizeof(int16_t)), reinterpret_cast<int16_t *>(mat.data)).release();
+                    return array_t<int16_t>(shape, reinterpret_cast<int16_t *>(mat.data)).release();
                 case CV_16F:
                     throw cast_error("Does not support CV_16F.");
 #endif

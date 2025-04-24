@@ -4,14 +4,14 @@
     #include <pangolin/display/display.h>
     #include <pangolin/pangolin.h>
 
-    #include <map>
+    #include <unordered_map>
 
 namespace erl::common {
 
     class PangolinWindow {
         std::string m_window_name_;
         pangolin::WindowInterface& m_window_;
-        std::map<std::string, pangolin::View*> m_displays_;
+        std::unordered_map<std::string, pangolin::View*> m_displays_;
 
     public:
         PangolinWindow(const std::string& window_name, int window_width, int window_height, int window_x = -1, int window_y = -1);

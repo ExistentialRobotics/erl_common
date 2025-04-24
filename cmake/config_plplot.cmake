@@ -6,7 +6,7 @@ if (ERL_USE_PLPLOT)
             PKGCONFIG REQUIRED cairomm-1.0
     )
     erl_find_package(
-            plplot
+            PACKAGE plplot
             REQUIRED
             COMMANDS ARCH_LINUX "try `paru -S plplot`"
             COMMANDS UBUNTU_LINUX "try `sudo apt install libplplot-dev`"

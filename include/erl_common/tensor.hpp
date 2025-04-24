@@ -148,7 +148,8 @@ namespace erl::common {
             }
 
             // generate new tensor
-            Eigen::VectorXi slice_shape = m_shape_(dims_to_keep);
+            Eigen::VectorXi slice_shape(dims_to_keep.size());
+            for (std::size_t i = 0; i < dims_to_keep.size(); ++i) { slice_shape[i] = m_shape_[dims_to_keep[i]]; }
             Tensor<T, Eigen::Dynamic> slice(slice_shape);
             for (int i = 0; i < slice.Size(); ++i) {
                 auto slice_coords = IndexToCoords<Eigen::Dynamic>(slice_shape, i, RowMajor);

@@ -2,6 +2,7 @@
 #include "erl_common/test_helper.hpp"
 
 #include <chrono>
+#include <thread>
 
 TEST(ProgressBar, SingleBar) {
     using namespace erl::common;

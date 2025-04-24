@@ -104,7 +104,7 @@ if [ ! -d "nanoflann" ]; then
   git clone https://github.com/jlblancoc/nanoflann
 fi
 cd nanoflann
-git checkout a74fc3b5b359c941d9a00eb9d92c2202c22eca3a  # v1.6.0
+git checkout 9a653cb243db6a09c94f833b28732b62f033e2b5  # v1.7.1
 mkdir -p build
 cd build
 cmake ..

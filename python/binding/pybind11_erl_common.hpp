@@ -124,14 +124,14 @@ namespace erl::common {
                 for (int i = 0; i < Rank; ++i) { tensor_shape[i] = static_cast<int>(info.shape[i]); }
                 Eigen::VectorX<Dtype> data(info.size);
                 auto ptr = static_cast<Dtype *>(info.ptr);
-                std::copy(ptr, ptr + info.size, data.begin());
+                std::copy(ptr, ptr + info.size, data.data());
                 Self tensor(tensor_shape, data);
                 return tensor;
             }))
             .def_buffer([](Self &tensor) -> py::buffer_info {
                 auto shape = tensor.Shape();
                 std::vector<py::ssize_t> array_shape(shape.size());
-                std::copy(shape.begin(), shape.end(), array_shape.begin());
+                std::copy(shape.data(), shape.data() + shape.size(), array_shape.data());
                 std::vector<py::ssize_t> strides = ComputeCStrides<py::ssize_t>(array_shape, sizeof(Dtype));
                 return {tensor.GetMutableDataPtr(), sizeof(Dtype), py::format_descriptor<Dtype>::format(), tensor.Dims(), array_shape, strides};
             })
@@ -427,10 +427,10 @@ namespace erl::common {
         py::class_<T>(m, name)
             .def(py::init<const std::shared_ptr<Info> &>(), py::arg("grid_map_info"))
             .def_readwrite("grid_map_info", &T::grid_map_info)
-            .def_property(
-                "image",
-                [](const T &self) { return self.image; },
-                [](T &self, const cv::Mat &image) { image.copyTo(self.image); })
+            // .def_property(
+            //     "image",
+            //     [](const T &self) { return self.image; },
+            //     [](T &self, const cv::Mat &image) { image.copyTo(self.image); })
             .def("reset_image", &T::ResetImage)
             .def("draw_segments_inplace", &T::DrawSegmentsInplace, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))
             .def("draw_segments", &T::DrawSegments, py::arg("mat"), py::arg("color"), py::arg("thickness"), py::arg("starts"), py::arg("ends"))

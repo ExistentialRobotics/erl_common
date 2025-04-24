@@ -189,3 +189,20 @@ TEST(EigenTest, Tensor) {
     Eigen::Tensor<double, 3> tensor(3, 4, 5);  //
     tensor(0, 0, 0);
 }
+
+TEST(EigenTest, Solve) {
+    Eigen::Matrix3d A = Eigen::Matrix3d::Random();
+    A = (A + A.transpose()).eval();  // make it symmetric
+    A = A * A.transpose();           // make it positive definite
+    Eigen::Matrix3d B = Eigen::Matrix3d::Random();
+    Eigen::Matrix3d L = A.llt().matrixL();
+    Eigen::Matrix3d X = L.triangularView<Eigen::Lower>().solve(B);
+    L.transpose().triangularView<Eigen::Upper>().solveInPlace(X);
+    std::cout << "A = " << std::endl << A << std::endl;
+    std::cout << "L * L.T = " << std::endl << L * L.transpose() << std::endl;
+    std::cout << "B = " << std::endl << B << std::endl;
+    std::cout << "A * X.col(i) = " << std::endl;
+    std::cout << (A * X.col(0)).eval().transpose() << std::endl;
+    std::cout << (A * X.col(1)).eval().transpose() << std::endl;
+    std::cout << (A * X.col(2)).eval().transpose() << std::endl;
+}

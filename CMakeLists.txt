@@ -53,8 +53,9 @@ target_include_directories(${PROJECT_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${${PROJECT_NAME}_INCLUDE_DIR}>
         $<INSTALL_INTERFACE:${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}>)
-target_include_directories(${PROJECT_NAME} SYSTEM
-        PUBLIC ${MKL_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${cairomm-1.0_INCLUDE_DIRS})
+if (ERL_USE_INTEL_MKL)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MKL_INCLUDE_DIRS})
+endif ()
 # https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
 target_link_libraries(${PROJECT_NAME}
         PUBLIC fmt::fmt
@@ -62,15 +63,27 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC yaml-cpp nlohmann_json::nlohmann_json
         PUBLIC Boost::boost Boost::program_options Boost::graph
         PUBLIC pthread OpenMP::OpenMP_CXX
-        PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
-        PUBLIC ${catkin_LIBRARIES})
+        PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 if (Pangolin_FOUND)
     target_link_libraries(${PROJECT_NAME} PUBLIC ${Pangolin_LIBRARIES})
     target_compile_definitions(${PROJECT_NAME} PUBLIC -DERL_USE_PANGOLIN)
 endif ()
 if (plplot_FOUND)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${cairomm-1.0_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} PUBLIC PLPLOT::plplot PLPLOT::plplotcxx ${cairomm-1.0_LIBRARIES})
     target_compile_definitions(${PROJECT_NAME} PUBLIC "ERL_USE_PLPLOT")
+endif ()
+if (ROS_ACTIVATED)
+    if (DEFINED catkin_INCLUDE_DIRS)
+        target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
+    endif ()
+    if (DEFINED catkin_LIBRARIES)
+        target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
+    endif ()
+else ()
+    if (DEFINED ${PROJECT_NAME}_ERL_PACKAGES)
+        target_link_libraries(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_ERL_PACKAGES})
+    endif ()
 endif ()
 
 ###################
