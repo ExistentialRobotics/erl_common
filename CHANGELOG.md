@@ -1,3 +1,9 @@
+# 2025-04-28
+
+- Add: add ColorBar, Legend, Shades, etc. to PlplotFig
+- Add: serialization.hpp
+- Update test of PlplotFig
+
 # 2025-04-23
 
 - Add: use plplot to draw graphs. Enabled by default. Use `-DERL_USE_PLPLOT=OFF` to disable it.

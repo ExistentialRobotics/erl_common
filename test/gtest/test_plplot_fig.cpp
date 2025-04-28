@@ -51,22 +51,17 @@ TEST(PlplotFig, Demo04) {
         .SetCurrentColor(PlplotFig::Color0::Green)
         .SetAxisLabelY("Phase shift (degrees)", true);
 
-    double legend_width, legend_height;
-    fig.SetCurrentColor0(15, 32, 32, 32, 0.70)  //
-        .Legend(
-            legend_width,
-            legend_height,
-            2,
-            {"Amplitude", "Phase shift"},
-            {PL_LEGEND_LINE, PL_LEGEND_LINE | PL_LEGEND_SYMBOL},
-            {static_cast<int>(PlplotFig::Color0::Yellow), static_cast<int>(PlplotFig::Color0::Green)},
-            {1, 3},
-            {1, 1},
-            {1.0, 1.0},
-            {"", "#(728)"},
-            {0, 3},
-            {1.0, 1.0},
-            {0, 4});
+    PlplotFig::LegendOpt legend_opt(2, {"Amplitude", "Phase shift"});
+    legend_opt.SetTextColors({static_cast<int>(PlplotFig::Color0::Yellow), static_cast<int>(PlplotFig::Color0::Green)})
+        .SetStyles({PL_LEGEND_LINE, PL_LEGEND_LINE | PL_LEGEND_SYMBOL})
+        .SetLineColors({1, 3})
+        .SetLineStyles({1, 1})
+        .SetLineWidths({1.0, 1.0})
+        .SetSymbols({"", "#(728)"})
+        .SetSymbolColors({0, 3})
+        .SetSymbolScales({1.0, 1.0})
+        .SetSymbolSizes({0, 4});
+    fig.SetCurrentColor0(15, 32, 32, 32, 0.70).Legend(legend_opt);
     cv::imshow("demo04", fig.ToCvMat());
     cv::waitKey(0);
 
@@ -86,22 +81,46 @@ TEST(PlplotFig, Demo04) {
         .SetTitle("Single Pole Low-Pass Filter")
         .SetCurrentColor(PlplotFig::Color0::Yellow)
         .SetAxisLabelY("Amplitude (dB)");
-    fig.SetCurrentColor0(15, 32, 32, 32, 0.70)  //
-        .Legend(
-            legend_width,
-            legend_height,
-            1,  // draw the first legend entry only
-            {"Amplitude", "Phase shift"},
-            {PL_LEGEND_LINE, PL_LEGEND_LINE | PL_LEGEND_SYMBOL},
-            {static_cast<int>(PlplotFig::Color0::Yellow), static_cast<int>(PlplotFig::Color0::Green)},
-            {1, 3},
-            {1, 1},
-            {1.0, 1.0},
-            {"", "#(728)"},
-            {0, 3},
-            {1.0, 1.0},
-            {0, 4});
+    fig.SetCurrentColor0(15, 32, 32, 32, 0.70).Legend(legend_opt.SetNumLegend(1));
     cv::imshow("demo04", fig.ToCvMat());
+    cv::waitKey(0);
+}
+
+TEST(PlplotFig, Demo16) {
+    using namespace erl::common;
+
+    constexpr int nx = 35;
+    constexpr int ny = 70;
+    Eigen::MatrixXd z(nx, ny);
+    Eigen::MatrixXd w(nx, ny);
+    for (int j = 0; j < ny; j++) {
+        double y = (j - static_cast<double>(ny) / 2) / (static_cast<double>(ny) / 2) - 1.0;
+        for (int i = 0; i < nx; i++) {
+            double x = (i - static_cast<double>(nx) / 2) / (static_cast<double>(nx) / 2);
+            z(i, j) = -sin(7. * x) * cos(7. * y) + x * x - y * y;
+            w(i, j) = -cos(7. * x) * sin(7. * y) + 2 * x * y;
+        }
+    }
+
+    double zmin = z.minCoeff();
+    double zmax = z.maxCoeff();
+
+    int ns = 20;
+    std::vector<double> shedge(ns + 1);
+    for (int i = 0; i < ns + 1; i++) { shedge[i] = zmin + (zmax - zmin) * static_cast<double>(i) / static_cast<double>(ns); }
+
+    PlplotFig fig(640, 480, true);
+    PlplotFig::ShadesOpt shades_opt;
+    shades_opt.SetColorLevels(z.data(), nx, ny, ns).SetContourColor0(15).SetContourLineWidth(1.0);
+    fig.Clear()
+        .SetMargin(0.15, 0.85, 0.15, 0.85)
+        .SetAxisLimits(-1.0, 1.0, -1.0, 1.0)
+        .SetCurrentColor(PlplotFig::Color0::White)
+        .DrawAxesBox(PlplotFig::AxisOpt().DrawTopRightEdge(), PlplotFig::AxisOpt().DrawPerpendicularTickLabels())
+        .SetAreaFillPattern(PlplotFig::AreaFillPattern::Solid)
+        .SetColorMap(1, PlplotFig::ColorMap::Jet)
+        .Shades(z.data(), nx, ny, true, shades_opt);
+    cv::imshow("demo16", fig.ToCvMat());
     cv::waitKey(0);
 }
 #else

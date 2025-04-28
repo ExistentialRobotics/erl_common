@@ -176,23 +176,23 @@ namespace erl::common {
         /**
          * Code of color map 0.
          */
-        enum class Color0 {
-            Black = 0,       // 0x000000
-            Red = 1,         // 0xFF0000
-            Yellow = 2,      // 0xFFFF00
-            Green = 3,       // 0x00FF00
-            Aquamarine = 4,  // 0x7FFFD4
-            Pink = 5,        // ffc0cb
-            Wheat = 6,       // f5deb3
-            Gray = 7,        // bebebe
-            Brown = 8,       // a52a2a
-            Blue = 9,        // 0000ff
-            Violet = 10,     // 8a2be2
-            Cyan = 11,       // 00ffff
-            Turquoise = 12,  // 40e0d0
-            Magenta = 13,    // ff00ff
-            Salmon = 14,     // fa8072
-            White = 15,      // ffffff
+        enum Color0 {
+            Black = 0,        // 0x000000
+            Red = 1,          // 0xFF0000
+            Yellow = 2,       // 0xFFFF00
+            Green = 3,        // 0x00FF00
+            Aquamarine = 4,   // 0x7FFFD4
+            Pink = 5,         // ffc0cb
+            Wheat = 6,        // f5deb3
+            Gray = 7,         // bebebe
+            Brown = 8,        // a52a2a
+            Blue = 9,         // 0000ff
+            BlueViolet = 10,  // 8a2be2
+            Cyan = 11,        // 00ffff
+            Turquoise = 12,   // 40e0d0
+            Magenta = 13,     // ff00ff
+            Salmon = 14,      // fa8072
+            White = 15,       // ffffff
         };
 
         /**
@@ -204,6 +204,122 @@ namespace erl::common {
         PlplotFig&
         SetCurrentColor(Color0 color);
 
+        struct ColorBarOpt {
+            int opt_orientation = 0;           // PL_COLORBAR_ORIENT_RIGHT, PL_COLORBAR_ORIENT_TOP, PL_COLORBAR_ORIENT_LEFT, PL_COLORBAR_ORIENT_BOTTOM
+            bool opt_background = false;       // plot the background: PL_COLORBAR_BACKGROUND
+            bool opt_bounding_box = false;     // plot the bounding box: PL_COLORBAR_BOUNDING_BOX
+            int opt_type = PL_COLORBAR_SHADE;  // PL_COLORBAR_IMAGE, PL_COLORBAR_SHADE, PL_COLORBAR_GRADIENT
+            int opt_label_position = PL_COLORBAR_SHADE_LABEL;  // PL_COLORBAR_SHADE_LABEL (available with PL_COLORBAR_SHADE), PL_COLORBAR_LABEL_RIGHT,
+                                                               // PL_COLORBAR_LABEL_TOP, PL_COLORBAR_LABEL_LEFT, PL_COLORBAR_LABEL_BOTTOM
+            int opt_cap = PL_COLORBAR_CAP_NONE;                // PL_COLORBAR_CAP_LOW, PL_COLORBAR_CAP_HIGH, PL_COLORBAR_CAP_NONE
+            int position = PL_POSITION_RIGHT | PL_POSITION_OUTSIDE |
+                           PL_POSITION_VIEWPORT;   // PL_POSITION_LEFT, PL_POSITION_RIGHT, PL_POSITION_TOP, PL_POSITION_BOTTOM,
+                                                   // PL_POSITION_INSIDE, PL_POSITION_OUTSIDE, PL_POSITION_VIEWPORT, PL_POSITION_SUBPAGE
+            double position_offset_x = 0.025;      // normalized position offset in x direction
+            double position_offset_y = 0.0;        // normalized position offset in y direction
+            double width = 0.0375;                 // normalized width of the color bar
+            double height = 0.875;                 // normalized height of the color bar
+            int bg_color0 = 0;                     // background color0 index of the color bar
+            int bbox_line_color0 = 15;             // bounding box color of cmap0
+            int bbox_line_style = 1;               // bounding box line style
+            double low_cap_color = 0.0;            // low cap color, cmap1
+            double high_cap_color = 1.0;           // high cap color, cmap1
+            int contour_line_color0 = 1;           // contour line color of cmap0
+            double contour_line_width = 1.0;       // contour line width
+            std::vector<int> label_opts;           // PL_COLORBAR_LABEL_LEFT, PL_COLORBAR_LABEL_RIGHT, PL_COLORBAR_LABEL_TOP, PL_COLORBAR_LABEL_BOTTOM
+            std::vector<const char*> label_texts;  // text of each label
+            int n_axes = 1;                        // number of axes, which must be >= 1
+            std::vector<AxisOpt> axis_opts = {     // axis options
+                AxisOpt().DrawTopRightTickLabels().DrawBottomLeftTickLabels(false).DrawPerpendicularTickLabels()};
+            std::vector<double> axis_tick_intervals = {0.0};  // number of ticks for each axis, 0.0 for auto
+            std::vector<int> axis_num_subticks = {0};         // number of sub-ticks for each axis, 0.0 for auto
+            std::vector<std::vector<double>> cmap_values;     // control values for each axis color map
+
+            ColorBarOpt&
+            SetOptOrientation(int opt_orientation_);
+
+            ColorBarOpt&
+            SetOptBackground(bool opt_background_ = true);
+
+            ColorBarOpt&
+            SetOptBoundingBox(bool opt_bounding_box_ = true);
+
+            ColorBarOpt&
+            SetOptType(int opt_type_);
+
+            ColorBarOpt&
+            SetOptLabelPosition(int opt_label_position_);
+
+            ColorBarOpt&
+            SetOptCap(int opt_cap_);
+
+            ColorBarOpt&
+            SetPosition(int position_);
+
+            ColorBarOpt&
+            SetPositionOffsetX(double position_offset_x_);
+
+            ColorBarOpt&
+            SetPositionOffsetY(double position_offset_y_);
+
+            ColorBarOpt&
+            SetWidth(double width_);
+
+            ColorBarOpt&
+            SetHeight(double height_);
+
+            ColorBarOpt&
+            SetBgColor0(int bg_color0_);
+
+            ColorBarOpt&
+            SetBboxLineColor0(int bbox_line_color0_);
+
+            ColorBarOpt&
+            SetBboxLineStyle(int bbox_line_style_);
+
+            ColorBarOpt&
+            SetLowCapColor(double low_cap_color_);
+
+            ColorBarOpt&
+            SetHighCapColor(double high_cap_color_);
+
+            ColorBarOpt&
+            SetContourLineColor0(int contour_line_color0_);
+
+            ColorBarOpt&
+            SetContourLineWidth(double contour_line_width_);
+
+            ColorBarOpt&
+            SetLabelOpts(const std::vector<int>& label_opts_);
+
+            ColorBarOpt&
+            SetLabelTexts(const std::vector<const char*>& label_texts_);
+
+            ColorBarOpt&
+            SetNumAxes(int n_axes_);
+
+            ColorBarOpt&
+            SetAxisOpts(const std::vector<AxisOpt>& axis_opts_);
+
+            ColorBarOpt&
+            SetAxisTickIntervals(const std::vector<double>& axis_tick_intervals_);
+
+            ColorBarOpt&
+            SetAxisNumSubticks(const std::vector<int>& axis_num_subticks_);
+
+            ColorBarOpt&
+            SetColorMapValues(const std::vector<std::vector<double>>& cmap_values_);
+
+            ColorBarOpt&
+            AddColorMap(int idx, const std::vector<double>& cmap_values_, int stride = 1);
+        };
+
+        PlplotFig&
+        ColorBar(double& width_out, double& height_out, ColorBarOpt& opt);
+
+        PlplotFig&
+        ColorBar(ColorBarOpt& opt);
+
         /**
          *
          * @param line_style 1: solid, 2: short-dash-short-gap, 3: long-dash-log-gap, 4: long-dash-short-gap, etc. max 8
@@ -211,9 +327,14 @@ namespace erl::common {
          * @param line_mark_size the size of marks (dash) in a line, unit is millimeter
          * @param line_space_size the size of spaces (gap) in a line, unit is millimeter
          * @return
+         * @note 17.74, 17.155
          */
         PlplotFig&
-        SetLineStyle(int line_style, std::optional<int> line_nms, std::optional<int> line_mark_size, std::optional<int> line_space_size);
+        SetLineStyle(
+            int line_style,
+            std::optional<int> line_nms = std::nullopt,
+            std::optional<int> line_mark_size = std::nullopt,
+            std::optional<int> line_space_size = std::nullopt);
 
         /**
          * Set labels quickly. Call SetAxisLabelX or SetAxisLabelY for more options.
@@ -226,74 +347,139 @@ namespace erl::common {
         PlplotFig&
         SetLabels(const char* x_label, const char* y_label, const char* title);
 
+        struct LegendOpt {
+            int n_legend;                              // number of legend entries
+            std::vector<const char*> texts;            // legend text of each entry
+            std::vector<int> text_colors = {};         // legend text color of each entry
+            std::vector<int> styles;                   // legend style of each entry, PL_LEGEND_COLOR_BOX | PL_LEGEND_LINE | PL_LEGEND_SYMBOL
+            std::vector<int> line_colors;              // legend line color of each entry
+            std::vector<int> line_styles;              // legend line style of each entry
+            std::vector<double> line_widths;           // legend line width of each entry
+            std::vector<const char*> symbols;          // legend symbol of each entry
+            std::vector<int> symbol_colors;            // legend symbol color of each entry
+            std::vector<double> symbol_scales;         // legend symbol scale of each entry
+            std::vector<int> symbol_sizes;             // legend symbol size of each entry
+            std::vector<int> box_colors;               // legend box color of each entry
+            std::vector<int> box_fill_patterns;        // legend box fill-pattern of each entry. [0, 8]
+            std::vector<double> box_scales;            // legend box scale of each entry
+            std::vector<double> box_fill_line_widths;  // legend box fill line width of each entry
+            int box_style = 0;                         // legend box style. PL_LEGEND_BACKGROUND | PL_LEGEND_BOUNDING_BOX
+            int position = PL_POSITION_RIGHT | PL_POSITION_TOP | PL_POSITION_INSIDE | PL_POSITION_VIEWPORT;  // legend box position
+            double position_offset_x = 0.0;                                                                  // normalized position offset in x direction
+            double position_offset_y = 0.0;                                                                  // normalized position offset in y direction
+            double width = 0.1;                                                                              // normalized width of the legend box
+            int bg_color0 = 15;                                                                              // background color0 index of the legend box
+            int legend_box_line_color0 = 1;                                                                  // bounding box color of cmap0
+            int legend_box_line_style = 1;                                                                   // bounding box line style
+            int n_row = 0;                                                                                   // number of rows in the legend box
+            int n_col = 0;                                                                                   // number of columns in the legend box
+            double text_offset = 1.0;         // text offset from the legend box in units of character width
+            double text_scale = 1.0;          // character height scale for text annotation
+            double text_spacing = 2.0;        // vertical spacing in units of character height between text annotations
+            double text_justification = 1.0;  // text justification, 0: left, 0.5: center, 1: right
+
+            LegendOpt(int n_legend_, std::vector<const char*> texts_);
+
+            LegendOpt&
+            SetNumLegend(int n_legend_);
+
+            LegendOpt&
+            SetTexts(std::vector<const char*> texts_);
+
+            LegendOpt&
+            SetTextColors(std::vector<int> text_colors_);
+
+            LegendOpt&
+            SetStyles(std::vector<int> styles_);
+
+            LegendOpt&
+            SetLineColors(std::vector<int> line_colors_);
+
+            LegendOpt&
+            SetLineStyles(std::vector<int> line_styles_);
+
+            LegendOpt&
+            SetLineWidths(std::vector<double> line_widths_);
+
+            LegendOpt&
+            SetSymbols(std::vector<const char*> symbols_);
+
+            LegendOpt&
+            SetSymbolColors(std::vector<int> symbol_colors_);
+
+            LegendOpt&
+            SetSymbolScales(std::vector<double> symbol_scales_);
+
+            LegendOpt&
+            SetSymbolSizes(std::vector<int> symbol_sizes_);
+
+            LegendOpt&
+            SetBoxColors(std::vector<int> box_colors_);
+
+            LegendOpt&
+            SetBoxFillPatterns(std::vector<int> box_fill_patterns_);
+
+            LegendOpt&
+            SetBoxScales(std::vector<double> box_scales_);
+
+            LegendOpt&
+            SetBoxFillLineWidths(std::vector<double> box_fill_line_widths_);
+
+            LegendOpt&
+            SetBoxStyle(int box_style_);
+
+            LegendOpt&
+            SetPosition(int position_);
+
+            LegendOpt&
+            SetPositionOffsetX(double position_offset_x_);
+
+            LegendOpt&
+            SetPositionOffsetY(double position_offset_y_);
+
+            LegendOpt&
+            SetWidth(double width_);
+
+            LegendOpt&
+            SetBgColor0(int bg_color0_);
+
+            LegendOpt&
+            SetLegendBoxLineColor0(int legend_box_line_color0_);
+
+            LegendOpt&
+            SetLegendBoxLineStyle(int legend_box_line_style_);
+
+            LegendOpt&
+            SetNumRows(int n_row_);
+
+            LegendOpt&
+            SetNumCols(int n_col_);
+
+            LegendOpt&
+            SetTextOffset(double text_offset_);
+
+            LegendOpt&
+            SetTextScale(double text_scale_);
+
+            LegendOpt&
+            SetTextSpacing(double text_spacing_);
+
+            LegendOpt&
+            SetTextJustification(double text_justification_);
+        };
+
         /**
          * @param width_out returned value of the normalized legend width.
          * @param height_out returned value of the normalized legend height.
-         * @param n_legend number of legend entries.
-         * @param texts legend text of each entry.
-         * @param styles legend style of each entry, PL_LEGEND_COLOR_BOX | PL_LEGEND_LINE | PL_LEGEND_SYMBOL.
-         * @param text_colors legend text color of each entry.
-         * @param line_colors legend line color of each entry.
-         * @param line_styles legend line style of each entry.
-         * @param line_widths legend line width of each entry.
-         * @param symbols legend symbol of each entry.
-         * @param symbol_colors legend symbol color of each entry.
-         * @param symbol_scales legend symbol scale of each entry.
-         * @param symbol_numbers number of symbols to draw for each entry.
-         * @param box_colors legend box color of each entry.
-         * @param box_fill_patterns legend box fill-pattern of each entry. [0, 8].
-         * @param box_scales legend box scale of each entry.
-         * @param box_fill_line_widths legend box fill line width of each entry.
-         * @param box_style legend box style.
-         * @param position legend box position.
-         * @param position_offset_x normalized position offset in x direction.
-         * @param position_offset_y normalized position offset in y direction.
-         * @param width normalized width of the legend box.
-         * @param bg_color0 background color0 index of the legend box.
-         * @param legend_box_line_color0 bounding box color of cmap0.
-         * @param legend_box_line_style bounding box line style.
-         * @param n_row number of rows in the legend box.
-         * @param n_col number of columns in the legend box.
-         * @param text_offset text offset from the legend box in units of character width.
-         * @param text_scale character height scale for text annotation.
-         * @param text_spacing vertical spacing in units of character height between text annotations.
-         * @param text_justification text justification, 0: left, 0.5: center, 1: right.
+         * @param opt legend options
          * @return
          * @note 17.70
          */
         PlplotFig&
-        Legend(
-            double& width_out,
-            double& height_out,
-            int n_legend,
-            const std::vector<const char*>& texts,
-            const std::vector<int>& styles = {},
-            const std::vector<int>& text_colors = {},
-            const std::vector<int>& line_colors = {},
-            const std::vector<int>& line_styles = {},
-            const std::vector<double>& line_widths = {},
-            const std::vector<const char*>& symbols = {},
-            const std::vector<int>& symbol_colors = {},
-            const std::vector<double>& symbol_scales = {},
-            const std::vector<int>& symbol_numbers = {},
-            const std::vector<int>& box_colors = {},
-            const std::vector<int>& box_fill_patterns = {},
-            const std::vector<double>& box_scales = {},
-            const std::vector<double>& box_fill_line_widths = {},
-            int box_style = PL_LEGEND_BACKGROUND | PL_LEGEND_BOUNDING_BOX,
-            int position = PL_POSITION_RIGHT | PL_POSITION_TOP | PL_POSITION_INSIDE | PL_POSITION_VIEWPORT,
-            double position_offset_x = 0.0,
-            double position_offset_y = 0.0,
-            double width = 0.1,
-            int bg_color0 = 15,
-            int legend_box_line_color0 = 1,
-            int legend_box_line_style = 1,
-            int n_row = 0,
-            int n_col = 0,
-            double text_offset = 1.0,
-            double text_scale = 1.0,
-            double text_spacing = 2.0,
-            double text_justification = 1.0);
+        Legend(double& width_out, double& height_out, const LegendOpt& opt);
+
+        PlplotFig&
+        Legend(const LegendOpt& opt);
 
         /**
          * Draw a line in 2D.
@@ -391,6 +577,21 @@ namespace erl::common {
         PlplotFig&
         SetAxis3LabelZ(const char* text, bool opposite = false, bool perpendicular = false, double displacement = 5.0, double pos = 0.5, double just = 0.5);
 
+        enum AreaFillPattern {
+            Solid = 0,
+            HorizontalLines = 1,
+            VerticalLines = 2,
+            Lines45 = 3,
+            Lines315 = 4,
+            Lines30 = 5,
+            Lines330 = 6,
+            GridLines = 7,
+            CrossLines = 8,
+        };
+
+        PlplotFig&
+        SetAreaFillPattern(AreaFillPattern pattern);
+
         /**
          * Place text inside the viewport. The string baseline is parallel to the line (x, y) -> (x+dx, y+dy).
          * @param text the text to be placed
@@ -436,7 +637,16 @@ namespace erl::common {
             double sy = 0,
             double sz = 0,
             double just = 0,
-            Color0 color = Color0::Red);
+            Color0 color = Red);
+
+        enum ColorMap {
+            Default0 = 0,
+            Default1 = 1,
+            Jet = 2,
+        };
+
+        PlplotFig&
+        SetColorMap(int map_index, ColorMap cmap = Default0);
 
         /**
          *
@@ -461,6 +671,67 @@ namespace erl::common {
          */
         PlplotFig&
         SetFont(int family = PL_FCI_SANS, int style = PL_FCI_UPRIGHT, int weight = PL_FCI_MEDIUM);
+
+        struct ShadesOpt {
+            PLDEFINED_callback defined_callback = nullptr;
+            double x_min = -1.0;
+            double x_max = 1.0;
+            double y_min = -1.0;
+            double y_max = 1.0;
+            std::vector<double> color_levels;
+            double fill_width = 2.0;                            // width of the line used to fill the area
+            int contour_color0 = 0;                             // color0 index of the contour line, 0 means no contour line
+            double contour_line_width = 0.0;                    // 0.0 means no contour line
+            PLFILL_callback fill_callback = plcallback::fill;   // fill the area with color
+            bool rectangular = false;                           // if true, the transform preserves the aspect ratio of the rectangle
+            PLTRANSFORM_callback transform_callback = nullptr;  // transform the data to the viewport
+            PLPointer transform_data = nullptr;
+
+            ShadesOpt&
+            SetDefinedCallback(PLDEFINED_callback defined_callback_);
+
+            ShadesOpt&
+            SetXMin(double x_min_);
+
+            ShadesOpt&
+            SetXMax(double x_max_);
+
+            ShadesOpt&
+            SetYMin(double y_min_);
+
+            ShadesOpt&
+            SetYMax(double y_max_);
+
+            ShadesOpt&
+            SetColorLevels(const std::vector<double>& color_levels_);
+
+            ShadesOpt&
+            SetColorLevels(const double* z, int n_rows, int n_cols, int n_levels);
+
+            ShadesOpt&
+            SetFillWidth(double fill_width_);
+
+            ShadesOpt&
+            SetContourColor0(int contour_color0_);
+
+            ShadesOpt&
+            SetContourLineWidth(double contour_line_width_);
+
+            ShadesOpt&
+            SetFillCallback(PLFILL_callback fill_callback_);
+
+            ShadesOpt&
+            SetRectangular(bool rectangular_);
+
+            ShadesOpt&
+            SetTransformCallback(PLTRANSFORM_callback transform_callback_);
+
+            ShadesOpt&
+            SetTransformData(PLPointer transform_data_);
+        };
+
+        PlplotFig&
+        Shades(const double* z, int n_rows, int n_cols, bool col_major, const ShadesOpt& opt);
 
         /**
          * Split the window into subplots (subpages).

@@ -109,3 +109,51 @@ TEST(YamlTest, EigenConversion) {
     std::cout << node << std::endl;
     ASSERT_STREQ(YAML::Dump(node).c_str(), "- 1\n- 2\n- 3");
 }
+
+enum class Color {
+    kRed = 0,
+    kBlue = 1,
+};
+
+template<>
+struct YAML::convert<Color> {
+    static Node
+    encode(const Color& rhs) {
+        Node node;
+        switch (rhs) {
+            case Color::kRed:
+                node = "red";
+                break;
+            case Color::kBlue:
+                node = "blue";
+                break;
+            default:
+                throw std::runtime_error("Unknown color");
+        }
+        return node;
+    }
+
+    static bool
+    decode(const Node& node, Color& rhs) {
+        std::string color_str = node.as<std::string>();
+        if (color_str == "red") {
+            rhs = Color::kRed;
+        } else if (color_str == "blue") {
+            rhs = Color::kBlue;
+        } else {
+            return false;
+        }
+        return true;
+    }
+};
+
+TEST(YamlTest, EnumConversion) {
+
+    std::cout << type_name(Color::kRed) << std::endl;
+    auto color = static_cast<Color>(0);
+    std::cout << type_name(color) << std::endl;
+
+    YAML::Node node;
+    node["color"] = Color::kRed;  // does not work unless we define struct convert<Color>
+    std::cout << node << std::endl;
+}

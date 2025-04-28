@@ -20,10 +20,27 @@ demangle(const char *name) {
 }
 #endif
 
+/**
+ *
+ * @tparam T type of the object
+ * @return type name of the object (derived at compile time)
+ */
 template<typename T>
 std::string
 type_name() {
     return demangle(typeid(T).name());
+}
+
+/**
+ *
+ * @tparam T type of the object
+ * @param obj object instance
+ * @return type name of the object (derived at runtime)
+ */
+template<typename T>
+std::string
+type_name(const T &obj) {
+    return demangle(typeid(obj).name());
 }
 
 namespace erl::common {
