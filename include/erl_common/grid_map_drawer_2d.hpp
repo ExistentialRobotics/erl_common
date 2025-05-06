@@ -18,11 +18,19 @@ namespace erl::common {
 
         explicit GridMapDrawer2D(const std::shared_ptr<Info> &grid_map_info)
             : grid_map_info(grid_map_info),
-              image(cv::Mat(grid_map_info->Height(), grid_map_info->Width(), CV_8UC3, cv::Scalar(0, 0, 0))) {}
+              image(cv::Mat(
+                  grid_map_info->Height(),
+                  grid_map_info->Width(),
+                  CV_8UC3,
+                  cv::Scalar(0, 0, 0))) {}
 
         void
         ResetImage() {
-            image = cv::Mat(grid_map_info->Height(), grid_map_info->Width(), CV_8UC3, cv::Scalar(0, 0, 0));
+            image = cv::Mat(
+                grid_map_info->Height(),
+                grid_map_info->Width(),
+                CV_8UC3,
+                cv::Scalar(0, 0, 0));
         }
 
         void
@@ -32,12 +40,19 @@ namespace erl::common {
             const int thickness,
             const Eigen::Ref<const Matrix2X> &starts,
             const Eigen::Ref<const Matrix2X> &ends) const {
-            ERL_DEBUG_ASSERT(starts.cols() == ends.cols(), "starts and ends should have the same number of columns.");
+            ERL_DEBUG_ASSERT(
+                starts.cols() == ends.cols(),
+                "starts and ends should have the same number of columns.");
             const long num_segments = starts.cols();
             for (long i = 0; i < num_segments; ++i) {
                 const Eigen::Vector2i start = grid_map_info->MeterToPixelForPoints(starts.col(i));
                 const Eigen::Vector2i end = grid_map_info->MeterToPixelForPoints(ends.col(i));
-                cv::line(mat, cv::Point2i(start(0), start(1)), cv::Point2i(end(0), end(1)), color, thickness);
+                cv::line(
+                    mat,
+                    cv::Point2i(start(0), start(1)),
+                    cv::Point2i(end(0), end(1)),
+                    color,
+                    thickness);
             }
         }
 
@@ -85,37 +100,64 @@ namespace erl::common {
         }
 
         void
-        DrawPolylineInplace(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const bool closed, const Eigen::Ref<const Matrix2X> &points)
-            const {
+        DrawPolylineInplace(
+            const cv::Mat &mat,
+            const cv::Scalar &color,
+            const int thickness,
+            const bool closed,
+            const Eigen::Ref<const Matrix2X> &points) const {
             std::vector<cv::Point2i> cv_points;
             const long num_points = points.cols();
             cv_points.resize(num_points);
-            Eigen::Map<Eigen::Matrix2Xi> map(reinterpret_cast<int *>(cv_points.data()), 2, num_points);
-            for (long i = 0; i < num_points; ++i) { map.col(i) = grid_map_info->MeterToPixelForPoints(points.col(i)); }
+            Eigen::Map<Eigen::Matrix2Xi> map(
+                reinterpret_cast<int *>(cv_points.data()),
+                2,
+                num_points);
+            for (long i = 0; i < num_points; ++i) {
+                map.col(i) = grid_map_info->MeterToPixelForPoints(points.col(i));
+            }
             cv::polylines(mat, cv_points, closed, color, thickness, cv::LINE_8);
         }
 
         [[nodiscard]] cv::Mat
-        DrawPolyline(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const bool closed, const Eigen::Ref<const Matrix2X> &points) const {
+        DrawPolyline(
+            const cv::Mat &mat,
+            const cv::Scalar &color,
+            const int thickness,
+            const bool closed,
+            const Eigen::Ref<const Matrix2X> &points) const {
             cv::Mat result = mat.clone();
             DrawPolylineInplace(result, color, thickness, closed, points);
             return result;
         }
 
         [[nodiscard]] cv::Mat
-        DrawContour(const cv::Mat &mat, const cv::Scalar &color, const int thickness, const Eigen::Ref<const Matrix2X> &contour) const {
+        DrawContour(
+            const cv::Mat &mat,
+            const cv::Scalar &color,
+            const int thickness,
+            const Eigen::Ref<const Matrix2X> &contour) const {
             cv::Mat result = mat.clone();
             DrawContourInplace(result, color, thickness, contour);
             return result;
         }
 
         void
-        DrawContourInplace(cv::Mat &mat, const cv::Scalar &color, const int &thickness, const Eigen::Ref<const Matrix2X> &contour) const {
+        DrawContourInplace(
+            cv::Mat &mat,
+            const cv::Scalar &color,
+            const int &thickness,
+            const Eigen::Ref<const Matrix2X> &contour) const {
             std::vector<std::vector<cv::Point2i>> points(1);
             const long num_points = contour.cols();
             points[0].resize(num_points);
-            Eigen::Map<Eigen::Matrix2Xi> map(reinterpret_cast<int *>(points[0].data()), 2, num_points);
-            for (long i = 0; i < num_points; ++i) { map.col(i) = grid_map_info->MeterToPixelForPoints(contour.col(i)); }
+            Eigen::Map<Eigen::Matrix2Xi> map(
+                reinterpret_cast<int *>(points[0].data()),
+                2,
+                num_points);
+            for (long i = 0; i < num_points; ++i) {
+                map.col(i) = grid_map_info->MeterToPixelForPoints(contour.col(i));
+            }
             cv::drawContours(mat, points, 0, color, thickness, cv::LINE_8);
         }
 

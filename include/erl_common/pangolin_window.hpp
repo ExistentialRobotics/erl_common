@@ -14,7 +14,12 @@ namespace erl::common {
         std::unordered_map<std::string, pangolin::View*> m_displays_;
 
     public:
-        PangolinWindow(const std::string& window_name, int window_width, int window_height, int window_x = -1, int window_y = -1);
+        PangolinWindow(
+            const std::string& window_name,
+            int window_width,
+            int window_height,
+            int window_x = -1,
+            int window_y = -1);
 
         void
         Activate(const bool clear = false) {
@@ -43,7 +48,10 @@ namespace erl::common {
         }
 
         pangolin::View&
-        AddDisplay(const std::string& display_name, pangolin::View& display, pangolin::View& display_parent) {
+        AddDisplay(
+            const std::string& display_name,
+            pangolin::View& display,
+            pangolin::View& display_parent) {
             m_displays_[display_name] = &display_parent.AddDisplay(display);
             return *m_displays_[display_name];
         }

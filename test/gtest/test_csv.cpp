@@ -19,8 +19,12 @@ TEST(CsvIoTest, ReadWrite) {
         }
     }
 
-    const auto csv_data = LoadAndCastCsvFile<double>("example.csv", [](const std::string &string) { return std::stod(string); });
+    const auto csv_data = LoadAndCastCsvFile<double>("example.csv", [](const std::string &string) {
+        return std::stod(string);
+    });
     for (int i = 0; i < static_cast<int>(csv_data.size()); i++) {
-        for (int j = 0; j < static_cast<int>(csv_data[i].size()); j++) { ASSERT_EQ(csv_data[i][j], csv_gt[i][j]); }
+        for (int j = 0; j < static_cast<int>(csv_data[i].size()); j++) {
+            ASSERT_EQ(csv_data[i][j], csv_gt[i][j]);
+        }
     }
 }

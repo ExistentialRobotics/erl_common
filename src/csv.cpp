@@ -40,7 +40,10 @@ namespace erl::common {
         header = rows[0];
         data.clear();
         for (const std::string &column_name: header) {
-            ERL_ASSERTM(data.find(column_name) == data.end(), "Duplicate column name: {}", column_name);
+            ERL_ASSERTM(
+                data.find(column_name) == data.end(),
+                "Duplicate column name: {}",
+                column_name);
             data[column_name] = std::vector<std::string>();
         }
         for (std::size_t i = 1; i < rows.size(); ++i) {
@@ -48,7 +51,12 @@ namespace erl::common {
             const std::vector<std::string> &row = rows[i];
             for (const std::string &column_name: header) {
                 if (row.size() <= j) {
-                    ERL_WARN("Row size is smaller than header size. Column name: {}, row size: {}, header size: {}", column_name, row.size(), header.size());
+                    ERL_WARN(
+                        "Row size is smaller than header size. Column name: {}, row size: {}, "
+                        "header size: {}",
+                        column_name,
+                        row.size(),
+                        header.size());
                     data[column_name].emplace_back("");
                 } else {
                     data[column_name].push_back(row[j]);

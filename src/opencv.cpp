@@ -11,12 +11,16 @@ namespace erl::common {
         ERL_ASSERTM(gray.channels() == 1, "gray must have 1 channel.");
         std::unordered_set<int> unique_values;
         for (int row = 0; row < gray.rows; ++row) {
-            for (int col = 0; col < gray.cols; ++col) { unique_values.insert(gray.at<int>(row, col)); }
+            for (int col = 0; col < gray.cols; ++col) {
+                unique_values.insert(gray.at<int>(row, col));
+            }
         }
         std::vector<int> unique_values_vec(unique_values.begin(), unique_values.end());
         std::sort(unique_values_vec.begin(), unique_values_vec.end());  // ascending order
         std::unordered_map<int, std::size_t> value_to_index;
-        for (std::size_t i = 0; i < unique_values_vec.size(); ++i) { value_to_index[unique_values_vec[i]] = i; }
+        for (std::size_t i = 0; i < unique_values_vec.size(); ++i) {
+            value_to_index[unique_values_vec[i]] = i;
+        }
         custom = cv::Mat::zeros(gray.rows, gray.cols, CV_8UC3);
         for (int row = 0; row < gray.rows; ++row) {
             for (int col = 0; col < gray.cols; ++col) {
@@ -47,7 +51,9 @@ namespace erl::common {
     AlphaBlending(const cv::Mat &foreground, const cv::Mat &background) {
         ERL_ASSERTM(foreground.channels() == 4, "Foreground image must have 4 channels.");
         ERL_ASSERTM(background.channels() == 4, "Background image must have 4 channels.");
-        ERL_ASSERTM(foreground.size() == background.size(), "Foreground and background image must have the same size.");
+        ERL_ASSERTM(
+            foreground.size() == background.size(),
+            "Foreground and background image must have the same size.");
 
         cv::Mat channels[4];
         cv::split(foreground, channels);
@@ -67,11 +73,14 @@ namespace erl::common {
         cv::multiply(alpha_bg, alpha_background, alpha_background);
 
         cv::Mat out_image(alpha_foreground.size(), alpha_foreground.type());
-        cv::add(alpha_foreground, alpha_background, out_image);  // it seems only the first 3 channels are modified
+        cv::add(  // it seems only the first 3 channels are modified
+            alpha_foreground,
+            alpha_background,
+            out_image);
 
         out_image.convertTo(out_image, CV_8UC4);
         cv::split(out_image, channels);
-        channels[3].setTo(255);  // set alpha channel to 255
+        channels[3].setTo(255);  // set the alpha channel to 255
         cv::merge(channels, 4, out_image);
 
         return out_image;

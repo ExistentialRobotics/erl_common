@@ -1,7 +1,6 @@
 #pragma once
 
 #include "binary_file.hpp"
-#include "block_timer.hpp"
 #include "eigen.hpp"
 #include "logging.hpp"
 #include "tracy.hpp"
@@ -17,7 +16,13 @@ namespace erl::common {
 
     template<bool IsIntegral, typename T>
     bool
-    CheckValue(const char *question_str, T ans, T gt, double abs_tol = 1.e-6, double rel_tol = 1.e-6, const bool assert_diff = true) {
+    CheckValue(
+        const char *question_str,
+        T ans,
+        T gt,
+        double abs_tol = 1.e-6,
+        double rel_tol = 1.e-6,
+        const bool assert_diff = true) {
         if (IsIntegral && ans == gt) {
             Logging::Success("{}: {}", question_str, ans);
             return true;
@@ -46,23 +51,37 @@ namespace erl::common {
 
     template<typename T1, typename T2>
     bool
-    CheckAnswers(const char *question_str, T1 ans, T2 gt, double abs_tol = 1.e-6, double rel_tol = 1.e-6, const bool assert_diff = true) {
+    CheckAnswers(
+        const char *question_str,
+        T1 ans,
+        T2 gt,
+        double abs_tol = 1.e-6,
+        double rel_tol = 1.e-6,
+        const bool assert_diff = true) {
 
         if (static_cast<size_t>(ans.size()) != static_cast<size_t>(gt.size())) {
-            Logging::Failure("{}: size is different, {} and {}.", question_str, ans.size(), gt.size());
+            Logging::Failure(
+                "{}: size is different, {} and {}.",
+                question_str,
+                ans.size(),
+                gt.size());
             return false;
         }
         bool fail = false;
         auto ans_ptr = ans.data();
         auto gt_ptr = gt.data();
         for (decltype(ans.size()) i = 0; i < ans.size(); ++i) {
-            auto diff = std::fabs(ans_ptr[i] - gt_ptr[i]) - (abs_tol + rel_tol * std::fabs(gt_ptr[i]));
+            auto diff =
+                std::fabs(ans_ptr[i] - gt_ptr[i]) - (abs_tol + rel_tol * std::fabs(gt_ptr[i]));
             if (diff > 0) {
-                std::cout << "element " << i << " is different: " << ans_ptr[i] << " and " << gt_ptr[i] << ", diff = " << std::scientific
-                          << std::setprecision(4) << std::fabs(ans_ptr[i] - gt_ptr[i]) << std::endl
+                std::cout << "element " << i << " is different: " << ans_ptr[i] << " and "
+                          << gt_ptr[i] << ", diff = " << std::scientific << std::setprecision(4)
+                          << std::fabs(ans_ptr[i] - gt_ptr[i]) << std::endl
                           << "GetSize is " << ans.size() << std::endl;
                 fail = true;
-                if (assert_diff) { throw std::runtime_error(std::string(question_str) + " failed."); }
+                if (assert_diff) {
+                    throw std::runtime_error(std::string(question_str) + " failed.");
+                }
             }
         }
 
@@ -74,59 +93,77 @@ namespace erl::common {
         return true;
     }
 
-#define GTEST_PREPARE_OUTPUT_DIR()                                                                               \
-    auto test_info = ::testing::UnitTest::GetInstance()->current_test_info();                                    \
-    std::filesystem::path gtest_src_dir = __FILE__;                                                              \
-    gtest_src_dir = gtest_src_dir.parent_path();                                                                 \
-    std::filesystem::path test_output_dir = test_info->test_suite_name();                                        \
-    test_output_dir /= test_info->name();                                                                        \
-    do {                                                                                                         \
-        if (!std::filesystem::exists(test_output_dir)) { std::filesystem::create_directories(test_output_dir); } \
+#define GTEST_PREPARE_OUTPUT_DIR()                                            \
+    auto test_info = ::testing::UnitTest::GetInstance()->current_test_info(); \
+    std::filesystem::path gtest_src_dir = __FILE__;                           \
+    gtest_src_dir = gtest_src_dir.parent_path();                              \
+    std::filesystem::path test_output_dir = test_info->test_suite_name();     \
+    test_output_dir /= test_info->name();                                     \
+    do {                                                                      \
+        if (!std::filesystem::exists(test_output_dir)) {                      \
+            std::filesystem::create_directories(test_output_dir);             \
+        }                                                                     \
     } while (false)
 
-#define ASSERT_EIGEN_MATRIX_EQUAL(question, ans, gt)                                                                              \
-    do {                                                                                                                          \
-        { ASSERT_EQ((ans).rows(), (gt).rows()); }                                                                                 \
-        { ASSERT_EQ((ans).cols(), (gt).cols()); }                                                                                 \
-        for (int _i = 0; _i < (ans).rows(); ++_i) {                                                                               \
-            for (int _j = 0; _j < (ans).cols(); ++_j) {                                                                           \
-                ASSERT_EQ((ans) (_i, _j), (gt) (_i, _j)) << (question) << ": element (" << _i << ", " << _j << ") is different."; \
-            }                                                                                                                     \
-        }                                                                                                                         \
+#define ASSERT_EIGEN_MATRIX_EQUAL(question, ans, gt)                                         \
+    do {                                                                                     \
+        { ASSERT_EQ((ans).rows(), (gt).rows()); }                                            \
+        { ASSERT_EQ((ans).cols(), (gt).cols()); }                                            \
+        for (int _i = 0; _i < (ans).rows(); ++_i) {                                          \
+            for (int _j = 0; _j < (ans).cols(); ++_j) {                                      \
+                ASSERT_EQ((ans) (_i, _j), (gt) (_i, _j))                                     \
+                    << (question) << ": element (" << _i << ", " << _j << ") is different."; \
+            }                                                                                \
+        }                                                                                    \
     } while (false)
 
-#define ASSERT_EIGEN_MATRIX_NEAR(question, ans, gt, error)                                                                              \
-    do {                                                                                                                                \
-        { ASSERT_EQ((ans).rows(), (gt).rows()); }                                                                                       \
-        { ASSERT_EQ((ans).cols(), (gt).cols()); }                                                                                       \
-        for (int _i = 0; _i < (ans).rows(); ++_i) {                                                                                     \
-            for (int _j = 0; _j < (ans).cols(); ++_j) {                                                                                 \
-                ASSERT_NEAR((ans) (_i, _j), gt(_i, _j), error) << (question) << ": element (" << _i << ", " << _j << ") is different."; \
-            }                                                                                                                           \
-        }                                                                                                                               \
+#define ASSERT_EIGEN_MATRIX_NEAR(question, ans, gt, error)                                   \
+    do {                                                                                     \
+        { ASSERT_EQ((ans).rows(), (gt).rows()); }                                            \
+        { ASSERT_EQ((ans).cols(), (gt).cols()); }                                            \
+        for (int _i = 0; _i < (ans).rows(); ++_i) {                                          \
+            for (int _j = 0; _j < (ans).cols(); ++_j) {                                      \
+                ASSERT_NEAR((ans) (_i, _j), gt(_i, _j), error)                               \
+                    << (question) << ": element (" << _i << ", " << _j << ") is different."; \
+            }                                                                                \
+        }                                                                                    \
     } while (false)
 
-#define ASSERT_EIGEN_VECTOR_EQUAL(question, ans, gt)                                                                                            \
-    do {                                                                                                                                        \
-        { ASSERT_EQ((ans).size(), (gt).size()); }                                                                                               \
-        for (int _i = 0; _i < (ans).size(); ++_i) { ASSERT_EQ((ans)[_i], (gt)[_i]) << (question) << ": element [" << _i << "] is different."; } \
+#define ASSERT_EIGEN_VECTOR_EQUAL(question, ans, gt)                       \
+    do {                                                                   \
+        { ASSERT_EQ((ans).size(), (gt).size()); }                          \
+        for (int _i = 0; _i < (ans).size(); ++_i) {                        \
+            ASSERT_EQ((ans)[_i], (gt)[_i])                                 \
+                << (question) << ": element [" << _i << "] is different."; \
+        }                                                                  \
     } while (false)
 
-#define ASSERT_EIGEN_VECTOR_NEAR(question, ans, gt, error)                                                                                               \
-    do {                                                                                                                                                 \
-        { ASSERT_EQ((ans).size(), (gt).size()); }                                                                                                        \
-        for (int _i = 0; _i < (ans).size(); ++_i) { ASSERT_NEAR((ans)[_i], (gt)[_i], error) << (question) << ": element [" << _i << "] is different."; } \
+#define ASSERT_EIGEN_VECTOR_NEAR(question, ans, gt, error)                 \
+    do {                                                                   \
+        { ASSERT_EQ((ans).size(), (gt).size()); }                          \
+        for (int _i = 0; _i < (ans).size(); ++_i) {                        \
+            ASSERT_NEAR((ans)[_i], (gt)[_i], error)                        \
+                << (question) << ": element [" << _i << "] is different."; \
+        }                                                                  \
     } while (false)
 
-#define ASSERT_STD_VECTOR_EQUAL(question, ans, gt)                                                                                                      \
-    do {                                                                                                                                                \
-        { ASSERT_EQ((ans).size(), (gt).size()); }                                                                                                       \
-        for (std::size_t _i = 0; _i < (ans).size(); ++_i) { ASSERT_EQ((ans)[_i], (gt)[_i]) << (question) << ": element [" << _i << "] is different."; } \
+#define ASSERT_STD_VECTOR_EQUAL(question, ans, gt)                         \
+    do {                                                                   \
+        { ASSERT_EQ((ans).size(), (gt).size()); }                          \
+        for (std::size_t _i = 0; _i < (ans).size(); ++_i) {                \
+            ASSERT_EQ((ans)[_i], (gt)[_i])                                 \
+                << (question) << ": element [" << _i << "] is different."; \
+        }                                                                  \
     } while (false)
 
     template<typename duration, typename F, typename... Args>
     double
-    ReportTime(const char *label, int repeat, const bool print_all_repetitions, F func, Args &&...args) {
+    ReportTime(
+        const char *label,
+        int repeat,
+        const bool print_all_repetitions,
+        F func,
+        Args &&...args) {
         std::string unit;
         if (std::is_same_v<duration, std::chrono::nanoseconds>) {
             unit = " ns";
@@ -148,13 +185,17 @@ namespace erl::common {
         double dt_square_mean = dt_mean * dt_mean;
         double dt_max = dt_mean;
         double dt_min = dt_mean;
-        if (print_all_repetitions) { std::cout << label << "[0]: " << dt_mean << unit << std::endl; }
+        if (print_all_repetitions) {
+            std::cout << label << "[0]: " << dt_mean << unit << std::endl;
+        }
         for (int i = 0; i < repeat; ++i) {
             t1 = std::chrono::high_resolution_clock::now();
             func(std::forward<Args>(args)...);
             t2 = std::chrono::high_resolution_clock::now();
             double dt = std::chrono::duration<double, typename duration::period>(t2 - t1).count();
-            if (print_all_repetitions) { std::cout << label << '[' << i + 1 << "]: " << dt << unit << std::endl; }
+            if (print_all_repetitions) {
+                std::cout << label << '[' << i + 1 << "]: " << dt << unit << std::endl;
+            }
             dt_mean += dt;
             dt_square_mean += dt * dt;
             dt_min = std::min(dt, dt_min);

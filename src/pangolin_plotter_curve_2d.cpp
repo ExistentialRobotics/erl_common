@@ -19,7 +19,14 @@ namespace erl::common {
         const pangolin::Colour &axis_color,
         const pangolin::Colour &tick_color)
         : m_window_(std::move(window)),
-          m_plotter_(&m_data_log_, plot_x_init, plot_x_init + static_cast<float>(plot_window_width) * plot_x_tick, -1.0f, 1.0f, plot_x_tick, plot_y_tick),
+          m_plotter_(
+              &m_data_log_,
+              plot_x_init,
+              plot_x_init + static_cast<float>(plot_window_width) * plot_x_tick,
+              -1.0f,
+              1.0f,
+              plot_x_tick,
+              plot_y_tick),
           m_display_(m_window_->AddDisplay(plotter_name, m_plotter_)),
           m_log_buffer_(labels.size()),
           m_max_values_(plot_window_width, std::numeric_limits<float>::lowest()),
@@ -31,12 +38,16 @@ namespace erl::common {
         m_plotter_.SetAxisColour(axis_color);
         m_plotter_.SetTickColour(tick_color);
         m_plotter_.ClearSeries();
-        for (std::size_t i = 1; i < labels.size(); ++i) { m_plotter_.AddSeries("$0", "$" + std::to_string(i), pangolin::DrawingModeLine); }
+        for (std::size_t i = 1; i < labels.size(); ++i) {
+            m_plotter_.AddSeries("$0", "$" + std::to_string(i), pangolin::DrawingModeLine);
+        }
     }
 
     void
     PangolinPlotterCurve2D::Append(const float x, const std::vector<float> &values) {
-        ERL_ASSERTM(values.size() == m_log_buffer_.size() - 1, "Number of values does not match the number of series in the plotter");
+        ERL_ASSERTM(
+            values.size() == m_log_buffer_.size() - 1,
+            "Number of values does not match the number of series in the plotter");
 
         m_window_->Activate();
         m_display_.Activate();

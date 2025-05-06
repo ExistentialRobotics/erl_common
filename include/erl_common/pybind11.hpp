@@ -2,52 +2,6 @@
 
 #include <pybind11/pybind11.h>  // must be included first
 // https://github.com/pybind/pybind11/blob/d2e7e8c68711d1ebfb02e2f20bd1cb3bfc5647c0/docs/basics.rst#L81-L86
-//
-// #if PYBIND11_VERSION_MAJOR < 2 || (PYBIND11_VERSION_MAJOR == 2 && PYBIND11_VERSION_MINOR < 12)
-//     #include <pybind11/pytypes.h>
-//
-// namespace PYBIND11_NAMESPACE {
-//     namespace typing {
-//         template<typename T>
-//         class Iterator : public iterator {
-//             using iterator::iterator;
-//         };
-//     }  // namespace typing
-//
-//     namespace detail {
-//         template<typename Access, return_value_policy Policy, typename Iterator, typename Sentinel, typename ValueType, typename... Extra>
-//         iterator
-//         make_iterator_impl(Iterator first, Sentinel last, Extra&&... extra) {
-//             using state = detail::iterator_state<Iterator, Sentinel, false, Policy>;
-//
-//             if (!detail::get_type_info(typeid(state), false)) {
-//                 class_<state>(handle(), "iterator", pybind11::module_local())
-//                     .def("__iter__", [](state& s) -> state& { return s; })
-//                     .def(
-//                         "__next__",
-//                         [](state& s) -> ValueType {
-//                             if (!s.first_or_done) {
-//                                 ++s.it;
-//                             } else {
-//                                 s.first_or_done = false;
-//                             }
-//                             if (s.it == s.end) {
-//                                 s.first_or_done = true;
-//                                 throw stop_iteration();
-//                             }
-//                             return Access()(s.it);
-//                             // NOLINTNEXTLINE(readability-const-return-type) // PR #3263
-//                         },
-//                         std::forward<Extra>(extra)...,
-//                         Policy);
-//             }
-//
-//             return cast(state{std::forward<Iterator>(first), std::forward<Sentinel>(last), true});
-//         }
-//     }  // namespace detail
-// }  // namespace PYBIND11_NAMESPACE
-//
-// #endif
 
 namespace py = pybind11;
 
@@ -57,6 +11,7 @@ namespace py = pybind11;
 // EIGEN
 #include <pybind11/eigen.h>
 
+// clang-format off
 /**
  * NumPy to Eigen behavior
  * Type                                    | Accept c-style | Accept f-style | require writable | Posted to compatible different Ref types |
@@ -69,14 +24,16 @@ namespace py = pybind11;
  *
  * Eigen::MatrixXd::conservativeResize can be used to replace std::vector<gpis::Point<T, Dim>>
  */
-
+// clang-format on
 #include "pybind11_opencv.hpp"
 
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 
-#define ERL_PYBIND_WRAP_NAME_PROPERTY_AS_READONLY(py_cls, cls, name, property) py_cls.def_property_readonly(name, [](const cls& obj) { return obj.property; })
-#define ERL_PYBIND_WRAP_PROPERTY_AS_READONLY(py_cls, cls, property)            ERL_PYBIND_WRAP_NAME_PROPERTY_AS_READONLY(py_cls, cls, #property, property)
+#define ERL_PYBIND_WRAP_NAME_PROPERTY_AS_READONLY(py_cls, cls, name, property) \
+    py_cls.def_property_readonly(name, [](const cls& obj) { return obj.property; })
+#define ERL_PYBIND_WRAP_PROPERTY_AS_READONLY(py_cls, cls, property) \
+    ERL_PYBIND_WRAP_NAME_PROPERTY_AS_READONLY(py_cls, cls, #property, property)
 
 namespace PYBIND11_NAMESPACE {
     template<typename T>
@@ -148,7 +105,13 @@ namespace PYBIND11_NAMESPACE {
         typename... Extra>
     typing::Iterator<ValueType>
     wrap_iterator(Iterator first, Sentinel last, Extra&&... extra) {
-        return detail::make_iterator_impl<detail::iterator_self_access<Iterator>, Policy, Iterator, Sentinel, ValueType, Extra...>(
+        return detail::make_iterator_impl<
+            detail::iterator_self_access<Iterator>,
+            Policy,
+            Iterator,
+            Sentinel,
+            ValueType,
+            Extra...>(
             std::forward<Iterator>(first),
             std::forward<Sentinel>(last),
             std::forward<Extra>(extra)...);

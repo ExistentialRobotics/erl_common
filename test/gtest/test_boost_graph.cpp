@@ -6,7 +6,12 @@
 TEST(Boost, AdjacencyList) {
 
     Eigen::Matrix2Xd vertices = Eigen::Matrix2Xd::Random(2, 10);
-    using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, boost::property<boost::edge_weight_t, double>>;
+    using Graph = boost::adjacency_list<
+        boost::vecS,
+        boost::vecS,
+        boost::undirectedS,
+        boost::no_property,
+        boost::property<boost::edge_weight_t, double>>;
     Graph graph(10);
     for (long i = 0; i < vertices.cols(); ++i) {
         for (long j = 0; j < vertices.cols(); ++j) {
@@ -30,7 +35,8 @@ TEST(Boost, AdjacencyList) {
         const long u = boost::source(*ei, graph);
         const long v = boost::target(*ei, graph);
         const double weight = boost::get(boost::edge_weight, graph, *ei);
-        const double weight2 = boost::get(boost::edge_weight, graph, boost::edge(v, u, graph).first);
+        const double weight2 =
+            boost::get(boost::edge_weight, graph, boost::edge(v, u, graph).first);
         EXPECT_EQ(weight, weight2);
         const double dist = (vertices.col(u) - vertices.col(v)).norm();
         std::cout << fmt::format(

@@ -45,7 +45,10 @@ namespace erl::common {
 
     template<int Dim>
     [[nodiscard]] int
-    CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape, const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords, const bool c_stride) {
+    CoordsToIndex(
+        const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape,
+        const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords,
+        const bool c_stride) {
         const auto ndim = static_cast<int>(shape.size());
 
         if (Dim == 2) {
@@ -59,47 +62,41 @@ namespace erl::common {
         }
 
         if (Dim == 4) {
-            if (c_stride) { return coords[3] + shape[3] * (coords[2] + shape[2] * (coords[1] + shape[1] * coords[0])); }
-            return coords[0] + shape[0] * (coords[1] + shape[1] * (coords[2] + shape[2] * coords[3]));
+            if (c_stride) {
+                return coords[3] +
+                       shape[3] * (coords[2] + shape[2] * (coords[1] + shape[1] * coords[0]));
+            }
+            return coords[0] +
+                   shape[0] * (coords[1] + shape[1] * (coords[2] + shape[2] * coords[3]));
         }
 
         if (c_stride) {
             int index = coords[0];
             for (int i = 1; i < ndim; ++i) { index = index * shape[i] + coords[i]; }
-
-            // int index = coords[ndim - 1];
-            // int prod = 1;
-            // for (int i = ndim - 1; i > 0; --i) {
-            //     prod *= shape[i];
-            //     index += coords[i - 1] * prod;
-            // }
-
             return index;
         }
 
         int index = coords[ndim - 1];
         for (int i = ndim - 1; i > 0; --i) { index = index * shape[i - 1] + coords[i - 1]; }
 
-        // int index = coords[0];
-        // int prod = 1;
-        // for (int i = 1; i < ndim - 1; ++i) {
-        //     prod *= shape[i - 1];
-        //     index += coords[i] * prod;
-        // }
-
         return index;
     }
 
     template<int Dim>
     [[nodiscard]] int
-    CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &strides, const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords) {
+    CoordsToIndex(
+        const Eigen::Ref<const Eigen::Vector<int, Dim>> &strides,
+        const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords) {
         ERL_DEBUG_ASSERT((coords.array() >= 0).all(), "Coords must be non-negative.");
         return strides.dot(coords);
     }
 
     template<int Dim>
     [[nodiscard]] Eigen::Vector<int, Dim>
-    IndexToCoords(const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape, int index, bool c_stride) {
+    IndexToCoords(
+        const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape,
+        int index,
+        bool c_stride) {
         const auto ndim = static_cast<int>(shape.size());
         Eigen::Vector<int, Dim> coords;
         coords.setZero(ndim);
@@ -133,7 +130,9 @@ namespace erl::common {
         }
 
         if (Dim == 4) {
-            if (c_stride) {  // coords[3] + shape[3] * (coords[2] + shape[2] * (coords[1] + shape[1] * coords[0]))
+            if (c_stride) {
+                // coords[3] + shape[3] * (coords[2] + shape[2] *
+                // (coords[1] + shape[1] * coords[0]))
                 int prod_23 = shape[2] * shape[3];
                 int prod_123 = shape[1] * prod_23;
                 coords[0] = index / prod_123;
@@ -142,7 +141,9 @@ namespace erl::common {
                 index -= coords[1] * prod_23;
                 coords[2] = index / shape[3];
                 coords[3] = index - coords[2] * shape[3];
-            } else {  // coords[0] + shape[0] * (coords[1] + shape[1] * (coords[2] + shape[2] * coords[3]))
+            } else {
+                // coords[0] + shape[0] * (coords[1] + shape[1] *
+                // (coords[2] + shape[2] * coords[3]))
                 int prod_12 = shape[1] * shape[2];
                 int prod_012 = shape[0] * prod_12;
                 coords[3] = index / prod_012;

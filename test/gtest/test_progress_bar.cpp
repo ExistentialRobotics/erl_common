@@ -12,14 +12,12 @@ TEST(ProgressBar, SingleBar) {
     setting->description = "single bar";
     std::cout << std::string(setting->line_width, '=') << std::endl;
     const std::shared_ptr<ProgressBar> bar = ProgressBar::Open(setting);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     for (std::size_t i = 0; i < 100; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         bar->Update();
     }
     bar->Update();
     bar->Close();
-    // std::cout << std::endl;
 }
 
 TEST(ProgressBar, SingleBarLog) {
@@ -30,7 +28,6 @@ TEST(ProgressBar, SingleBarLog) {
     setting->description = "single bar";
     std::cout << std::string(setting->line_width, '=') << std::endl;
     const std::shared_ptr<ProgressBar> bar = ProgressBar::Open(setting);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     for (std::size_t i = 0; i < 100; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         bar->Update(1, "progress: " + std::to_string(i) + "%\nHello!");

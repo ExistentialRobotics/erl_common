@@ -18,7 +18,10 @@ namespace erl::common {
                 [](Manager &self, const T &entry) { return self.AddEntry(entry); },
                 py::arg("entry"))
             .def("remove_entry", &Manager::RemoveEntry, py::arg("index"))
-            .def("__getitem__", py::overload_cast<std::size_t>(&Manager::operator[], py::const_), py::arg("index"))
+            .def(
+                "__getitem__",
+                py::overload_cast<std::size_t>(&Manager::operator[], py::const_),
+                py::arg("index"))
             .def_property_readonly("entries", &Manager::GetEntries)
             .def("clear", &Manager::Clear);
     }

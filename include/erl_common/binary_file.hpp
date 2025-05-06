@@ -3,7 +3,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <vector>
 
 namespace erl::common {
@@ -12,7 +11,11 @@ namespace erl::common {
     LoadBinaryFile(const std::string &path) {
         std::ifstream ifs;
         ifs.open(path, std::ios::binary);
-        ERL_ASSERTM(ifs.is_open(), "{} does not exist in {}.", path, std::filesystem::current_path());
+        ERL_ASSERTM(
+            ifs.is_open(),
+            "{} does not exist in {}.",
+            path,
+            std::filesystem::current_path());
         auto data = std::vector<char>(std::istreambuf_iterator<char>(ifs), {});
         ifs.close();
 

@@ -13,9 +13,10 @@
         #define ERL_TRACY_RECORD_FREE(ptr)        ((void) 0)
     #endif
 
-    #define ERL_TRACY_SET_THREAD_NAME(name)                             tracy::SetThreadName(name)
-    #define ERL_TRACY_PLOT(name, value)                                 TracyPlot(name, value)
-    #define ERL_TRACY_PLOT_CONFIG(name, format_type, step, fill, color) TracyPlotConfig(name, format_type, step, fill, color)
+    #define ERL_TRACY_SET_THREAD_NAME(name) tracy::SetThreadName(name)
+    #define ERL_TRACY_PLOT(name, value)     TracyPlot(name, value)
+    #define ERL_TRACY_PLOT_CONFIG(name, format_type, step, fill, color) \
+        TracyPlotConfig(name, format_type, step, fill, color)
 #else
     #define ERL_TRACY_FRAME_MARK_START()                                ((void) 0)
     #define ERL_TRACY_FRAME_MARK_END()                                  ((void) 0)

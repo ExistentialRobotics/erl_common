@@ -4,7 +4,12 @@
     #include "erl_common/random.hpp"
 
 namespace erl::common {
-    PangolinWindow::PangolinWindow(const std::string &window_name, const int window_width, const int window_height, int window_x, int window_y)
+    PangolinWindow::PangolinWindow(
+        const std::string &window_name,
+        const int window_width,
+        const int window_height,
+        int window_x,
+        int window_y)
         : m_window_name_(window_name),
           m_window_(pangolin::CreateWindowAndBind(window_name, window_width, window_height)) {
         m_window_.MakeCurrent();

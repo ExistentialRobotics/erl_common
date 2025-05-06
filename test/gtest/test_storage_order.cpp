@@ -12,7 +12,11 @@ TEST(StorageOrderTest, CoordsToIndexTiming) {
 
     int index_1, index_2;
     const auto strides = ComputeCStrides<int>(shape, 1);
-    ReportTime<std::chrono::nanoseconds>("CoordsToIndex(shape, coords)", 100, false, [&] { index_1 = CoordsToIndex<5>(shape, coords, true); });
-    ReportTime<std::chrono::nanoseconds>("CoordsToIndex(strides, coords)", 100, false, [&] { index_2 = CoordsToIndex<5>(strides, coords); });
+    ReportTime<std::chrono::nanoseconds>("CoordsToIndex(shape, coords)", 100, false, [&] {
+        index_1 = CoordsToIndex<5>(shape, coords, true);
+    });
+    ReportTime<std::chrono::nanoseconds>("CoordsToIndex(strides, coords)", 100, false, [&] {
+        index_2 = CoordsToIndex<5>(strides, coords);
+    });
     ASSERT_EQ(index_1, index_2);
 }

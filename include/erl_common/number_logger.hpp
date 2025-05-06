@@ -55,7 +55,9 @@ namespace erl::common {
 
         void
         AddColumn(const std::string &column_name) {
-            ERL_ASSERTM(!m_header_written_ && !m_log_called_, "AddColumn must be called before Log and Print");
+            ERL_ASSERTM(
+                !m_header_written_ && !m_log_called_,
+                "AddColumn must be called before Log and Print");
             m_column_names_.push_back(column_name);
             m_value_sum_[column_name] = 0.0;
             m_weight_sum_[column_name] = 0.0;
@@ -76,7 +78,9 @@ namespace erl::common {
             ERL_DEBUG_ASSERT(!std::isnan(weight) && !std::isinf(weight), "Weight is NaN or Inf");
 
             m_log_called_ = true;
-            ERL_ASSERTM(m_value_sum_.find(column_name) != m_value_sum_.end(), "Column name not found, call AddColumn first");
+            ERL_ASSERTM(
+                m_value_sum_.find(column_name) != m_value_sum_.end(),
+                "Column name not found, call AddColumn first");
             m_value_sum_[column_name] += value * weight;
             m_weight_sum_[column_name] += weight;
             m_squared_value_sum_[column_name] += value * value * weight;
@@ -84,7 +88,9 @@ namespace erl::common {
 
         void
         Log(const std::vector<std::tuple<std::string, double, double>> &values) {
-            for (const auto &[column_name, value, weight]: values) { Log(column_name, value, weight); }
+            for (const auto &[column_name, value, weight]: values) {
+                Log(column_name, value, weight);
+            }
         }
 
         void
@@ -96,9 +102,14 @@ namespace erl::common {
         GetStatistics() const {
             std::vector<std::tuple<std::string, double, double>> statistics;
             for (const std::string &column_name: m_column_names_) {
-                ERL_WARN_COND(m_weight_sum_.at(column_name) == 0.0, "Weight sum is zero for column {}", column_name);
+                ERL_WARN_COND(
+                    m_weight_sum_.at(column_name) == 0.0,
+                    "Weight sum is zero for column {}",
+                    column_name);
                 const double mean = m_value_sum_.at(column_name) / m_weight_sum_.at(column_name);
-                const double std = std::sqrt(m_squared_value_sum_.at(column_name) / m_weight_sum_.at(column_name) - mean * mean);
+                const double std = std::sqrt(
+                    m_squared_value_sum_.at(column_name) / m_weight_sum_.at(column_name) -
+                    mean * mean);
                 statistics.emplace_back(column_name, mean, std);
             }
             return statistics;
@@ -112,28 +123,40 @@ namespace erl::common {
                     ERL_ASSERTM(!m_column_names_.empty(), "AddColumn must be called before Print");
                     if (!m_append_) {  // write header only if not appending
                         m_file_ << m_step_name_;
-                        for (const std::string &column_name: m_column_names_) { m_file_ << "," << column_name << "_mean," << column_name << "_std"; }
+                        for (const std::string &column_name: m_column_names_) {
+                            m_file_ << "," << column_name << "_mean," << column_name << "_std";
+                        }
                         m_file_ << std::endl;
                     }
                     m_header_written_ = true;
                 }
                 m_file_ << m_step_idx_;
-                for (const auto &[column_name, mean, std]: statistics) { m_file_ << "," << mean << "," << std; }
+                for (const auto &[column_name, mean, std]: statistics) {
+                    m_file_ << "," << mean << "," << std;
+                }
                 m_file_ << std::endl;
                 m_file_.flush();
             }
             if (m_on_screen_) {
                 std::stringstream ss;
                 constexpr int min_column_width = 10;
-                const int step_column_width = std::max(static_cast<int>(m_step_name_.size()) + 4, min_column_width);
+                const int step_column_width =
+                    std::max(static_cast<int>(m_step_name_.size()) + 4, min_column_width);
                 ss << fmt::format("|{:^{}}|", m_step_name_, step_column_width);
 
                 std::vector<std::pair<int, int>> column_widths;
                 for (const std::string &column_name: m_column_names_) {
-                    const int mean_column_width = std::max(static_cast<int>(column_name.size()) + 9, min_column_width);
-                    const int std_column_width = std::max(static_cast<int>(column_name.size()) + 8, min_column_width);
+                    const int mean_column_width =
+                        std::max(static_cast<int>(column_name.size()) + 9, min_column_width);
+                    const int std_column_width =
+                        std::max(static_cast<int>(column_name.size()) + 8, min_column_width);
                     column_widths.emplace_back(mean_column_width, std_column_width);
-                    ss << fmt::format("{:^{}}|{:^{}}|", column_name + "_mean", mean_column_width, column_name + "_std", std_column_width);
+                    ss << fmt::format(
+                        "{:^{}}|{:^{}}|",
+                        column_name + "_mean",
+                        mean_column_width,
+                        column_name + "_std",
+                        std_column_width);
                 }
                 ss << std::endl;
 
@@ -141,7 +164,12 @@ namespace erl::common {
                 for (std::size_t i = 0; i < column_widths.size(); ++i) {
                     const auto &[mean_column_width, std_column_width] = column_widths[i];
                     const auto &[column_name, mean, std] = statistics[i];
-                    ss << fmt::format("{:^{}}|{:^{}}|", fmt::format("{:.2e}", mean), mean_column_width, fmt::format("{:.2e}", std), std_column_width);
+                    ss << fmt::format(
+                        "{:^{}}|{:^{}}|",
+                        fmt::format("{:.2e}", mean),
+                        mean_column_width,
+                        fmt::format("{:.2e}", std),
+                        std_column_width);
                 }
                 ss << std::endl;
                 ss << "|" << std::string(step_column_width, '-');

@@ -27,14 +27,22 @@ TEST(Logging, Macro) {
     ERL_DEBUG("debug message, 2 / 3 = {:.3f}", 2.0 / 3.0);
     try {
         ERL_DEBUG_ASSERT(1 == 2, "message");
-    } catch (std::runtime_error &e) { EXPECT_STREQ(e.what(), ("assertion (1 == 2) at " + std::string(__FILE__) + ":22: message\n").c_str()); }
+    } catch (std::runtime_error &e) {
+        EXPECT_STREQ(
+            e.what(),
+            ("assertion (1 == 2) at " + std::string(__FILE__) + ":22: message\n").c_str());
+    }
     ERL_WARN("warn message, 2 / 3 = {:.3f}", 2.0 / 3.0);
     ERL_WARN_ONCE("once warn message, 2 / 3 = {:.3f}", 2.0 / 3.0);
     ERL_WARN_COND(true, "warn message, 2 / 3 = {:.3f}", 2.0 / 3.0);
-    ERL_ERROR("error meesaage, 2 / 3 = {:.3f}", 2.0 / 3.0);
+    ERL_ERROR("error message, 2 / 3 = {:.3f}", 2.0 / 3.0);
     try {
         ERL_ASSERTM(1 == 2, "message");
-    } catch (std::runtime_error &e) { EXPECT_STREQ(e.what(), ("assertion (1 == 2) at " + std::string(__FILE__) + ":31: message\n").c_str()); }
+    } catch (std::runtime_error &e) {
+        EXPECT_STREQ(
+            e.what(),
+            ("assertion (1 == 2) at " + std::string(__FILE__) + ":31: message\n").c_str());
+    }
     // should exit
     ASSERT_DEATH({ ERL_FATAL("fatal message, 2 / 3 = {:.3f}", 2.0 / 3.0); }, ".*");
 }

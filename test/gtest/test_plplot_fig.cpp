@@ -26,7 +26,9 @@ TEST(PlplotFig, Demo04) {
         .SetMargin(0.15, 0.85, 0.15, 0.9)
         .SetAxisLimits(-2.0, 3.0, -80.0, 0.0)
         .SetCurrentColor(PlplotFig::Color0::Red)
-        .DrawAxesBox(PlplotFig::AxisOpt().DrawTopRightEdge().LogScale() /*bclnst*/, PlplotFig::AxisOpt().DrawPerpendicularTickLabels() /*bnstv*/)
+        .DrawAxesBox(
+            PlplotFig::AxisOpt().DrawTopRightEdge().LogScale() /*bclnst*/,
+            PlplotFig::AxisOpt().DrawPerpendicularTickLabels() /*bnstv*/)
         .SetCurrentColor(PlplotFig::Color0::Yellow)
         .DrawLine(101, freql.data(), ampl.data())               // plot ampl vs freq
         .PutText("-20 dB/decade", 1.6, -30.0, 1.0, -20.0, 0.5)  // put text near the curve
@@ -40,7 +42,12 @@ TEST(PlplotFig, Demo04) {
         .SetAxisLimits(-2.0, 3.0, -100.0, 0.0)
         .DrawAxesBox(
             PlplotFig::AxisOpt::Off(),
-            PlplotFig::AxisOpt::Off().DrawTopRightEdge().DrawTopRightTickLabels().DrawTickMajor().DrawTickMinor().DrawPerpendicularTickLabels(),
+            PlplotFig::AxisOpt::Off()
+                .DrawTopRightEdge()
+                .DrawTopRightTickLabels()
+                .DrawTickMajor()
+                .DrawTickMinor()
+                .DrawPerpendicularTickLabels(),
             0.0,
             30.0,
             0,
@@ -52,7 +59,10 @@ TEST(PlplotFig, Demo04) {
         .SetAxisLabelY("Phase shift (degrees)", true);
 
     PlplotFig::LegendOpt legend_opt(2, {"Amplitude", "Phase shift"});
-    legend_opt.SetTextColors({static_cast<int>(PlplotFig::Color0::Yellow), static_cast<int>(PlplotFig::Color0::Green)})
+    legend_opt
+        .SetTextColors(
+            {static_cast<int>(PlplotFig::Color0::Yellow),
+             static_cast<int>(PlplotFig::Color0::Green)})
         .SetStyles({PL_LEGEND_LINE, PL_LEGEND_LINE | PL_LEGEND_SYMBOL})
         .SetLineColors({1, 3})
         .SetLineStyles({1, 1})
@@ -71,8 +81,17 @@ TEST(PlplotFig, Demo04) {
         .SetAxisLimits(-2.0, 3.0, -80.0, 0.0)
         .SetCurrentColor(PlplotFig::Color0::Red)
         .DrawAxesBox(
-            PlplotFig::AxisOpt().DrawTopRightEdge().LogScale().UseFixedPointNumeric().DrawGridMajor().DrawGridMinor() /*bcfghlnst*/,
-            PlplotFig::AxisOpt().DrawTopRightEdge().DrawGridMajor().DrawGridMinor().DrawPerpendicularTickLabels() /*bcghnstv*/)
+            PlplotFig::AxisOpt()
+                .DrawTopRightEdge()
+                .LogScale()
+                .UseFixedPointNumeric()
+                .DrawGridMajor()
+                .DrawGridMinor() /*bcfghlnst*/,
+            PlplotFig::AxisOpt()
+                .DrawTopRightEdge()
+                .DrawGridMajor()
+                .DrawGridMinor()
+                .DrawPerpendicularTickLabels() /*bcghnstv*/)
         .SetCurrentColor(PlplotFig::Color0::Yellow)
         .DrawLine(101, freql.data(), ampl.data())               // plot ampl vs freq
         .PutText("-20 dB/decade", 1.6, -30.0, 1.0, -20.0, 0.5)  // put text near the curve
@@ -102,12 +121,14 @@ TEST(PlplotFig, Demo16) {
         }
     }
 
-    double zmin = z.minCoeff();
-    double zmax = z.maxCoeff();
+    const double zmin = z.minCoeff();
+    const double zmax = z.maxCoeff();
 
-    int ns = 20;
+    constexpr int ns = 20;
     std::vector<double> shedge(ns + 1);
-    for (int i = 0; i < ns + 1; i++) { shedge[i] = zmin + (zmax - zmin) * static_cast<double>(i) / static_cast<double>(ns); }
+    for (int i = 0; i < ns + 1; i++) {
+        shedge[i] = zmin + (zmax - zmin) * static_cast<double>(i) / static_cast<double>(ns);
+    }
 
     PlplotFig fig(640, 480, true);
     PlplotFig::ShadesOpt shades_opt;
@@ -116,7 +137,9 @@ TEST(PlplotFig, Demo16) {
         .SetMargin(0.15, 0.85, 0.15, 0.85)
         .SetAxisLimits(-1.0, 1.0, -1.0, 1.0)
         .SetCurrentColor(PlplotFig::Color0::White)
-        .DrawAxesBox(PlplotFig::AxisOpt().DrawTopRightEdge(), PlplotFig::AxisOpt().DrawPerpendicularTickLabels())
+        .DrawAxesBox(
+            PlplotFig::AxisOpt().DrawTopRightEdge(),
+            PlplotFig::AxisOpt().DrawPerpendicularTickLabels())
         .SetAreaFillPattern(PlplotFig::AreaFillPattern::Solid)
         .SetColorMap(1, PlplotFig::ColorMap::Jet)
         .Shades(z.data(), nx, ny, true, shades_opt);
@@ -126,5 +149,9 @@ TEST(PlplotFig, Demo16) {
 #else
     #include "erl_common/test_helper.hpp"
 
-TEST(PlplotFig, Demo04) { ERL_INFO("plplot is not enabled, skip test. Please configure cmake with -DERL_USE_PLPLOT=ON to run this test."); }
+TEST(PlplotFig, Demo04) {
+    ERL_INFO(
+        "plplot is not enabled, skip test. Please configure cmake with -DERL_USE_PLPLOT=ON to run "
+        "this test.");
+}
 #endif

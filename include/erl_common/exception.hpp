@@ -3,7 +3,7 @@
 #include <exception>
 #include <string>
 
-struct NotImplemented : public std::exception {
+struct NotImplemented : std::exception {
 
     std::string msg;
 

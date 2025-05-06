@@ -170,7 +170,8 @@ TEST(GridMapInfo, Generate3DMeterCoordinatesWithCStride) {
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 5; ++j) {
             for (int k = 0; k < 7; ++k) {
-                Eigen::Vector3d expect = grid_map_info.GridToMeterForPoints(Eigen::Vector3i{i, j, k});
+                Eigen::Vector3d expect =
+                    grid_map_info.GridToMeterForPoints(Eigen::Vector3i{i, j, k});
                 EXPECT_NEAR(expect[0], actual(0, cnt), 1.e-10);
                 EXPECT_NEAR(expect[1], actual(1, cnt), 1.e-10);
                 EXPECT_NEAR(expect[2], actual(2, cnt), 1.e-10);
@@ -197,7 +198,8 @@ TEST(GridMapInfo, Generate3DMeterCoordinatesWithFStride) {
     for (int k = 0; k < 7; ++k) {
         for (int j = 0; j < 5; ++j) {
             for (int i = 0; i < 3; ++i) {
-                Eigen::Vector3d expect = grid_map_info.GridToMeterForPoints(Eigen::Vector3i{i, j, k});
+                Eigen::Vector3d expect =
+                    grid_map_info.GridToMeterForPoints(Eigen::Vector3i{i, j, k});
                 EXPECT_NEAR(expect[0], actual(0, cnt), 1.e-10);
                 EXPECT_NEAR(expect[1], actual(1, cnt), 1.e-10);
                 EXPECT_NEAR(expect[2], actual(2, cnt), 1.e-10);
@@ -218,7 +220,8 @@ TEST(GridMapInfo, RayCasting2D) {
 
     const GridMapInfo2Dd grid_map_info(map_shape, min, max);
     {
-        auto points = grid_map_info.RayCasting(Eigen::Vector2d{0.5, 0.5}, Eigen::Vector2d{0.5, 0.5});
+        auto points =
+            grid_map_info.RayCasting(Eigen::Vector2d{0.5, 0.5}, Eigen::Vector2d{0.5, 0.5});
         ASSERT_EQ(points.cols(), 1);
         EXPECT_EQ(points(0, 0), 5);
         EXPECT_EQ(points(1, 0), 5);

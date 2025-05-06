@@ -15,8 +15,10 @@ namespace erl::common {
     public:
         using BaseType = Base;
         using ArgsType = std::tuple<Args...>;
-        using InitFunction =
-            std::function<std::conditional_t<RawPtr, Base *, std::conditional_t<UniquePtr, std::unique_ptr<Base>, std::shared_ptr<Base>>>(Args...)>;
+        using InitFunction = std::function<std::conditional_t<
+            RawPtr,
+            Base *,
+            std::conditional_t<UniquePtr, std::unique_ptr<Base>, std::shared_ptr<Base>>>(Args...)>;
 
     private:
         std::map<std::string, InitFunction> m_class_id_mapping_ = {};
@@ -47,7 +49,10 @@ namespace erl::common {
         Register(std::string class_id, InitFunction init_function) {
             if (class_id.empty()) { class_id = type_name<Derived>(); }
             if (m_class_id_mapping_.count(class_id)) {
-                ERL_WARN("{} is already registered to the factory.", class_id, type_name<FactoryPattern>());
+                ERL_WARN(
+                    "{} is already registered to the factory.",
+                    class_id,
+                    type_name<FactoryPattern>());
                 return false;
             }
             m_class_id_mapping_[class_id] = init_function;
@@ -59,7 +64,10 @@ namespace erl::common {
         Create(const std::string &class_id, Args... args) {
             const auto it = m_class_id_mapping_.find(class_id);
             if (it == m_class_id_mapping_.end()) {
-                ERL_WARN("Unknown class id {} in the factory {}. Here are the registered class ids:", class_id, type_name<FactoryPattern>());
+                ERL_WARN(
+                    "Unknown class id {} in the factory {}. Here are the registered class ids:",
+                    class_id,
+                    type_name<FactoryPattern>());
                 for (const auto &pair: m_class_id_mapping_) { ERL_WARN("  - {}", pair.first); }
                 return nullptr;
             }

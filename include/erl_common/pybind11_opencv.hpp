@@ -50,8 +50,12 @@ namespace pybind11::detail {
                 return false;
             }
 
-            for (ssize_t i = 0; i < buf.size(); ++i) { value[static_cast<int>(i)] = static_cast<double>(buf.at(i)); }
-            for (ssize_t i = buf.size(); i < 4; ++i) { value[static_cast<int>(i)] = 255; }  // default value
+            for (ssize_t i = 0; i < buf.size(); ++i) {
+                value[static_cast<int>(i)] = static_cast<double>(buf.at(i));
+            }
+            for (ssize_t i = buf.size(); i < 4; ++i) {
+                value[static_cast<int>(i)] = 255;  // default value
+            }
 
             return true;
         }
@@ -77,7 +81,9 @@ namespace pybind11::detail {
             auto buf = array::ensure(src);
 
             const auto ndim = buf.ndim();
-            if (ndim != 2 && ndim != 3) { throw std::runtime_error("Buffer dimension should be 2 or 3."); }
+            if (ndim != 2 && ndim != 3) {
+                throw std::runtime_error("Buffer dimension should be 2 or 3.");
+            }
             const int num_channels = ndim == 2 ? 1 : static_cast<int>(buf.shape(2));
 
             if (buf.dtype().equal(dtype::of<uint8_t>())) {
@@ -87,19 +93,44 @@ namespace pybind11::detail {
                     CV_MAKETYPE(CV_8U, num_channels),
                     buf.mutable_data());  // NO COPY!
             } else if (buf.dtype().equal(dtype::of<int8_t>())) {
-                value = cv::Mat(static_cast<int>(buf.shape(0)), static_cast<int>(buf.shape(1)), CV_MAKETYPE(CV_8S, num_channels), buf.mutable_data());
+                value = cv::Mat(
+                    static_cast<int>(buf.shape(0)),
+                    static_cast<int>(buf.shape(1)),
+                    CV_MAKETYPE(CV_8S, num_channels),
+                    buf.mutable_data());
             } else if (buf.dtype().equal(dtype::of<uint16_t>())) {
-                value = cv::Mat(static_cast<int>(buf.shape(0)), static_cast<int>(buf.shape(1)), CV_MAKETYPE(CV_16U, num_channels), buf.mutable_data());
+                value = cv::Mat(
+                    static_cast<int>(buf.shape(0)),
+                    static_cast<int>(buf.shape(1)),
+                    CV_MAKETYPE(CV_16U, num_channels),
+                    buf.mutable_data());
             } else if (buf.dtype().equal(dtype::of<int16_t>())) {
-                value = cv::Mat(static_cast<int>(buf.shape(0)), static_cast<int>(buf.shape(1)), CV_MAKETYPE(CV_16S, num_channels), buf.mutable_data());
+                value = cv::Mat(
+                    static_cast<int>(buf.shape(0)),
+                    static_cast<int>(buf.shape(1)),
+                    CV_MAKETYPE(CV_16S, num_channels),
+                    buf.mutable_data());
             } else if (buf.dtype().equal(dtype::of<int32_t>())) {
-                value = cv::Mat(static_cast<int>(buf.shape(0)), static_cast<int>(buf.shape(1)), CV_MAKETYPE(CV_32S, num_channels), buf.mutable_data());
+                value = cv::Mat(
+                    static_cast<int>(buf.shape(0)),
+                    static_cast<int>(buf.shape(1)),
+                    CV_MAKETYPE(CV_32S, num_channels),
+                    buf.mutable_data());
             } else if (buf.dtype().equal(dtype::of<float>())) {
-                value = cv::Mat(static_cast<int>(buf.shape(0)), static_cast<int>(buf.shape(1)), CV_MAKETYPE(CV_32F, num_channels), buf.mutable_data());
+                value = cv::Mat(
+                    static_cast<int>(buf.shape(0)),
+                    static_cast<int>(buf.shape(1)),
+                    CV_MAKETYPE(CV_32F, num_channels),
+                    buf.mutable_data());
             } else if (buf.dtype().equal(dtype::of<double>())) {
-                value = cv::Mat(static_cast<int>(buf.shape(0)), static_cast<int>(buf.shape(1)), CV_MAKETYPE(CV_64F, num_channels), buf.mutable_data());
+                value = cv::Mat(
+                    static_cast<int>(buf.shape(0)),
+                    static_cast<int>(buf.shape(1)),
+                    CV_MAKETYPE(CV_64F, num_channels),
+                    buf.mutable_data());
             } else {
-                throw std::runtime_error("Unsupported format: " + str(buf.dtype()).operator std::string());
+                throw std::runtime_error(
+                    "Unsupported format: " + str(buf.dtype()).operator std::string());
             }
 
             return true;
@@ -124,7 +155,8 @@ namespace pybind11::detail {
                     return array_t<double>(shape, reinterpret_cast<double *>(mat.data)).release();
 #if CV_MAJOR_VERSION >= 4
                 case CV_16U:
-                    return array_t<uint16_t>(shape, reinterpret_cast<uint16_t *>(mat.data)).release();
+                    return array_t<uint16_t>(shape, reinterpret_cast<uint16_t *>(mat.data))
+                        .release();
                 case CV_16S:
                     return array_t<int16_t>(shape, reinterpret_cast<int16_t *>(mat.data)).release();
                 case CV_16F:

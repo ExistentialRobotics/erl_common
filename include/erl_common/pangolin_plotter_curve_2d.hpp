@@ -38,8 +38,14 @@ namespace erl::common {
         void
         Reset() {
             m_data_log_.Clear();
-            std::fill(m_max_values_.begin(), m_max_values_.end(), std::numeric_limits<float>::lowest());
-            std::fill(m_min_values_.begin(), m_min_values_.end(), std::numeric_limits<float>::max());
+            std::fill(
+                m_max_values_.begin(),
+                m_max_values_.end(),
+                std::numeric_limits<float>::lowest());
+            std::fill(
+                m_min_values_.begin(),
+                m_min_values_.end(),
+                std::numeric_limits<float>::max());
             m_head_ = 0;
         }
 

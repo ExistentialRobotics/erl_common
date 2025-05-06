@@ -28,8 +28,10 @@ TEST(EigenTest, FormatToString) {
               7, 8, 9;
     // clang-format on
 
-    std::cout << matrix.format(GetEigenTextFormat(erl::common::EigenTextFormat::kNumpyFmt)) << std::endl;
-    std::cout << erl::common::EigenToString<erl::common::EigenTextFormat::kNumpyFmt>(matrix) << std::endl;
+    std::cout << matrix.format(GetEigenTextFormat(erl::common::EigenTextFormat::kNumpyFmt))
+              << std::endl;
+    std::cout << erl::common::EigenToString<erl::common::EigenTextFormat::kNumpyFmt>(matrix)
+              << std::endl;
 }
 
 TEST(EigenTest, SaveAndLoadText) {
@@ -57,9 +59,6 @@ TEST(EigenTest, SaveAndLoadTextWithInf) {
 
     Eigen::Matrix4d matrix_load = LoadEigenMatrixFromTextFile<double, 4, 4>("matrix.txt");
 
-    // std::cout << "matrix: " << std::endl << matrix << std::endl;
-    // std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
-
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
             if (std::isfinite(matrix(i, j))) {
@@ -79,9 +78,6 @@ TEST(EigenTest, SaveAndLoadBinary) {
 
     Eigen::Matrix4d matrix_load = LoadEigenMatrixFromBinaryFile<double, 4, 4>("matrix.bin");
 
-    // std::cout << "matrix: " << std::endl << matrix << std::endl;
-    // std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
-
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) { ASSERT_DOUBLE_EQ(matrix(i, j), matrix_load(i, j)); }
     }
@@ -95,9 +91,6 @@ TEST(EigenTest, SaveAndLoadBinaryWithInf) {
     ASSERT_TRUE(SaveEigenMatrixToBinaryFile<double>("matrix.bin", matrix));
 
     Eigen::Matrix4d matrix_load = LoadEigenMatrixFromBinaryFile<double, 4, 4>("matrix.bin");
-
-    // std::cout << "matrix: " << std::endl << matrix << std::endl;
-    // std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -120,7 +113,9 @@ TEST(EigenTest, SaveAndLoadEigenMap) {
 
     Eigen::MatrixXd matrix_load(matrix.rows(), matrix.cols());
     std::ifstream ifs("matrix.bin", std::ios::binary);
-    ASSERT_TRUE(LoadEigenMapFromBinaryStream(ifs, Eigen::Map<Eigen::MatrixXd>(matrix_load.data(), matrix.rows(), matrix.cols())));
+    ASSERT_TRUE(LoadEigenMapFromBinaryStream(
+        ifs,
+        Eigen::Map<Eigen::MatrixXd>(matrix_load.data(), matrix.rows(), matrix.cols())));
     ifs.close();
 
     EXPECT_TRUE(matrix.cwiseEqual(matrix_load).all());
@@ -140,7 +135,9 @@ TEST(EigenTest, SaveAndLoadVectorOfFixedSizedMatrices) {
     ASSERT_TRUE(LoadVectorOfEigenMatricesFromBinaryStream(ifs, matrices_load));
     ifs.close();
 
-    for (std::size_t i = 0; i < matrices.size(); ++i) { EXPECT_TRUE(matrices[i].cwiseEqual(matrices_load[i]).all()); }
+    for (std::size_t i = 0; i < matrices.size(); ++i) {
+        EXPECT_TRUE(matrices[i].cwiseEqual(matrices_load[i]).all());
+    }
 }
 
 TEST(EigenTest, SaveAndLoadVectorOfDynamicSizedMatrices) {
@@ -159,7 +156,9 @@ TEST(EigenTest, SaveAndLoadVectorOfDynamicSizedMatrices) {
     ASSERT_TRUE(LoadVectorOfEigenMatricesFromBinaryStream(ifs, matrices_load));
     ifs.close();
 
-    for (std::size_t i = 0; i < matrices.size(); ++i) { EXPECT_TRUE(matrices[i].cwiseEqual(matrices_load[i]).all()); }
+    for (std::size_t i = 0; i < matrices.size(); ++i) {
+        EXPECT_TRUE(matrices[i].cwiseEqual(matrices_load[i]).all());
+    }
 }
 
 TEST(EigenTest, SaveAndLoadEigenMatrixOfFixedSizedEigenMatrices) {
@@ -179,7 +178,9 @@ TEST(EigenTest, SaveAndLoadEigenMatrixOfFixedSizedEigenMatrices) {
     ifs.close();
 
     for (int i = 0; i < matrices.rows(); ++i) {
-        for (int j = 0; j < matrices.cols(); ++j) { EXPECT_TRUE(matrices(i, j).cwiseEqual(matrices_load(i, j)).all()); }
+        for (int j = 0; j < matrices.cols(); ++j) {
+            EXPECT_TRUE(matrices(i, j).cwiseEqual(matrices_load(i, j)).all());
+        }
     }
 }
 

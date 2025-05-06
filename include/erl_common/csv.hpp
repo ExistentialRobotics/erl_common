@@ -12,7 +12,10 @@ namespace erl::common {
 
     template<typename T>
     std::vector<std::vector<T>>
-    LoadAndCastCsvFile(const char *path, std::function<T(const std::string &)> cast_func, char delimiter = ',') {
+    LoadAndCastCsvFile(
+        const char *path,
+        std::function<T(const std::string &)> cast_func,
+        char delimiter = ',') {
         std::ifstream ifs;
         ifs.open(path);
         if (!ifs.is_open()) { throw std::runtime_error("Fail to open file: " + std::string(path)); }
@@ -42,7 +45,10 @@ namespace erl::common {
 
     template<typename T>
     void
-    SaveCsvFile(const char *path, const std::vector<std::vector<T>> &rows, const char delimiter = ',') {
+    SaveCsvFile(
+        const char *path,
+        const std::vector<std::vector<T>> &rows,
+        const char delimiter = ',') {
         std::ofstream ofs;
         ofs.open(path);
         if (!ofs.is_open()) { throw std::runtime_error("Fail to open file: " + std::string(path)); }

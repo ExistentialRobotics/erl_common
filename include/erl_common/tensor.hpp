@@ -33,7 +33,9 @@ namespace erl::common {
         Tensor(Eigen::VectorXi shape, const T fill_value)
             : m_shape_(std::move(shape)) {
             CheckShape();
-            if (int total_size = Size(); total_size > 0) { m_data_.setConstant(total_size, fill_value); }
+            if (int total_size = Size(); total_size > 0) {
+                m_data_.setConstant(total_size, fill_value);
+            }
         }
 
         Tensor(Eigen::VectorXi shape, Eigen::VectorX<T> data)
@@ -123,12 +125,19 @@ namespace erl::common {
         }
 
         Tensor<T, Eigen::Dynamic>
-        GetSlice(const std::vector<int> &dims_to_remove, const std::vector<int> &dim_indices_at_removed) const {
-            ERL_ASSERTM(dims_to_remove.size() == dim_indices_at_removed.size(), "dims_to_remove and dim_indices_at_removed should be of the same size");
-            ERL_ASSERTM(!dims_to_remove.empty(), "dims_to_remove should not be empty");
-            ERL_ASSERTM(!dim_indices_at_removed.empty(), "dim_indices_at_removed should not be empty");
+        GetSlice(
+            const std::vector<int> &dims_to_remove,
+            const std::vector<int> &dim_indices_at_removed) const {
             ERL_ASSERTM(
-                std::unordered_set<int>(dims_to_remove.begin(), dims_to_remove.end()).size() == dims_to_remove.size(),
+                dims_to_remove.size() == dim_indices_at_removed.size(),
+                "dims_to_remove and dim_indices_at_removed should be of the same size");
+            ERL_ASSERTM(!dims_to_remove.empty(), "dims_to_remove should not be empty");
+            ERL_ASSERTM(
+                !dim_indices_at_removed.empty(),
+                "dim_indices_at_removed should not be empty");
+            ERL_ASSERTM(
+                std::unordered_set(dims_to_remove.begin(), dims_to_remove.end()).size() ==
+                    dims_to_remove.size(),
                 "there are duplicate dims in dims_to_remove");
 
             const auto ndim = Dims();
@@ -142,18 +151,26 @@ namespace erl::common {
             std::sort(sorted_indices.begin(), sorted_indices.end(), std::greater());
             Eigen::VectorXi coords = Eigen::VectorXi::Zero(ndim);
             for (auto &i: sorted_indices) {
-                ERL_ASSERTM(0 <= dims_to_remove[i] && dims_to_remove[i] < ndim, "%d-dim is out of range for %d-dim shape", dims_to_remove[i], ndim);
+                ERL_ASSERTM(
+                    0 <= dims_to_remove[i] && dims_to_remove[i] < ndim,
+                    "%d-dim is out of range for %d-dim shape",
+                    dims_to_remove[i],
+                    ndim);
                 dims_to_keep.erase(dims_to_keep.begin() + dims_to_remove[i]);
                 coords[dims_to_remove[i]] = dim_indices_at_removed[i];
             }
 
             // generate new tensor
             Eigen::VectorXi slice_shape(dims_to_keep.size());
-            for (std::size_t i = 0; i < dims_to_keep.size(); ++i) { slice_shape[i] = m_shape_[dims_to_keep[i]]; }
+            for (std::size_t i = 0; i < dims_to_keep.size(); ++i) {
+                slice_shape[static_cast<long>(i)] = m_shape_[dims_to_keep[i]];
+            }
             Tensor<T, Eigen::Dynamic> slice(slice_shape);
             for (int i = 0; i < slice.Size(); ++i) {
                 auto slice_coords = IndexToCoords<Eigen::Dynamic>(slice_shape, i, RowMajor);
-                for (int j = 0; j < static_cast<int>(dims_to_keep.size()); ++j) { coords[dims_to_keep[j]] = slice_coords[j]; }
+                for (int j = 0; j < static_cast<int>(dims_to_keep.size()); ++j) {
+                    coords[dims_to_keep[j]] = slice_coords[j];
+                }
                 slice[i] = (*this)[coords];
             }
 
@@ -162,13 +179,16 @@ namespace erl::common {
 
         void
         Print(std::ostream &os) const {
-            os << "Tensor, shape: " << m_shape_.transpose() << ", data: array of " << typeid(T).name() << std::endl;
+            os << "Tensor, shape: " << m_shape_.transpose() << ", data: array of "
+               << typeid(T).name() << std::endl;
         }
 
     private:
         void
         CheckShape() {
-            for (int i = 0; i < m_shape_.size(); ++i) { ERL_ASSERTM(m_shape_[i] >= 0, "negative size %d at %d-dim", m_shape_[i], i); }
+            for (int i = 0; i < m_shape_.size(); ++i) {
+                ERL_ASSERTM(m_shape_[i] >= 0, "negative size %d at %d-dim", m_shape_[i], i);
+            }
         }
     };
 

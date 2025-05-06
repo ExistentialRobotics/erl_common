@@ -24,7 +24,11 @@ TEST(NumberLogger, Basic) {
 TEST(NumberLogger, WithProgressBar) {
     GTEST_PREPARE_OUTPUT_DIR();
     using namespace erl::common;
-    NumberLogger logger(test_output_dir / "with_progress_bar.csv", "epoch", /*append*/ false, /*on_screen*/ true);
+    NumberLogger logger(
+        test_output_dir / "with_progress_bar.csv",
+        "epoch",
+        /*append*/ false,
+        /*on_screen*/ true);
     logger.AddColumn("x");
     logger.AddColumn("y");
 

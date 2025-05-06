@@ -1,7 +1,6 @@
 #ifdef ERL_USE_PLPLOT
-    #include "erl_common/plplot_fig.hpp"
 
-    #include <absl/strings/internal/str_format/extension.h>
+    #include "erl_common/plplot_fig.hpp"
 
 namespace erl::common {
 
@@ -215,10 +214,12 @@ namespace erl::common {
         m_pls_->axes(
             origin_x,
             origin_y,
-            axis_opt_x.has_value() ? std::string(axis_opt_x.value()).c_str() : kDefaultAxisOpt.c_str(),
+            axis_opt_x.has_value() ? std::string(axis_opt_x.value()).c_str()
+                                   : kDefaultAxisOpt.c_str(),
             tick_interval_x,
             num_subticks_x,
-            axis_opt_y.has_value() ? std::string(axis_opt_y.value()).c_str() : kDefaultAxisOpt.c_str(),
+            axis_opt_y.has_value() ? std::string(axis_opt_y.value()).c_str()
+                                   : kDefaultAxisOpt.c_str(),
             tick_interval_y,
             num_subticks_y);
         return *this;
@@ -234,10 +235,12 @@ namespace erl::common {
         const int num_subticks_y) {
 
         m_pls_->box(
-            axis_opt_x.has_value() ? std::string(axis_opt_x.value()).c_str() : kDefaultAxisOpt.c_str(),
+            axis_opt_x.has_value() ? std::string(axis_opt_x.value()).c_str()
+                                   : kDefaultAxisOpt.c_str(),
             tick_interval_x,
             num_subticks_x,
-            axis_opt_y.has_value() ? std::string(axis_opt_y.value()).c_str() : kDefaultAxisOpt.c_str(),
+            axis_opt_y.has_value() ? std::string(axis_opt_y.value()).c_str()
+                                   : kDefaultAxisOpt.c_str(),
             tick_interval_y,
             num_subticks_y);
         return *this;
@@ -259,15 +262,18 @@ namespace erl::common {
         const int num_subticks_z) {
 
         m_pls_->box3(
-            axis_opt_x.has_value() ? std::string(axis_opt_x.value()).c_str() : kDefaultAxisOpt.c_str(),
+            axis_opt_x.has_value() ? std::string(axis_opt_x.value()).c_str()
+                                   : kDefaultAxisOpt.c_str(),
             axis_label_x,
             tick_interval_x,
             num_subticks_x,
-            axis_opt_y.has_value() ? std::string(axis_opt_y.value()).c_str() : kDefaultAxisOpt.c_str(),
+            axis_opt_y.has_value() ? std::string(axis_opt_y.value()).c_str()
+                                   : kDefaultAxisOpt.c_str(),
             axis_label_y,
             tick_interval_y,
             num_subticks_y,
-            axis_opt_z.has_value() ? std::string(axis_opt_z.value()).c_str() : kDefaultAxisOpt.c_str(),
+            axis_opt_z.has_value() ? std::string(axis_opt_z.value()).c_str()
+                                   : kDefaultAxisOpt.c_str(),
             axis_label_z,
             tick_interval_z,
             num_subticks_z);
@@ -401,7 +407,7 @@ namespace erl::common {
     }
 
     PlplotFig::ColorBarOpt &
-    PlplotFig::ColorBarOpt::SetNumAxes(int n_axes_) {
+    PlplotFig::ColorBarOpt::SetNumAxes(const int n_axes_) {
         n_axes = n_axes_;
         return *this;
     }
@@ -425,18 +431,24 @@ namespace erl::common {
     }
 
     PlplotFig::ColorBarOpt &
-    PlplotFig::ColorBarOpt::SetColorMapValues(const std::vector<std::vector<double>> &cmap_values_) {
+    PlplotFig::ColorBarOpt::SetColorMapValues(
+        const std::vector<std::vector<double>> &cmap_values_) {
         cmap_values = cmap_values_;
         return *this;
     }
 
     PlplotFig::ColorBarOpt &
-    PlplotFig::ColorBarOpt::AddColorMap(int idx, const std::vector<double> &cmap_values_, int stride) {
+    PlplotFig::ColorBarOpt::AddColorMap(
+        const int idx,
+        const std::vector<double> &cmap_values_,
+        const int stride) {
         if (idx >= static_cast<int>(cmap_values.size())) { cmap_values.resize(idx + 1); }
         auto &cmap_value = cmap_values[idx];
         cmap_value.clear();
         cmap_value.reserve(cmap_values_.size() / stride + 1);
-        for (std::size_t i = 0; i < cmap_values_.size() + stride; i += stride) { cmap_value.push_back(cmap_values_[std::min(i, cmap_values_.size() - 1)]); }
+        for (std::size_t i = 0; i < cmap_values_.size() + stride; i += stride) {
+            cmap_value.push_back(cmap_values_[std::min(i, cmap_values_.size() - 1)]);
+        }
         return *this;
     }
 
@@ -455,7 +467,9 @@ namespace erl::common {
             axis_opts.push_back(axis_opts_strings.back().c_str());
         }
 
-        ERL_ASSERTM(static_cast<int>(opt.cmap_values.size()) >= opt.n_axes, "cmap_values size is less than n_axes.");
+        ERL_ASSERTM(
+            static_cast<int>(opt.cmap_values.size()) >= opt.n_axes,
+            "cmap_values size is less than n_axes.");
 
         std::vector<int> n_values;
         std::vector<double *> values;
@@ -601,37 +615,37 @@ namespace erl::common {
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetBoxStyle(int box_style_) {
+    PlplotFig::LegendOpt::SetBoxStyle(const int box_style_) {
         box_style = box_style_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetPosition(int position_) {
+    PlplotFig::LegendOpt::SetPosition(const int position_) {
         position = position_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetPositionOffsetX(double position_offset_x_) {
+    PlplotFig::LegendOpt::SetPositionOffsetX(const double position_offset_x_) {
         position_offset_x = position_offset_x_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetPositionOffsetY(double position_offset_y_) {
+    PlplotFig::LegendOpt::SetPositionOffsetY(const double position_offset_y_) {
         position_offset_y = position_offset_y_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetWidth(double width_) {
+    PlplotFig::LegendOpt::SetWidth(const double width_) {
         width = width_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetBgColor0(int bg_color0_) {
+    PlplotFig::LegendOpt::SetBgColor0(const int bg_color0_) {
         bg_color0 = bg_color0_;
         return *this;
     }
@@ -649,37 +663,37 @@ namespace erl::common {
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetNumRows(int n_row_) {
+    PlplotFig::LegendOpt::SetNumRows(const int n_row_) {
         n_row = n_row_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetNumCols(int n_col_) {
+    PlplotFig::LegendOpt::SetNumCols(const int n_col_) {
         n_col = n_col_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetTextOffset(double text_offset_) {
+    PlplotFig::LegendOpt::SetTextOffset(const double text_offset_) {
         text_offset = text_offset_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetTextScale(double text_scale_) {
+    PlplotFig::LegendOpt::SetTextScale(const double text_scale_) {
         text_scale = text_scale_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetTextSpacing(double text_spacing_) {
+    PlplotFig::LegendOpt::SetTextSpacing(const double text_spacing_) {
         text_spacing = text_spacing_;
         return *this;
     }
 
     PlplotFig::LegendOpt &
-    PlplotFig::LegendOpt::SetTextJustification(double text_justification_) {
+    PlplotFig::LegendOpt::SetTextJustification(const double text_justification_) {
         text_justification = text_justification_;
         return *this;
     }
@@ -753,44 +767,107 @@ namespace erl::common {
     }
 
     PlplotFig &
-    PlplotFig::DrawLine3(const int num_points, const double *xs, const double *ys, const double *zs) {
+    PlplotFig::DrawLine3(
+        const int num_points,
+        const double *xs,
+        const double *ys,
+        const double *zs) {
         m_pls_->line3(num_points, xs, ys, zs);  // 17.73
         return *this;
     }
 
     PlplotFig &
-    PlplotFig::SetTitle(const char *title, const double displacement, const double pos, const double just) {
+    PlplotFig::SetTitle(
+        const char *title,
+        const double displacement,
+        const double pos,
+        const double just) {
         m_pls_->mtex("t", displacement, pos, just, title);  // 17.84
         return *this;
     }
 
     PlplotFig &
-    PlplotFig::SetAxisLabelX(const char *text, const bool top, const bool perpendicular, const double displacement, const double pos, const double just) {
-        m_pls_->mtex(top ? (perpendicular ? "tv" : "t") : (perpendicular ? "bv" : "b"), displacement, pos, just, text);  // 17.84
+    PlplotFig::SetAxisLabelX(
+        const char *text,
+        const bool top,
+        const bool perpendicular,
+        const double displacement,
+        const double pos,
+        const double just) {
+        m_pls_->mtex(
+            top ? (perpendicular ? "tv" : "t") : (perpendicular ? "bv" : "b"),
+            displacement,
+            pos,
+            just,
+            text);  // 17.84
         return *this;
     }
 
     PlplotFig &
-    PlplotFig::SetAxisLabelY(const char *text, const bool right, const bool perpendicular, const double displacement, const double pos, const double just) {
-        m_pls_->mtex(right ? (perpendicular ? "rv" : "r") : (perpendicular ? "lv" : "l"), displacement, pos, just, text);  // 17.84
+    PlplotFig::SetAxisLabelY(
+        const char *text,
+        const bool right,
+        const bool perpendicular,
+        const double displacement,
+        const double pos,
+        const double just) {
+        m_pls_->mtex(
+            right ? (perpendicular ? "rv" : "r") : (perpendicular ? "lv" : "l"),
+            displacement,
+            pos,
+            just,
+            text);  // 17.84
         return *this;
     }
 
     PlplotFig &
-    PlplotFig::SetAxis3LabelX(const char *text, const bool opposite, const bool perpendicular, const double displacement, const double pos, const double just) {
-        m_pls_->mtex3(opposite ? (perpendicular ? "xsv" : "xs") : (perpendicular ? "xpv" : "xp"), displacement, pos, just, text);  // 17.85
+    PlplotFig::SetAxis3LabelX(
+        const char *text,
+        const bool opposite,
+        const bool perpendicular,
+        const double displacement,
+        const double pos,
+        const double just) {
+        m_pls_->mtex3(
+            opposite ? (perpendicular ? "xsv" : "xs") : (perpendicular ? "xpv" : "xp"),
+            displacement,
+            pos,
+            just,
+            text);  // 17.85
         return *this;
     }
 
     PlplotFig &
-    PlplotFig::SetAxis3LabelY(const char *text, const bool opposite, const bool perpendicular, const double displacement, const double pos, const double just) {
-        m_pls_->mtex3(opposite ? (perpendicular ? "ysv" : "ys") : (perpendicular ? "ypv" : "yp"), displacement, pos, just, text);  // 17.85
+    PlplotFig::SetAxis3LabelY(
+        const char *text,
+        const bool opposite,
+        const bool perpendicular,
+        const double displacement,
+        const double pos,
+        const double just) {
+        m_pls_->mtex3(
+            opposite ? (perpendicular ? "ysv" : "ys") : (perpendicular ? "ypv" : "yp"),
+            displacement,
+            pos,
+            just,
+            text);  // 17.85
         return *this;
     }
 
     PlplotFig &
-    PlplotFig::SetAxis3LabelZ(const char *text, const bool opposite, const bool perpendicular, const double displacement, const double pos, const double just) {
-        m_pls_->mtex3(opposite ? (perpendicular ? "zsv" : "zs") : (perpendicular ? "zpv" : "zp"), displacement, pos, just, text);  // 17.85
+    PlplotFig::SetAxis3LabelZ(
+        const char *text,
+        const bool opposite,
+        const bool perpendicular,
+        const double displacement,
+        const double pos,
+        const double just) {
+        m_pls_->mtex3(
+            opposite ? (perpendicular ? "zsv" : "zs") : (perpendicular ? "zpv" : "zp"),
+            displacement,
+            pos,
+            just,
+            text);  // 17.85
         return *this;
     }
 
@@ -801,7 +878,13 @@ namespace erl::common {
     }
 
     PlplotFig &
-    PlplotFig::PutText(const char *text, const double x, const double y, const double dx, const double dy, const double just) {
+    PlplotFig::PutText(
+        const char *text,
+        const double x,
+        const double y,
+        const double dx,
+        const double dy,
+        const double just) {
         m_pls_->ptex(x, y, dx, dy, just, text);  // 17.97
         return *this;
     }
@@ -847,21 +930,33 @@ namespace erl::common {
             // clang-format on
         };
         static const std::array<std::vector<int>, 3> cmap_jet = {
-            std::vector{128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-                        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254, 246, 238, 230,
-                        222, 214, 206, 198, 190, 182, 174, 166, 158, 150, 142, 134, 126, 118, 110, 102, 94,  86,  78,  70,  62,  54,  46,  38,  30,  22,
-                        14,  6,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-                        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
-            std::vector{0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   8,   16,  24,  32,  40,  48,  56,  64,  72,
-                        80,  88,  96,  104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 255, 255, 255, 255,
-                        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-                        255, 255, 252, 244, 236, 228, 220, 212, 204, 196, 188, 180, 172, 164, 156, 148, 140, 132, 124, 116, 108, 100, 92,  84,  76,  68,
-                        60,  52,  44,  36,  28,  20,  12,  4,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
-            std::vector{0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-                        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   2,   10,  18,  26,
-                        34,  42,  50,  58,  66,  74,  82,  90,  98,  106, 114, 122, 130, 138, 146, 154, 162, 170, 178, 186, 194, 202, 210, 218, 226, 234,
-                        242, 250, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-                        255, 255, 255, 255, 255, 255, 255, 255, 252, 244, 236, 228, 220, 212, 204, 196, 188, 180, 172, 164, 156, 148, 140, 128}};
+            std::vector{128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240,
+                        248, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                        255, 255, 255, 254, 246, 238, 230, 222, 214, 206, 198, 190, 182, 174, 166,
+                        158, 150, 142, 134, 126, 118, 110, 102, 94,  86,  78,  70,  62,  54,  46,
+                        38,  30,  22,  14,  6,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0},
+            std::vector{0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   8,   16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,  104,
+                        112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224,
+                        232, 240, 248, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                        255, 255, 255, 255, 255, 252, 244, 236, 228, 220, 212, 204, 196, 188, 180,
+                        172, 164, 156, 148, 140, 132, 124, 116, 108, 100, 92,  84,  76,  68,  60,
+                        52,  44,  36,  28,  20,  12,  4,   0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0},
+            std::vector{0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   2,   10,  18,  26,  34,  42,  50,  58,  66,  74,  82,  90,
+                        98,  106, 114, 122, 130, 138, 146, 154, 162, 170, 178, 186, 194, 202, 210,
+                        218, 226, 234, 242, 250, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                        255, 255, 255, 255, 255, 255, 255, 252, 244, 236, 228, 220, 212, 204, 196,
+                        188, 180, 172, 164, 156, 148, 140, 128}};
 
         const std::vector<int> *rgb = cmap_default0.data();
         if (cmap == Default1) { rgb = cmap_default1.data(); }
@@ -884,7 +979,12 @@ namespace erl::common {
     }
 
     PlplotFig &
-    PlplotFig::SetCurrentColor0(const int index, const int r, const int g, const int b, const double alpha) {
+    PlplotFig::SetCurrentColor0(
+        const int index,
+        const int r,
+        const int g,
+        const int b,
+        const double alpha) {
         m_pls_->scol0a(index, r, g, b, alpha);  // 17.113
         return *this;
     }
@@ -932,7 +1032,11 @@ namespace erl::common {
     }
 
     PlplotFig::ShadesOpt &
-    PlplotFig::ShadesOpt::SetColorLevels(const double *z, const int n_rows, const int n_cols, const int n_levels) {
+    PlplotFig::ShadesOpt::SetColorLevels(
+        const double *z,
+        const int n_rows,
+        const int n_cols,
+        const int n_levels) {
         double min_z = z[0], max_z = z[0];
         const int n = n_rows * n_cols;
         for (int i = 1; i < n; ++i) {
@@ -942,7 +1046,11 @@ namespace erl::common {
         color_levels.clear();
         color_levels.reserve(n_levels);
         color_levels.push_back(min_z);
-        for (int i = 1; i < n_levels; ++i) { color_levels.push_back(min_z + (max_z - min_z) * static_cast<double>(i) / static_cast<double>(n_levels - 1)); }
+        for (int i = 1; i < n_levels; ++i) {
+            color_levels.push_back(
+                min_z +
+                (max_z - min_z) * static_cast<double>(i) / static_cast<double>(n_levels - 1));
+        }
         return *this;
     }
 
@@ -989,7 +1097,12 @@ namespace erl::common {
     }
 
     PlplotFig &
-    PlplotFig::Shades(const double *z, const int n_rows, const int n_cols, const bool col_major, const ShadesOpt &opt) {
+    PlplotFig::Shades(
+        const double *z,
+        const int n_rows,
+        const int n_cols,
+        const bool col_major,
+        const ShadesOpt &opt) {
         std::vector<double *> z_ptrs;
         if (col_major) {
             z_ptrs.resize(n_cols);
@@ -1026,19 +1139,32 @@ namespace erl::common {
     }
 
     PlplotFig &
-    PlplotFig::Scatter(const int num_points, const double *xs, const double *ys, const char *marker_utf8) {
+    PlplotFig::Scatter(
+        const int num_points,
+        const double *xs,
+        const double *ys,
+        const char *marker_utf8) {
         m_pls_->string(num_points, xs, ys, marker_utf8);
         return *this;
     }
 
     PlplotFig &
-    PlplotFig::Scatter3D(const int num_points, const double *xs, const double *ys, const double *zs, const char *marker_utf8) {
+    PlplotFig::Scatter3D(
+        const int num_points,
+        const double *xs,
+        const double *ys,
+        const double *zs,
+        const char *marker_utf8) {
         m_pls_->string3(num_points, xs, ys, zs, marker_utf8);
         return *this;
     }
 
     PlplotFig &
-    PlplotFig::SetMargin(const double left, const double right, const double bottom, const double top) {
+    PlplotFig::SetMargin(
+        const double left,
+        const double right,
+        const double bottom,
+        const double top) {
         m_pls_->vpor(left, right, bottom, top);  // 17.169
         return *this;
     }
@@ -1056,7 +1182,11 @@ namespace erl::common {
     }
 
     PlplotFig &
-    PlplotFig::SetAxisLimits(const double x_min, const double x_max, const double y_min, const double y_max) {
+    PlplotFig::SetAxisLimits(
+        const double x_min,
+        const double x_max,
+        const double y_min,
+        const double y_max) {
         m_pls_->wind(x_min, x_max, y_min, y_max);  // 17.173
         return *this;
     }

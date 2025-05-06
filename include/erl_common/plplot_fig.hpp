@@ -17,6 +17,7 @@ namespace erl::common {
     class PlplotFig {
     public:
         struct AxisOpt {
+            // clang-format off
             bool draw_axis = false;                       // a: draw x-axis or y-axis
             bool draw_bottom_left_edge = true;            // b: draw bottom (x) or left (y) edge
             bool draw_top_right_edge = false;             // c: draw top (x) or right (y) edge
@@ -32,6 +33,7 @@ namespace erl::common {
             bool draw_tick_minor = true;                  // s: draw minor tick marks
             bool draw_tick_major = true;                  // t: draw major tick marks
             bool draw_perpendicular_tick_labels = false;  // v: draw tick labels perpendicular to the axis
+            // clang-format on
 
             // u: like "b" but don't draw edge line
             // w: like "c" but don't draw edge line
@@ -114,7 +116,15 @@ namespace erl::common {
         Clear(double r = 0, double g = 0, double b = 0, double a = 1);
 
         PlplotFig&
-        DrawArc(double center_x, double center_y, double radius_x, double radius_y, double angle_start, double angle_end, double rotate, bool fill);
+        DrawArc(
+            double center_x,
+            double center_y,
+            double radius_x,
+            double radius_y,
+            double angle_start,
+            double angle_end,
+            double rotate,
+            bool fill);
 
         /**
          *
@@ -205,35 +215,52 @@ namespace erl::common {
         SetCurrentColor(Color0 color);
 
         struct ColorBarOpt {
-            int opt_orientation = 0;           // PL_COLORBAR_ORIENT_RIGHT, PL_COLORBAR_ORIENT_TOP, PL_COLORBAR_ORIENT_LEFT, PL_COLORBAR_ORIENT_BOTTOM
-            bool opt_background = false;       // plot the background: PL_COLORBAR_BACKGROUND
-            bool opt_bounding_box = false;     // plot the bounding box: PL_COLORBAR_BOUNDING_BOX
-            int opt_type = PL_COLORBAR_SHADE;  // PL_COLORBAR_IMAGE, PL_COLORBAR_SHADE, PL_COLORBAR_GRADIENT
-            int opt_label_position = PL_COLORBAR_SHADE_LABEL;  // PL_COLORBAR_SHADE_LABEL (available with PL_COLORBAR_SHADE), PL_COLORBAR_LABEL_RIGHT,
-                                                               // PL_COLORBAR_LABEL_TOP, PL_COLORBAR_LABEL_LEFT, PL_COLORBAR_LABEL_BOTTOM
-            int opt_cap = PL_COLORBAR_CAP_NONE;                // PL_COLORBAR_CAP_LOW, PL_COLORBAR_CAP_HIGH, PL_COLORBAR_CAP_NONE
-            int position = PL_POSITION_RIGHT | PL_POSITION_OUTSIDE |
-                           PL_POSITION_VIEWPORT;   // PL_POSITION_LEFT, PL_POSITION_RIGHT, PL_POSITION_TOP, PL_POSITION_BOTTOM,
-                                                   // PL_POSITION_INSIDE, PL_POSITION_OUTSIDE, PL_POSITION_VIEWPORT, PL_POSITION_SUBPAGE
-            double position_offset_x = 0.025;      // normalized position offset in x direction
-            double position_offset_y = 0.0;        // normalized position offset in y direction
-            double width = 0.0375;                 // normalized width of the color bar
-            double height = 0.875;                 // normalized height of the color bar
-            int bg_color0 = 0;                     // background color0 index of the color bar
-            int bbox_line_color0 = 15;             // bounding box color of cmap0
-            int bbox_line_style = 1;               // bounding box line style
-            double low_cap_color = 0.0;            // low cap color, cmap1
-            double high_cap_color = 1.0;           // high cap color, cmap1
-            int contour_line_color0 = 1;           // contour line color of cmap0
-            double contour_line_width = 1.0;       // contour line width
-            std::vector<int> label_opts;           // PL_COLORBAR_LABEL_LEFT, PL_COLORBAR_LABEL_RIGHT, PL_COLORBAR_LABEL_TOP, PL_COLORBAR_LABEL_BOTTOM
+            // PL_COLORBAR_ORIENT_RIGHT, PL_COLORBAR_ORIENT_TOP, PL_COLORBAR_ORIENT_LEFT,
+            // PL_COLORBAR_ORIENT_BOTTOM
+            int opt_orientation = 0;
+            bool opt_background = false;    // plot the background: PL_COLORBAR_BACKGROUND
+            bool opt_bounding_box = false;  // plot the bounding box: PL_COLORBAR_BOUNDING_BOX
+
+            // PL_COLORBAR_IMAGE, PL_COLORBAR_SHADE, PL_COLORBAR_GRADIENT
+            int opt_type = PL_COLORBAR_SHADE;
+            // PL_COLORBAR_SHADE_LABEL (available with PL_COLORBAR_SHADE), PL_COLORBAR_LABEL_RIGHT,
+            // PL_COLORBAR_LABEL_TOP, PL_COLORBAR_LABEL_LEFT, PL_COLORBAR_LABEL_BOTTOM
+            int opt_label_position = PL_COLORBAR_SHADE_LABEL;
+            // PL_COLORBAR_CAP_LOW, PL_COLORBAR_CAP_HIGH, PL_COLORBAR_CAP_NONE
+            int opt_cap = PL_COLORBAR_CAP_NONE;
+            // PL_POSITION_LEFT, PL_POSITION_RIGHT, PL_POSITION_TOP, PL_POSITION_BOTTOM,
+            // PL_POSITION_INSIDE, PL_POSITION_OUTSIDE, PL_POSITION_VIEWPORT, PL_POSITION_SUBPAGE
+            int position = PL_POSITION_RIGHT | PL_POSITION_OUTSIDE | PL_POSITION_VIEWPORT;
+            double position_offset_x = 0.025;  // normalized position offset in x direction
+            double position_offset_y = 0.0;    // normalized position offset in y direction
+            double width = 0.0375;             // normalized width of the color bar
+            double height = 0.875;             // normalized height of the color bar
+            int bg_color0 = 0;                 // background color0 index of the color bar
+            int bbox_line_color0 = 15;         // bounding box color of cmap0
+            int bbox_line_style = 1;           // bounding box line style
+            double low_cap_color = 0.0;        // low cap color, cmap1
+            double high_cap_color = 1.0;       // high cap color, cmap1
+            int contour_line_color0 = 1;       // contour line color of cmap0
+            double contour_line_width = 1.0;   // contour line width
+
+            // PL_COLORBAR_LABEL_LEFT, PL_COLORBAR_LABEL_RIGHT, PL_COLORBAR_LABEL_TOP,
+            // PL_COLORBAR_LABEL_BOTTOM
+            std::vector<int> label_opts;
             std::vector<const char*> label_texts;  // text of each label
             int n_axes = 1;                        // number of axes, which must be >= 1
-            std::vector<AxisOpt> axis_opts = {     // axis options
-                AxisOpt().DrawTopRightTickLabels().DrawBottomLeftTickLabels(false).DrawPerpendicularTickLabels()};
-            std::vector<double> axis_tick_intervals = {0.0};  // number of ticks for each axis, 0.0 for auto
-            std::vector<int> axis_num_subticks = {0};         // number of sub-ticks for each axis, 0.0 for auto
-            std::vector<std::vector<double>> cmap_values;     // control values for each axis color map
+
+            // axis options
+            std::vector<AxisOpt> axis_opts = {AxisOpt()
+                                                  .DrawTopRightTickLabels()
+                                                  .DrawBottomLeftTickLabels(false)
+                                                  .DrawPerpendicularTickLabels()};
+
+            // number of ticks for each axis, 0.0 for auto
+            std::vector<double> axis_tick_intervals = {0.0};
+            // number of sub-ticks for each axis, 0.0 for auto
+            std::vector<int> axis_num_subticks = {0};
+            // control values for each axis color map
+            std::vector<std::vector<double>> cmap_values;
 
             ColorBarOpt&
             SetOptOrientation(int opt_orientation_);
@@ -322,8 +349,10 @@ namespace erl::common {
 
         /**
          *
-         * @param line_style 1: solid, 2: short-dash-short-gap, 3: long-dash-log-gap, 4: long-dash-short-gap, etc. max 8
-         * @param line_nms the number of marks (dash) and spaces (gap) in a line, nms=0 for solid line
+         * @param line_style 1: solid, 2: short-dash-short-gap, 3: long-dash-log-gap, 4:
+         * long-dash-short-gap, etc. max 8
+         * @param line_nms the number of marks (dash) and spaces (gap) in a line, nms=0 for solid
+         * line
          * @param line_mark_size the size of marks (dash) in a line, unit is millimeter
          * @param line_space_size the size of spaces (gap) in a line, unit is millimeter
          * @return
@@ -348,35 +377,48 @@ namespace erl::common {
         SetLabels(const char* x_label, const char* y_label, const char* title);
 
         struct LegendOpt {
-            int n_legend;                              // number of legend entries
-            std::vector<const char*> texts;            // legend text of each entry
-            std::vector<int> text_colors = {};         // legend text color of each entry
-            std::vector<int> styles;                   // legend style of each entry, PL_LEGEND_COLOR_BOX | PL_LEGEND_LINE | PL_LEGEND_SYMBOL
-            std::vector<int> line_colors;              // legend line color of each entry
-            std::vector<int> line_styles;              // legend line style of each entry
-            std::vector<double> line_widths;           // legend line width of each entry
-            std::vector<const char*> symbols;          // legend symbol of each entry
-            std::vector<int> symbol_colors;            // legend symbol color of each entry
-            std::vector<double> symbol_scales;         // legend symbol scale of each entry
-            std::vector<int> symbol_sizes;             // legend symbol size of each entry
-            std::vector<int> box_colors;               // legend box color of each entry
-            std::vector<int> box_fill_patterns;        // legend box fill-pattern of each entry. [0, 8]
+            int n_legend;                       // number of legend entries
+            std::vector<const char*> texts;     // legend text of each entry
+            std::vector<int> text_colors = {};  // legend text color of each entry
+
+            // legend style of each entry, PL_LEGEND_COLOR_BOX | PL_LEGEND_LINE | PL_LEGEND_SYMBOL
+            std::vector<int> styles;
+            std::vector<int> line_colors;       // legend line color of each entry
+            std::vector<int> line_styles;       // legend line style of each entry
+            std::vector<double> line_widths;    // legend line width of each entry
+            std::vector<const char*> symbols;   // legend symbol of each entry
+            std::vector<int> symbol_colors;     // legend symbol color of each entry
+            std::vector<double> symbol_scales;  // legend symbol scale of each entry
+            std::vector<int> symbol_sizes;      // legend symbol size of each entry
+            std::vector<int> box_colors;        // legend box color of each entry
+
+            // legend box fill-pattern of each entry. [0, 8]
+            std::vector<int> box_fill_patterns;
             std::vector<double> box_scales;            // legend box scale of each entry
             std::vector<double> box_fill_line_widths;  // legend box fill line width of each entry
-            int box_style = 0;                         // legend box style. PL_LEGEND_BACKGROUND | PL_LEGEND_BOUNDING_BOX
-            int position = PL_POSITION_RIGHT | PL_POSITION_TOP | PL_POSITION_INSIDE | PL_POSITION_VIEWPORT;  // legend box position
-            double position_offset_x = 0.0;                                                                  // normalized position offset in x direction
-            double position_offset_y = 0.0;                                                                  // normalized position offset in y direction
-            double width = 0.1;                                                                              // normalized width of the legend box
-            int bg_color0 = 15;                                                                              // background color0 index of the legend box
-            int legend_box_line_color0 = 1;                                                                  // bounding box color of cmap0
-            int legend_box_line_style = 1;                                                                   // bounding box line style
-            int n_row = 0;                                                                                   // number of rows in the legend box
-            int n_col = 0;                                                                                   // number of columns in the legend box
-            double text_offset = 1.0;         // text offset from the legend box in units of character width
-            double text_scale = 1.0;          // character height scale for text annotation
-            double text_spacing = 2.0;        // vertical spacing in units of character height between text annotations
-            double text_justification = 1.0;  // text justification, 0: left, 0.5: center, 1: right
+
+            // legend box style. PL_LEGEND_BACKGROUND | PL_LEGEND_BOUNDING_BOX
+            int box_style = 0;
+            // legend box position
+            int position =
+                PL_POSITION_RIGHT | PL_POSITION_TOP | PL_POSITION_INSIDE | PL_POSITION_VIEWPORT;
+            double position_offset_x = 0.0;  // normalized position offset in x direction
+            double position_offset_y = 0.0;  // normalized position offset in y direction
+            double width = 0.1;              // normalized width of the legend box
+            int bg_color0 = 15;              // background color0 index of the legend box
+            int legend_box_line_color0 = 1;  // bounding box color of cmap0
+            int legend_box_line_style = 1;   // bounding box line style
+            int n_row = 0;                   // number of rows in the legend box
+            int n_col = 0;                   // number of columns in the legend box
+
+            // text offset from the legend box in units of character width
+            double text_offset = 1.0;
+            // character height scale for text annotation
+            double text_scale = 1.0;
+            // vertical spacing in units of character height between text annotations
+            double text_spacing = 2.0;
+            // text justification, 0: left, 0.5: center, 1: right
+            double text_justification = 1.0;
 
             LegendOpt(int n_legend_, std::vector<const char*> texts_);
 
@@ -512,70 +554,115 @@ namespace erl::common {
          * @param text
          * @param top if true, place the label on the top side.
          * @param perpendicular if true, the string is perpendicular to the axis.
-         * @param displacement unit is character height. positive value means outwards, negative value means inwards.
-         * @param pos position of the reference point relative to the axis. 0: left (x) or bottom (y), 1: right (x) or top (y), others: interpolation.
-         * @param just position of the string relative to the reference point. 0: left (x) or bottom (y), 1: right (x) or top (y), others: interpolation.
+         * @param displacement unit is character height. positive value means outwards, negative
+         * value means inwards.
+         * @param pos position of the reference point relative to the axis. 0: left (x) or bottom
+         * (y), 1: right (x) or top (y), others: interpolation.
+         * @param just position of the string relative to the reference point. 0: left (x) or bottom
+         * (y), 1: right (x) or top (y), others: interpolation.
          * @return
          * @note 17.84
          */
         PlplotFig&
-        SetAxisLabelX(const char* text, bool top = false, bool perpendicular = false, double displacement = 3.2, double pos = 0.5, double just = 0.5);
+        SetAxisLabelX(
+            const char* text,
+            bool top = false,
+            bool perpendicular = false,
+            double displacement = 3.2,
+            double pos = 0.5,
+            double just = 0.5);
 
         /**
          * Place y-axis label
          * @param text
          * @param right if true, place the label on the right side.
          * @param perpendicular if true, the string is perpendicular to the axis.
-         * @param displacement unit is character height. positive value means outwards, negative value means inwards.
-         * @param pos position of the reference point relative to the axis. 0: left (x) or bottom (y), 1: right (x) or top (y), others: interpolation.
-         * @param just position of the string relative to the reference point. 0: left (x) or bottom (y), 1: right (x) or top (y), others: interpolation.
+         * @param displacement unit is character height. positive value means outwards, negative
+         * value means inwards.
+         * @param pos position of the reference point relative to the axis. 0: left (x) or bottom
+         * (y), 1: right (x) or top (y), others: interpolation.
+         * @param just position of the string relative to the reference point. 0: left (x) or bottom
+         * (y), 1: right (x) or top (y), others: interpolation.
          * @return
          * @note 17.84
          */
         PlplotFig&
-        SetAxisLabelY(const char* text, bool right = false, bool perpendicular = false, double displacement = 5.0, double pos = 0.5, double just = 0.5);
+        SetAxisLabelY(
+            const char* text,
+            bool right = false,
+            bool perpendicular = false,
+            double displacement = 5.0,
+            double pos = 0.5,
+            double just = 0.5);
 
         /**
          *
          * @param text
          * @param opposite if true, place the label on the opposite side.
          * @param perpendicular if true, the string is perpendicular to the axis.
-         * @param displacement unit is character height. positive value means outwards, negative value means inwards.
-         * @param pos the reference point relative to the axis. 0: min, 1: max, others: interpolation.
-         * @param just the string position relative to the reference point. 0: left (x) or bottom (y), 1: right (x) or top (y), others: interpolation.
+         * @param displacement unit is character height. positive value means outwards, negative
+         * value means inwards.
+         * @param pos the reference point relative to the axis. 0: min, 1: max, others:
+         * interpolation.
+         * @param just the string position relative to the reference point. 0: left (x) or bottom
+         * (y), 1: right (x) or top (y), others: interpolation.
          * @return
          * @note 17.85
          */
         PlplotFig&
-        SetAxis3LabelX(const char* text, bool opposite = false, bool perpendicular = false, double displacement = 5.0, double pos = 0.5, double just = 0.5);
+        SetAxis3LabelX(
+            const char* text,
+            bool opposite = false,
+            bool perpendicular = false,
+            double displacement = 5.0,
+            double pos = 0.5,
+            double just = 0.5);
 
         /**
          *
          * @param text
          * @param opposite if true, place the label on the opposite side.
          * @param perpendicular if true, the string is perpendicular to the axis.
-         * @param displacement unit is character height. positive value means outwards, negative value means inwards.
-         * @param pos the reference point relative to the axis. 0: left (x) or bottom (y), 1: right (x) or top (y), others: interpolation.
-         * @param just the string position relative to the reference point. 0: left (x) or bottom (y), 1: right (x) or top (y), others: interpolation.
+         * @param displacement unit is character height. positive value means outwards, negative
+         * value means inwards.
+         * @param pos the reference point relative to the axis. 0: left (x) or bottom (y), 1: right
+         * (x) or top (y), others: interpolation.
+         * @param just the string position relative to the reference point. 0: left (x) or bottom
+         * (y), 1: right (x) or top (y), others: interpolation.
          * @return
          * @note 17.85
          */
         PlplotFig&
-        SetAxis3LabelY(const char* text, bool opposite = false, bool perpendicular = false, double displacement = 5.0, double pos = 0.5, double just = 0.5);
+        SetAxis3LabelY(
+            const char* text,
+            bool opposite = false,
+            bool perpendicular = false,
+            double displacement = 5.0,
+            double pos = 0.5,
+            double just = 0.5);
 
         /**
          *
          * @param text
          * @param opposite if true, place the label on the opposite side.
          * @param perpendicular if true, the string is perpendicular to the axis.
-         * @param displacement unit is character height. positive value means outwards, negative value means inwards.
-         * @param pos the reference point relative to the axis. 0: min, 1: max, others: interpolation.
-         * @param just the string position relative to the reference point. 0: left (x) or bottom (y), 1: right (x) or top (y), others: interpolation.
+         * @param displacement unit is character height. positive value means outwards, negative
+         * value means inwards.
+         * @param pos the reference point relative to the axis. 0: min, 1: max, others:
+         * interpolation.
+         * @param just the string position relative to the reference point. 0: left (x) or bottom
+         * (y), 1: right (x) or top (y), others: interpolation.
          * @return
          * @note 17.85
          */
         PlplotFig&
-        SetAxis3LabelZ(const char* text, bool opposite = false, bool perpendicular = false, double displacement = 5.0, double pos = 0.5, double just = 0.5);
+        SetAxis3LabelZ(
+            const char* text,
+            bool opposite = false,
+            bool perpendicular = false,
+            double displacement = 5.0,
+            double pos = 0.5,
+            double just = 0.5);
 
         enum AreaFillPattern {
             Solid = 0,
@@ -593,22 +680,31 @@ namespace erl::common {
         SetAreaFillPattern(AreaFillPattern pattern);
 
         /**
-         * Place text inside the viewport. The string baseline is parallel to the line (x, y) -> (x+dx, y+dy).
+         * Place text inside the viewport. The string baseline is parallel to the line (x, y) ->
+         * (x+dx, y+dy).
          * @param text the text to be placed
          * @param x x coordinate of the reference point
          * @param y y coordinate of the reference point
          * @param dx dx coordinate of the incline vector
          * @param dy dy coordinate of the incline vector
-         * @param just position of the string relative to (x, y). 0: (x, y) is the left of the string, 1: the right, others: interpolation.
+         * @param just position of the string relative to (x, y). 0: (x, y) is the left of the
+         * string, 1: the right, others: interpolation.
          * @return
          * @note 17.97
          */
         PlplotFig&
-        PutText(const char* text, double x, double y, double dx = 0, double dy = 0, double just = 0);
+        PutText(
+            const char* text,
+            double x,
+            double y,
+            double dx = 0,
+            double dy = 0,
+            double just = 0);
 
         /**
-         * Place text inside the viewport of a 3D plot. The string baseline is parallel to the line (wx, wy, wz) -> (wx+dx, wy+dy, wz+dz).
-         * The string is vertically parallel to the line (wx, wy, wz) -> (wx+sx, wy+sy, wz+sz).
+         * Place text inside the viewport of a 3D plot. The string baseline is parallel to the line
+         * (wx, wy, wz) -> (wx+dx, wy+dy, wz+dz). The string is vertically parallel to the line (wx,
+         * wy, wz) -> (wx+sx, wy+sy, wz+sz).
          * @param text the text to be placed
          * @param wx world x coordinate of the reference point
          * @param wy world y coordinate of the reference point
@@ -619,7 +715,8 @@ namespace erl::common {
          * @param sx x coordinate of the shear vector
          * @param sy y coordinate of the shear vector
          * @param sz z coordinate of the shear vector
-         * @param just position of the string relative to (x, y). 0: (x, y) is the left of the string, 1: the right, others: interpolation.
+         * @param just position of the string relative to (x, y). 0: (x, y) is the left of the
+         * string, 1: the right, others: interpolation.
          * @param color default is red
          * @return
          * @note 17.98
@@ -689,12 +786,14 @@ namespace erl::common {
             double y_min = -1.0;
             double y_max = 1.0;
             std::vector<double> color_levels;
-            double fill_width = 2.0;                            // width of the line used to fill the area
-            int contour_color0 = 0;                             // color0 index of the contour line, 0 means no contour line
-            double contour_line_width = 0.0;                    // 0.0 means no contour line
-            PLFILL_callback fill_callback = plcallback::fill;   // fill the area with color
-            bool rectangular = false;                           // if true, the transform preserves the aspect ratio of the rectangle
-            PLTRANSFORM_callback transform_callback = nullptr;  // transform the data to the viewport
+            double fill_width = 2.0;  // width of the line used to fill the area
+            int contour_color0 = 0;   // color0 index of the contour line, 0 means no contour line
+            double contour_line_width = 0.0;                   // 0.0 means no contour line
+            PLFILL_callback fill_callback = plcallback::fill;  // fill the area with color
+
+            // if true, the transform preserves the aspect ratio of the rectangle
+            bool rectangular = false;
+            PLTRANSFORM_callback transform_callback = nullptr;  // transform data to the viewport
             PLPointer transform_data = nullptr;
 
             ShadesOpt&
@@ -763,7 +862,11 @@ namespace erl::common {
          * @note 17.150
          */
         PlplotFig&
-        Scatter(int num_points, const double* xs, const double* ys, const char* marker_utf8 = "#(728)");
+        Scatter(
+            int num_points,
+            const double* xs,
+            const double* ys,
+            const char* marker_utf8 = "#(728)");
 
         /**
          * Draw a scatter plot (glyph) in 3D.
@@ -776,14 +879,19 @@ namespace erl::common {
          * @note 17.151
          */
         PlplotFig&
-        Scatter3D(int num_points, const double* xs, const double* ys, const double* zs, const char* marker_utf8 = "#(728)");
+        Scatter3D(
+            int num_points,
+            const double* xs,
+            const double* ys,
+            const double* zs,
+            const char* marker_utf8 = "#(728)");
 
         /**
          * Set the margin of the plot.
-         * @param left the left margin, [0, 1].
-         * @param right the right margin, [0, 1].
-         * @param bottom the bottom margin, [0, 1].
-         * @param top the top margin, [0, 1].
+         * @param left The left margin, [0, 1].
+         * @param right The right margin, [0, 1].
+         * @param bottom The bottom margin, [0, 1].
+         * @param top The top margin, [0, 1].
          * @return
          * @note 17.169
          */

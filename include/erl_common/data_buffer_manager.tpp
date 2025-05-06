@@ -50,7 +50,8 @@ namespace erl::common {
         ERL_DEBUG_ASSERT(index < m_entries_.size(), "Index {} is out of range.", index);
         m_available_indices_.push_back(index);
         ERL_DEBUG_ASSERT(
-            std::unordered_set(m_available_indices_.begin(), m_available_indices_.end()).size() == m_available_indices_.size(),
+            std::unordered_set(m_available_indices_.begin(), m_available_indices_.end()).size() ==
+                m_available_indices_.size(),
             "Redundant indices");
     }
 
@@ -71,11 +72,16 @@ namespace erl::common {
     template<typename T, class Buffer>
     bool
     DataBufferManager<T, Buffer>::operator==(const DataBufferManager &other) const {
-        if (m_entries_.size() - m_available_indices_.size() != other.m_entries_.size() - other.m_available_indices_.size()) { return false; }
-        const std::set<std::size_t> available_indices(m_available_indices_.begin(), m_available_indices_.end());
+        if (m_entries_.size() - m_available_indices_.size() !=
+            other.m_entries_.size() - other.m_available_indices_.size()) {
+            return false;
+        }
+        const std::set available_indices(m_available_indices_.begin(), m_available_indices_.end());
         for (std::size_t i = 0; i < m_entries_.size(); ++i) {
             if (!available_indices.count(i)) { continue; }
-            if (i >= other.m_entries_.size() || m_entries_[i] != other.m_entries_[i]) { return false; }
+            if (i >= other.m_entries_.size() || m_entries_[i] != other.m_entries_[i]) {
+                return false;
+            }
         }
         return true;
     }
@@ -104,7 +110,9 @@ namespace erl::common {
     DataBufferManager<T, Buffer>::Compact() {
         std::unordered_map<std::size_t, std::size_t> index_mapping;
         std::size_t new_index = 0;
-        const std::unordered_set available_indices(m_available_indices_.begin(), m_available_indices_.end());
+        const std::unordered_set available_indices(
+            m_available_indices_.begin(),
+            m_available_indices_.end());
         for (std::size_t i = 0; i < m_entries_.size(); ++i) {
             if (!available_indices.count(i)) {
                 index_mapping[i] = new_index;
@@ -121,64 +129,74 @@ namespace erl::common {
     template<typename T, class Buffer>
     bool
     DataBufferManager<T, Buffer>::Write(std::ostream &s) const {
-        static const std::vector<std::pair<const char *, std::function<bool(const DataBufferManager *, std::ostream &)>>> token_function_pairs = {
-            {
-                "entries",
-                [](const DataBufferManager *self, std::ostream &stream) {
-                    const std::size_t size = self->m_entries_.size();
-                    stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
-                    for (const auto &entry: self->m_entries_) {
-                        if (!entry.Write(stream)) {
-                            ERL_WARN("Failed to write entry.");
-                            return false;
+        static const std::vector<
+            std::pair<const char *, std::function<bool(const DataBufferManager *, std::ostream &)>>>
+            token_function_pairs = {
+                {
+                    "entries",
+                    [](const DataBufferManager *self, std::ostream &stream) {
+                        const std::size_t size = self->m_entries_.size();
+                        stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
+                        for (const auto &entry: self->m_entries_) {
+                            if (!entry.Write(stream)) {
+                                ERL_WARN("Failed to write entry.");
+                                return false;
+                            }
                         }
-                    }
-                    return true;
+                        return true;
+                    },
                 },
-            },
-            {
-                "available_indices",
-                [](const DataBufferManager *self, std::ostream &stream) {
-                    const std::size_t size = self->m_available_indices_.size();
-                    stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
-                    for (const auto &index: self->m_available_indices_) { stream.write(reinterpret_cast<const char *>(&index), sizeof(index)); }
-                    return true;
+                {
+                    "available_indices",
+                    [](const DataBufferManager *self, std::ostream &stream) {
+                        const std::size_t size = self->m_available_indices_.size();
+                        stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
+                        for (const auto &index: self->m_available_indices_) {
+                            stream.write(reinterpret_cast<const char *>(&index), sizeof(index));
+                        }
+                        return true;
+                    },
                 },
-            },
-        };
+            };
         return common::WriteTokens(s, this, token_function_pairs);
     }
 
     template<typename T, class Buffer>
     bool
     DataBufferManager<T, Buffer>::Read(std::istream &s) {
-        static const std::vector<std::pair<const char *, std::function<bool(DataBufferManager *, std::istream &)>>> token_function_pairs = {
-            {
-                "entries",
-                [](DataBufferManager *self, std::istream &stream) {
-                    std::size_t size;
-                    stream.read(reinterpret_cast<char *>(&size), sizeof(size));
-                    self->m_entries_.resize(size);
-                    for (std::size_t i = 0; i < size; ++i) {
-                        if (!self->m_entries_[i].Read(stream)) {
-                            ERL_WARN("Failed to read entry.");
-                            return false;
+        static const std::vector<
+            std::pair<const char *, std::function<bool(DataBufferManager *, std::istream &)>>>
+            token_function_pairs = {
+                {
+                    "entries",
+                    [](DataBufferManager *self, std::istream &stream) {
+                        std::size_t size;
+                        stream.read(reinterpret_cast<char *>(&size), sizeof(size));
+                        self->m_entries_.resize(size);
+                        for (std::size_t i = 0; i < size; ++i) {
+                            if (!self->m_entries_[i].Read(stream)) {
+                                ERL_WARN("Failed to read entry.");
+                                return false;
+                            }
                         }
-                    }
-                    return true;
+                        return true;
+                    },
                 },
-            },
-            {
-                "available_indices",
-                [](DataBufferManager *self, std::istream &stream) {
-                    std::size_t size;
-                    stream.read(reinterpret_cast<char *>(&size), sizeof(size));
-                    self->m_available_indices_.resize(size);
-                    for (std::size_t i = 0; i < size; ++i) { stream.read(reinterpret_cast<char *>(&self->m_available_indices_[i]), sizeof(std::size_t)); }
-                    return true;
+                {
+                    "available_indices",
+                    [](DataBufferManager *self, std::istream &stream) {
+                        std::size_t size;
+                        stream.read(reinterpret_cast<char *>(&size), sizeof(size));
+                        self->m_available_indices_.resize(size);
+                        for (std::size_t i = 0; i < size; ++i) {
+                            stream.read(
+                                reinterpret_cast<char *>(&self->m_available_indices_[i]),
+                                sizeof(std::size_t));
+                        }
+                        return true;
+                    },
                 },
-            },
-        };
+            };
         return common::ReadTokens(s, this, token_function_pairs);
     }
 

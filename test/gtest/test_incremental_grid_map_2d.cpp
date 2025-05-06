@@ -4,29 +4,42 @@
 TEST(IncrementalGridMap2DTest, DataAccess) {
     using namespace erl::common;
 
-    const auto grid_map_info =
-        std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    const auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
 
     const int n_rows = grid_map_info->Shape(0);
     const int n_cols = grid_map_info->Shape(1);
     for (int i = 0; i < n_rows; ++i) {
-        for (int j = 0; j < n_cols; ++j) { ASSERT_EQ(grid_map(i, j), nullptr); }  // check the default value
+        for (int j = 0; j < n_cols; ++j) {
+            ASSERT_EQ(grid_map(i, j), nullptr);  // check the default value
+        }
     }
 
     for (int i = 0; i < n_rows; ++i) {
-        for (int j = 0; j < n_cols; ++j) { grid_map.GetMutableData(i, j) = std::make_shared<int>(i * n_rows + j); }  // test assignment
+        for (int j = 0; j < n_cols; ++j) {  // test assignment
+            grid_map.GetMutableData(i, j) = std::make_shared<int>(i * n_rows + j);
+        }
     }
 
     for (int i = 0; i < n_rows; ++i) {
-        for (int j = 0; j < n_cols; ++j) { ASSERT_EQ(*grid_map(i, j), i * n_rows + j); }  // check the value
+        for (int j = 0; j < n_cols; ++j) {
+            ASSERT_EQ(*grid_map(i, j), i * n_rows + j);
+        }  // check the value
     }
 }
 
 TEST(IncrementalGridMap2DTest, ExtendToTopLeft) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
     ASSERT_EQ(grid_map_info->Shape(0), 11);
     ASSERT_EQ(grid_map_info->Shape(1), 11);
@@ -54,7 +67,11 @@ TEST(IncrementalGridMap2DTest, ExtendToTopLeft) {
 TEST(IncrementalGridMap2DTest, ExtendToCentralLeft) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
     ASSERT_EQ(grid_map_info->Shape(0), 11);
     ASSERT_EQ(grid_map_info->Shape(1), 11);
@@ -82,7 +99,11 @@ TEST(IncrementalGridMap2DTest, ExtendToCentralLeft) {
 TEST(IncrementalGridMap2DTest, ExtendToTopCentral) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
     ASSERT_EQ(grid_map_info->Shape(0), 11);
     ASSERT_EQ(grid_map_info->Shape(1), 11);
@@ -110,7 +131,11 @@ TEST(IncrementalGridMap2DTest, ExtendToTopCentral) {
 TEST(IncrementalGridMap2DTest, ExtendToTopRight) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
     ASSERT_EQ(grid_map_info->Shape(0), 11);
     ASSERT_EQ(grid_map_info->Shape(1), 11);
@@ -138,7 +163,11 @@ TEST(IncrementalGridMap2DTest, ExtendToTopRight) {
 TEST(IncrementalGridMap2DTest, ExtendToCentalRight) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
     ASSERT_EQ(grid_map_info->Shape(0), 11);
     ASSERT_EQ(grid_map_info->Shape(1), 11);
@@ -166,7 +195,11 @@ TEST(IncrementalGridMap2DTest, ExtendToCentalRight) {
 TEST(IncrementalGridMap2DTest, ExtendToBottomRight) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
     ASSERT_EQ(grid_map_info->Shape(0), 11);
     ASSERT_EQ(grid_map_info->Shape(1), 11);
@@ -194,7 +227,11 @@ TEST(IncrementalGridMap2DTest, ExtendToBottomRight) {
 TEST(IncrementalGridMap2DTest, ExtendToBottomCentral) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
     ASSERT_EQ(grid_map_info->Shape(0), 11);
     ASSERT_EQ(grid_map_info->Shape(1), 11);
@@ -222,7 +259,11 @@ TEST(IncrementalGridMap2DTest, ExtendToBottomCentral) {
 TEST(IncrementalGridMap2DTest, ExtendToBottomLeft) {
     using namespace erl::common;
 
-    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(Eigen::Vector2d(0, 0), Eigen::Vector2d(1.0, 1.0), Eigen::Vector2d(0.1, 0.1), Eigen::Vector2i(0, 0));
+    auto grid_map_info = std::make_shared<GridMapInfo2Dd>(
+        Eigen::Vector2d(0, 0),
+        Eigen::Vector2d(1.0, 1.0),
+        Eigen::Vector2d(0.1, 0.1),
+        Eigen::Vector2i(0, 0));
     IncrementalGridMap2D<std::shared_ptr<int>, double> grid_map(grid_map_info);
     ASSERT_EQ(grid_map_info->Shape(0), 11);
     ASSERT_EQ(grid_map_info->Shape(1), 11);

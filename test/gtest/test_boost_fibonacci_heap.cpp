@@ -7,7 +7,8 @@
 
 TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
     using namespace erl::common;
-    using Heap = boost::heap::fibonacci_heap<int, boost::heap::mutable_<true>, boost::heap::compare<std::greater<>>>;
+    using Heap = boost::heap::
+        fibonacci_heap<int, boost::heap::mutable_<true>, boost::heap::compare<std::greater<>>>;
 
     constexpr int num_of_nodes = 100000;
     std::vector<int> keys(num_of_nodes);
@@ -19,9 +20,12 @@ TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
     std::vector<Heap::handle_type> handles;
     handles.reserve(num_of_nodes);
     auto t0 = std::chrono::high_resolution_clock::now();
-    std::transform(keys.begin(), keys.end(), std::back_inserter(handles), [&heap](const int key) { return heap.push(key); });
+    std::transform(keys.begin(), keys.end(), std::back_inserter(handles), [&heap](const int key) {
+        return heap.push(key);
+    });
     auto t1 = std::chrono::high_resolution_clock::now();
-    double dt = std::chrono::duration<double, std::micro>(t1 - t0).count() / static_cast<double>(num_of_nodes);
+    double dt = std::chrono::duration<double, std::micro>(t1 - t0).count() /
+                static_cast<double>(num_of_nodes);
     std::cout << "insert: " << dt << " us per operation." << std::endl;
     // test decrease key
     std::shuffle(handles.begin(), handles.end(), g_random_engine);
@@ -31,7 +35,8 @@ TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
         heap.decrease(handle);
     }
     t1 = std::chrono::high_resolution_clock::now();
-    dt = std::chrono::duration<double, std::micro>(t1 - t0).count() / static_cast<double>(num_of_nodes);
+    dt = std::chrono::duration<double, std::micro>(t1 - t0).count() /
+         static_cast<double>(num_of_nodes);
     std::cout << "decrease key: " << dt << " us per operation" << std::endl;
     // test extract min
     int cnt = 0;
@@ -77,7 +82,10 @@ TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
     };
 
     g_random_engine.seed(21);
-    using Heap = boost::heap::fibonacci_heap<std::shared_ptr<int>, boost::heap::mutable_<true>, boost::heap::compare<Greater>>;
+    using Heap = boost::heap::fibonacci_heap<
+        std::shared_ptr<int>,
+        boost::heap::mutable_<true>,
+        boost::heap::compare<Greater>>;
 
     Heap heap;
     std::vector<Heap::handle_type> handles;
@@ -114,7 +122,9 @@ TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
         }
 
         if (!heap.empty()) {
-            auto itr = std::find_if(handles.begin(), handles.end(), [&heap](const auto &handle) { return heap.top() == *handle; });
+            auto itr = std::find_if(handles.begin(), handles.end(), [&heap](const auto &handle) {
+                return heap.top() == *handle;
+            });
             ERL_ASSERTM(itr != handles.end(), "Min node not found in nodes.");
             std::swap(*itr, handles.back());
             handles.pop_back();
@@ -125,20 +135,12 @@ TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
             t_extract_min += std::chrono::duration<double, std::micro>(t1 - t0).count();
             n_extract_min++;
         }
-
-        // std::cout << "iter: " << i << std::endl
-        //           << "insert: " << t_insert / double(n_insert) << " us per operation" << std::endl
-        //           << "decrease key: " << t_decrease_key / double(n_decrease_key) << " us per operation" << std::endl
-        //           << "extract min: " << t_extract_min / double(n_extract_min) << " us per operation" << std::endl
-        //           << "n_insert: " << n_insert << std::endl
-        //           << "n_decrease_key: " << n_decrease_key << std::endl
-        //           << "n_extract_min: " << n_extract_min << std::endl
-        //           << "heap size: " << heap.size() << std::endl
-        //           << std::endl;
     }
-    std::cout << "insert: " << t_insert / static_cast<double>(n_insert) << " us per operation" << std::endl
-              << "decrease key: " << t_decrease_key / static_cast<double>(n_decrease_key) << " us per operation" << std::endl
-              << "extract min: " << t_extract_min / static_cast<double>(n_extract_min) << " us per operation" << std::endl
+    std::cout << "insert: " << t_insert / static_cast<double>(n_insert) << " us per operation\n"
+              << "decrease key: " << t_decrease_key / static_cast<double>(n_decrease_key)
+              << " us per operation\n"
+              << "extract min: " << t_extract_min / static_cast<double>(n_extract_min)
+              << " us per operation\n"
               << "n_insert: " << n_insert << std::endl
               << "n_decrease_key: " << n_decrease_key << std::endl
               << "n_extract_min: " << n_extract_min << std::endl

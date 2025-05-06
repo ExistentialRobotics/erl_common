@@ -2,7 +2,6 @@
 
 #include "erl_common/logging.hpp"
 
-#include <unordered_set>
 #include <vector>
 
 namespace erl::common {

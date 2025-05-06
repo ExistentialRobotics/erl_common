@@ -393,7 +393,9 @@ namespace erl::common {
         } catch (const std::exception &) { window_exists = false; }
         if (!window_exists) { cv::namedWindow(window_name, cv::WINDOW_NORMAL); }
         cv::imshow(window_name, mat);
-        if (!window_exists) { cv::resizeWindow(window_name, 1000, 800); }  // only resize when first show
+        if (!window_exists) {
+            cv::resizeWindow(window_name, 1000, 800);
+        }  // only resize when first show
         if (mouse_callback) { cv::setMouseCallback(window_name, mouse_callback, userdata); }
         cv::waitKey(delay_ms);
     }
@@ -421,7 +423,12 @@ namespace erl::common {
      */
     template<typename T>
     cv::Mat
-    ShowEigenMatrix(const Eigen::MatrixX<T> &mat, double nan_value, double inf_value, const std::string &window_name, int delay_ms = 0) {
+    ShowEigenMatrix(
+        const Eigen::MatrixX<T> &mat,
+        double nan_value,
+        double inf_value,
+        const std::string &window_name,
+        int delay_ms = 0) {
         Eigen::MatrixXd normalized_mat = mat.template cast<double>();
         double min = std::numeric_limits<double>::infinity();
         double max = -std::numeric_limits<double>::infinity();
@@ -465,7 +472,9 @@ namespace erl::common {
             (void) flags;
             if (event == cv::EVENT_LBUTTONDOWN) {
                 std::cout << "x: " << x << ", y: " << y << ", mat(x, y): "  //
-                          << static_cast<double>((*static_cast<const Eigen::MatrixX<T> *>(userdata))(y, x)) << std::endl;
+                          << static_cast<double>(
+                                 (*static_cast<const Eigen::MatrixX<T> *>(userdata))(y, x))
+                          << std::endl;
             }
         };
         ShowCvMat(cv_mat, window_name, delay_ms, callback, const_cast<Eigen::MatrixX<T> *>(&mat));
@@ -494,11 +503,14 @@ namespace erl::common {
             for (long i = 0; i < num_points; ++i) {
                 points.emplace_back(
                     grid_map_info->MeterToGridForValue(trajectory(0, i), 0),
-                    grid_map_info->Shape(1) - grid_map_info->MeterToGridForValue(trajectory(1, i), 1));
+                    grid_map_info->Shape(1) -
+                        grid_map_info->MeterToGridForValue(trajectory(1, i), 1));
             }
         } else {
             for (long i = 0; i < num_points; ++i) {
-                points.emplace_back(grid_map_info->MeterToGridForValue(trajectory(1, i), 1), grid_map_info->MeterToGridForValue(trajectory(0, i), 0));
+                points.emplace_back(
+                    grid_map_info->MeterToGridForValue(trajectory(1, i), 1),
+                    grid_map_info->MeterToGridForValue(trajectory(0, i), 0));
             }
         }
         cv::polylines(map, points, false, color, thickness);
@@ -521,7 +533,9 @@ namespace erl::common {
         std::vector<std::vector<cv::Point2i>> contours(1);
         auto &contour = contours[0];
         contour.reserve(num_points + 1);
-        contour.emplace_back(grid_map_info->MeterToGridForValue(position[1], 1), grid_map_info->MeterToGridForValue(position[0], 0));
+        contour.emplace_back(
+            grid_map_info->MeterToGridForValue(position[1], 1),
+            grid_map_info->MeterToGridForValue(position[0], 0));
         for (long i = 0; i < num_points; ++i) {
             const double &angle = angles_in_world[i];
             const double &range = ranges[i];
@@ -550,7 +564,9 @@ namespace erl::common {
 
         std::vector<cv::Point2i> points;
         points.reserve(num_points * 2);
-        const cv::Point2i start_point(grid_map_info->MeterToGridForValue(position[1], 1), grid_map_info->MeterToGridForValue(position[0], 0));
+        const cv::Point2i start_point(
+            grid_map_info->MeterToGridForValue(position[1], 1),
+            grid_map_info->MeterToGridForValue(position[0], 0));
         for (long i = 0; i < num_points; ++i) {
             const double &angle = angles_in_world[i];
             const double &range = ranges[i];
@@ -566,7 +582,9 @@ namespace erl::common {
 
     inline cv::Mat
     MergeColoredMask(const std::vector<cv::Mat> &masks, const std::vector<cv::Scalar> &colors) {
-        ERL_ASSERTM(masks.size() == colors.size(), "The number of masks and colors must be the same.");
+        ERL_ASSERTM(
+            masks.size() == colors.size(),
+            "The number of masks and colors must be the same.");
         ERL_ASSERTM(!masks.empty(), "The number of masks and colors must be greater than 0.");
 
         cv::Mat merged_mask = cv::Mat::zeros(masks[0].size(), CV_8UC4);

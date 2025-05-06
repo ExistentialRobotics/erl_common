@@ -23,7 +23,12 @@ namespace erl::common {
          * @param format
          * @param dtype
          */
-        PangolinPlotterImage(std::shared_ptr<PangolinWindow> window, int image_height, int image_width, int format = GL_RGBA, int dtype = GL_UNSIGNED_BYTE);
+        PangolinPlotterImage(
+            std::shared_ptr<PangolinWindow> window,
+            int image_height,
+            int image_width,
+            int format = GL_RGBA,
+            int dtype = GL_UNSIGNED_BYTE);
 
         void
         Update(const cv::Mat &image) const;
