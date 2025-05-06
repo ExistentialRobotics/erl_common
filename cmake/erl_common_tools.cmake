@@ -128,13 +128,13 @@ macro(erl_add_tests)
                         gtest_discover_tests(
                                 ${name}
                                 EXTRA_ARGS ${${name}_GTEST_ARGS}
-                                WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                                # WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
                                 DISCOVERY_TIMEOUT 60
                         )
                     else ()
                         gtest_discover_tests(
                                 ${name}
-                                WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
+                                # WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
                                 DISCOVERY_TIMEOUT 60
                         )
                     endif ()

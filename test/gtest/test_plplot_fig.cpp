@@ -73,7 +73,7 @@ TEST(PlplotFig, Demo04) {
         .SetSymbolSizes({0, 4});
     fig.SetCurrentColor0(15, 32, 32, 32, 0.70).Legend(legend_opt);
     cv::imshow("demo04", fig.ToCvMat());
-    cv::waitKey(0);
+    cv::waitKey(2000);
 
     // page 2
     fig.Clear()  //
@@ -102,7 +102,7 @@ TEST(PlplotFig, Demo04) {
         .SetAxisLabelY("Amplitude (dB)");
     fig.SetCurrentColor0(15, 32, 32, 32, 0.70).Legend(legend_opt.SetNumLegend(1));
     cv::imshow("demo04", fig.ToCvMat());
-    cv::waitKey(0);
+    cv::waitKey(2000);
 }
 
 TEST(PlplotFig, Demo16) {
@@ -144,7 +144,7 @@ TEST(PlplotFig, Demo16) {
         .SetColorMap(1, PlplotFig::ColorMap::Jet)
         .Shades(z.data(), nx, ny, true, shades_opt);
     cv::imshow("demo16", fig.ToCvMat());
-    cv::waitKey(0);
+    cv::waitKey(2000);
 }
 #else
     #include "erl_common/test_helper.hpp"

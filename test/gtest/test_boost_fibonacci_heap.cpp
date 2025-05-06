@@ -5,7 +5,7 @@
 
 #include <vector>
 
-TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
+TEST(BoostFibonacciHeap, Seq) {
     using namespace erl::common;
     using Heap = boost::heap::
         fibonacci_heap<int, boost::heap::mutable_<true>, boost::heap::compare<std::greater<>>>;
@@ -55,7 +55,7 @@ TEST(ERL_COMMON, BoostFibonacciHeapSeq) {
     std::cout << "extract min: " << dt << " us per operation" << std::endl;
 }
 
-TEST(ERL_COMMON, BoostFibonacciHeapRandom) {
+TEST(BoostFibonacciHeap, Random) {
     using namespace erl::common;
 
     constexpr int max_insertions_per_iter = 10;

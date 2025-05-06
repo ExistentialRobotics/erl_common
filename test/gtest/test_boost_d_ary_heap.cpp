@@ -5,7 +5,7 @@
 
 #include <vector>
 
-TEST(ERL_COMMON, BoostDaryHeapSeq) {
+TEST(BoostDaryHeap, Seq) {
     using namespace erl::common;
     using Heap = boost::heap::d_ary_heap<
         int,
@@ -58,7 +58,7 @@ TEST(ERL_COMMON, BoostDaryHeapSeq) {
     std::cout << "extract min: " << dt << " us per operation" << std::endl;
 }
 
-TEST(ERL_COMMON, BoostDaryHeapRandom) {
+TEST(BoostDaryHeap, Random) {
     using namespace erl::common;
 
     constexpr int max_insertions_per_iter = 10;

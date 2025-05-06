@@ -2,6 +2,7 @@
 
 #include "logging.hpp"
 
+#include <filesystem>
 #include <istream>
 #include <vector>
 

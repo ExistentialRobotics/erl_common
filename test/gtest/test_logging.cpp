@@ -17,7 +17,7 @@ TEST(Logging, Print) {
     erl::common::Logging::Warn("warn message\n");
     erl::common::Logging::Error("error message\n");
     erl::common::Logging::Success("success message\n");
-    const std::string failure_msg = erl::common::Logging::Failure("failure message\n");
+    const std::string failure_msg = erl::common::Logging::Failure("failure message");
     EXPECT_EQ(failure_msg, "failure message\n");
 }
 
@@ -30,7 +30,7 @@ TEST(Logging, Macro) {
     } catch (std::runtime_error &e) {
         EXPECT_STREQ(
             e.what(),
-            ("assertion (1 == 2) at " + std::string(__FILE__) + ":22: message\n").c_str());
+            ("assertion (1 == 2) at " + std::string(__FILE__) + ":29: message\n").c_str());
     }
     ERL_WARN("warn message, 2 / 3 = {:.3f}", 2.0 / 3.0);
     ERL_WARN_ONCE("once warn message, 2 / 3 = {:.3f}", 2.0 / 3.0);
@@ -41,7 +41,7 @@ TEST(Logging, Macro) {
     } catch (std::runtime_error &e) {
         EXPECT_STREQ(
             e.what(),
-            ("assertion (1 == 2) at " + std::string(__FILE__) + ":31: message\n").c_str());
+            ("assertion (1 == 2) at " + std::string(__FILE__) + ":40: message\n").c_str());
     }
     // should exit
     ASSERT_DEATH({ ERL_FATAL("fatal message, 2 / 3 = {:.3f}", 2.0 / 3.0); }, ".*");

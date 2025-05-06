@@ -2,6 +2,9 @@
 
 #include "serialization.hpp"
 
+#include <unordered_map>
+#include <unordered_set>
+
 namespace erl::common {
     template<typename T, class Buffer>
     std::size_t
@@ -76,7 +79,9 @@ namespace erl::common {
             other.m_entries_.size() - other.m_available_indices_.size()) {
             return false;
         }
-        const std::set available_indices(m_available_indices_.begin(), m_available_indices_.end());
+        const std::unordered_set available_indices(
+            m_available_indices_.begin(),
+            m_available_indices_.end());
         for (std::size_t i = 0; i < m_entries_.size(); ++i) {
             if (!available_indices.count(i)) { continue; }
             if (i >= other.m_entries_.size() || m_entries_[i] != other.m_entries_[i]) {
