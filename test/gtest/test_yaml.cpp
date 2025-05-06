@@ -135,7 +135,7 @@ struct YAML::convert<Color> {
 
     static bool
     decode(const Node& node, Color& rhs) {
-        std::string color_str = node.as<std::string>();
+        auto color_str = node.as<std::string>();
         if (color_str == "red") {
             rhs = Color::kRed;
         } else if (color_str == "blue") {

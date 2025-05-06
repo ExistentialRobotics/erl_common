@@ -878,6 +878,12 @@ namespace erl::common {
     }
 
     PlplotFig &
+    PlplotFig::SetFontSize(const double height_mm, const double scale) {
+        m_pls_->schr(height_mm, scale);  // 17.102
+        return *this;
+    }
+
+    PlplotFig &
     PlplotFig::SetCurrentColor0(const int index, const int r, const int g, const int b, const double alpha) {
         m_pls_->scol0a(index, r, g, b, alpha);  // 17.113
         return *this;

@@ -650,6 +650,16 @@ namespace erl::common {
 
         /**
          *
+         * @param height_mm character height in millimeters. 0.0 means default height.
+         * @param scale scale factor to be applied to default to get actual character height.
+         * @return
+         * @note 17.102
+         */
+        PlplotFig&
+        SetFontSize(double height_mm = 0.0, double scale = 1.0);
+
+        /**
+         *
          * @param index index of the color in cmap0.
          * @param r red component, [0, 255].
          * @param g green component, [0, 255].

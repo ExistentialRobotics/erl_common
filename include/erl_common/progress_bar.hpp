@@ -2,9 +2,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <list>
 #include <memory>
 #include <numeric>
 #include <vector>
@@ -24,7 +24,7 @@ namespace erl::common {
             [[nodiscard]] std::string
             GetSymbolBuffer() const {
                 constexpr std::size_t tail_width = sizeof " [100.00 %]";
-                std::size_t n = line_width - tail_width - description.size();
+                const std::size_t n = line_width - tail_width - description.size();
                 return std::string(n, symbol_done) + std::string(n, symbol_todo);
             }
         };
@@ -36,7 +36,8 @@ namespace erl::common {
         double m_fraction_ = 0.0;
         std::size_t m_prev_count_ = -1;
         std::size_t m_count_ = 0;
-        std::chrono::high_resolution_clock::time_point m_t0_ = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point m_t0_ =
+            std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> m_prev_duration_{};
         std::chrono::duration<double> m_duration_{};
         std::ostream& m_out_;
@@ -81,7 +82,7 @@ namespace erl::common {
         }
 
         void
-        SetTotal(std::size_t total) const {
+        SetTotal(const std::size_t total) const {
             m_setting_->total = total;
         }
 
@@ -108,23 +109,27 @@ namespace erl::common {
             if (const std::size_t num_displayed = std::count_if(  //
                     s_progress_bars_.begin(),
                     s_progress_bars_.end(),
-                    [](const auto& pbar) -> bool { return !pbar.expired() && pbar.lock()->m_displayed_; });
+                    [](const auto& pbar) -> bool {
+                        return !pbar.expired() && pbar.lock()->m_displayed_;
+                    });
                 num_displayed >= 1) {
                 GoBackLines(out, num_displayed);
             }
             auto idx_itr = idx.begin();
             if (str.empty()) {
-                out << s_progress_bars_[*(idx_itr++)].lock()->AsString();
+                out << s_progress_bars_[*idx_itr++].lock()->AsString();
             } else {
-                out << str << std::endl << s_progress_bars_[*(idx_itr++)].lock()->AsString();
+                out << str << std::endl << s_progress_bars_[*idx_itr++].lock()->AsString();
             }
 
-            for (; idx_itr != idx.end(); ++idx_itr) { out << std::endl << s_progress_bars_[*idx_itr].lock()->AsString(); }
+            for (; idx_itr != idx.end(); ++idx_itr) {
+                out << std::endl << s_progress_bars_[*idx_itr].lock()->AsString();
+            }
             out << std::flush;
         }
 
         void
-        Update(std::size_t n = 1, const std::string& msg = "") {
+        Update(const std::size_t n = 1, const std::string& msg = "") {
             UpdateCount(n);
             UpdateFraction();
             Write(msg, m_out_);
@@ -151,7 +156,9 @@ namespace erl::common {
         }
 
     private:
-        explicit ProgressBar(std::shared_ptr<Setting> setting = nullptr, std::ostream& out = std::cout)
+        explicit ProgressBar(
+            std::shared_ptr<Setting> setting = nullptr,
+            std::ostream& out = std::cout)
             : m_setting_(std::move(setting)),
               m_out_(out) {
             if (m_setting_ == nullptr) { m_setting_ = std::make_shared<Setting>(); }
@@ -161,17 +168,19 @@ namespace erl::common {
         ArgSortProgressBars() {
             std::vector<std::size_t> idx(s_progress_bars_.size());
             std::iota(idx.begin(), idx.end(), 0);
-            std::sort(idx.begin(), idx.end(), [](std::size_t i, std::size_t j) {
-                return s_progress_bars_[i].lock()->m_setting_->position < s_progress_bars_[j].lock()->m_setting_->position;
+            std::sort(idx.begin(), idx.end(), [](const std::size_t i, const std::size_t j) {
+                return s_progress_bars_[i].lock()->m_setting_->position <
+                       s_progress_bars_[j].lock()->m_setting_->position;
             });
             return idx;
         }
 
         static void
-        GoBackLines(std::ostream& out, std::size_t num_lines) {
+        GoBackLines(std::ostream& out, const std::size_t num_lines) {
             // https://web.archive.org/web/20121225024852/http://www.climagic.org/mirrors/VT100_Escape_Codes.html
-            out << "\33[2K\r";                                                  // clear line
-            for (size_t i = 1; i < num_lines; i++) { out << "\033[F\033[0K"; }  // move cursor up
+            out << "\33[2K\r";  // clear line
+            // move the cursor up
+            for (std::size_t i = 1; i < num_lines; i++) { out << "\033[F\033[0K"; }
         }
 
         static std::string
@@ -212,7 +221,7 @@ namespace erl::common {
         }
 
         void
-        UpdateCount(std::size_t n) {
+        UpdateCount(const std::size_t n) {
             if (n == 0) { return; }
             m_prev_count_ = m_count_;
             m_count_ += n;
@@ -227,8 +236,11 @@ namespace erl::common {
 
         [[nodiscard]] double
         ComputeFps() const {
-            if (m_count_ == m_prev_count_) { return static_cast<double>(m_count_) / (m_duration_.count() + 0.001); }
-            return static_cast<double>(m_count_ - m_prev_count_) / (m_duration_.count() - m_prev_duration_.count());
+            if (m_count_ == m_prev_count_) {
+                return static_cast<double>(m_count_) / (m_duration_.count() + 0.001);
+            }
+            return static_cast<double>(m_count_ - m_prev_count_) /
+                   (m_duration_.count() - m_prev_duration_.count());
         }
 
         [[nodiscard]] std::string
@@ -236,12 +248,14 @@ namespace erl::common {
             std::stringstream ss_time;
             double passed_seconds = m_duration_.count();
             double remaining_seconds = passed_seconds / m_fraction_ - passed_seconds;
-            ss_time << "| [" << DurationToString(remaining_seconds) << "/" << DurationToString(passed_seconds) << "]";
+            ss_time << "| [" << DurationToString(remaining_seconds) << "/"
+                    << DurationToString(passed_seconds) << "]";
             std::string time_str = ss_time.str();
 
             std::stringstream ss_count;
             if (m_setting_->total > 0) {
-                ss_count << "[" << std::setw(3) << m_count_ << "/" << m_setting_->total << ": " << std::setprecision(2) << ComputeFps() << "it/s]";
+                ss_count << "[" << std::setw(3) << m_count_ << "/" << m_setting_->total << ": "
+                         << std::setprecision(2) << ComputeFps() << "it/s]";
             }
             std::string count_str = ss_count.str();
 
@@ -252,19 +266,26 @@ namespace erl::common {
             std::string symbol_buffer = m_setting_->GetSymbolBuffer();
             std::size_t n = symbol_buffer.size() / 2;
             std::size_t bar_width = n - count_str.size() - time_str.size();
-            std::size_t offset = n - static_cast<std::size_t>(static_cast<double>(bar_width) * m_fraction_);
+            std::size_t offset =
+                n - static_cast<std::size_t>(static_cast<double>(bar_width) * m_fraction_);
 
             std::stringstream ss_bar;
-            ss_bar << desc_str;                                                                                // write description
-            ss_bar.write(symbol_buffer.data() + offset, static_cast<std::streamsize>(bar_width));              // write bar
-            ss_bar << time_str << count_str;                                                                   // write time and count
-            ss_bar << "[" << std::fixed << std::setprecision(2) << std::setw(6) << 100 * m_fraction_ << "%]";  // write time and count
+            ss_bar << desc_str;  // write description
+            ss_bar.write(
+                symbol_buffer.data() + offset,
+                static_cast<std::streamsize>(bar_width));  // write bar
+            ss_bar << time_str << count_str;               // write time and count
+            ss_bar << "[" << std::fixed << std::setprecision(2) << std::setw(6) << 100 * m_fraction_
+                   << "%]";  // write time and count
             return ss_bar.str();
         }
 
         void
         Register() const {
-            if (std::none_of(s_progress_bars_.begin(), s_progress_bars_.end(), [this](const auto& bar) { return bar.lock().get() == this; })) {
+            if (std::none_of(
+                    s_progress_bars_.begin(),
+                    s_progress_bars_.end(),
+                    [this](const auto& bar) { return bar.lock().get() == this; })) {
                 s_progress_bars_.push_back(shared_from_this());
             }
         }

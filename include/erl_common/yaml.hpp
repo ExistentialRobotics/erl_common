@@ -24,20 +24,24 @@ namespace erl::common {
         template<typename Derived>
         static bool
         Register(const std::string& yamlable_type = "") {
-            return Factory::GetInstance().Register<Derived>(yamlable_type, []() { return std::make_shared<Derived>(); });
+            return Factory::GetInstance().Register<Derived>(yamlable_type, [] {
+                return std::make_shared<Derived>();
+            });
         }
 
         template<typename Derived>
         static std::shared_ptr<Derived>
         Create(const std::string& yamlable_type) {
-            return std::reinterpret_pointer_cast<Derived>(Factory::GetInstance().Create(yamlable_type));
+            return std::reinterpret_pointer_cast<Derived>(
+                Factory::GetInstance().Create(yamlable_type));
         }
 
         [[nodiscard]] bool
         operator==(const YamlableBase& other) const {
             const std::string yaml_str = AsYamlString();
             const std::string other_yaml_str = other.AsYamlString();
-            return yaml_str == other_yaml_str;  // if the yaml string is the same, the object is the same in terms of saving and loading
+            // if the YAML string is the same, the object is the same in terms of saving and loading
+            return yaml_str == other_yaml_str;
         }
 
         [[nodiscard]] bool
@@ -105,7 +109,7 @@ namespace erl::common {
     };
 
     template<typename T, typename Base = YamlableBase>
-    struct Yamlable : public Base {
+    struct Yamlable : Base {
 
         [[nodiscard]] bool
         FromYamlNode(const YAML::Node& node) override {
@@ -118,11 +122,21 @@ namespace erl::common {
         }
     };
 
-    // #define ERL_REGISTER_YAMLABLE(Derived) inline const volatile bool kRegistered##Derived = erl::common::YamlableBase::Register<Derived>()
+#define ERL_YAML_SAVE_ATTR(node, obj, attr)            node[#attr] = (obj).attr
+#define ERL_YAML_LOAD_ATTR_TYPE(node, obj, attr, type) obj.attr = (node)[#attr].as<type>()
+#define ERL_YAML_LOAD_ATTR(node, obj, attr) \
+    ERL_YAML_LOAD_ATTR_TYPE(node, obj, attr, decltype((obj).attr))
+
+    // #define ERL_REGISTER_YAMLABLE(Derived) inline const volatile bool kRegistered##Derived =
+    // erl::common::YamlableBase::Register<Derived>()
 }  // namespace erl::common
 
 namespace YAML {
-    template<typename T, int Rows = Eigen::Dynamic, int Cols = Eigen::Dynamic, int Order = Eigen::ColMajor>
+    template<
+        typename T,
+        int Rows = Eigen::Dynamic,
+        int Cols = Eigen::Dynamic,
+        int Order = Eigen::ColMajor>
     struct ConvertEigenMatrix {
         static Node
         encode(const Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
@@ -149,7 +163,9 @@ namespace YAML {
 
         static bool
         decode(const Node& node, Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
-            if (node.IsNull() && (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic)) { return true; }
+            if (node.IsNull() && (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic)) {
+                return true;
+            }
             if (!node.IsSequence()) { return false; }
             if (!node[0].IsSequence()) { return false; }
 
@@ -157,9 +173,17 @@ namespace YAML {
                 int rows = Rows == Eigen::Dynamic ? node.size() : Rows;
                 int cols = Cols == Eigen::Dynamic ? node[0].size() : Cols;
                 rhs.resize(rows, cols);
-                ERL_DEBUG_ASSERT(rows == static_cast<int>(node.size()), "expecting rows: {}, get node.size(): {}", rows, node.size());
+                ERL_DEBUG_ASSERT(
+                    rows == static_cast<int>(node.size()),
+                    "expecting rows: {}, get node.size(): {}",
+                    rows,
+                    node.size());
                 for (int i = 0; i < rows; ++i) {
-                    ERL_DEBUG_ASSERT(cols == static_cast<int>(node[i].size()), "expecting cols: {}, get node[0].size(): {}", cols, node[i].size());
+                    ERL_DEBUG_ASSERT(
+                        cols == static_cast<int>(node[i].size()),
+                        "expecting cols: {}, get node[0].size(): {}",
+                        cols,
+                        node[i].size());
                     auto& row_node = node[i];
                     for (int j = 0; j < cols; ++j) { rhs(i, j) = row_node[j].as<T>(); }
                 }
@@ -167,9 +191,17 @@ namespace YAML {
                 int cols = Cols == Eigen::Dynamic ? node.size() : Cols;
                 int rows = Rows == Eigen::Dynamic ? node[0].size() : Rows;
                 rhs.resize(rows, cols);
-                ERL_DEBUG_ASSERT(cols == static_cast<int>(node.size()), "expecting cols: {}, get node.size(): {}", cols, node.size());
+                ERL_DEBUG_ASSERT(
+                    cols == static_cast<int>(node.size()),
+                    "expecting cols: {}, get node.size(): {}",
+                    cols,
+                    node.size());
                 for (int j = 0; j < cols; ++j) {
-                    ERL_DEBUG_ASSERT(rows == static_cast<int>(node[j].size()), "expecting rows: {}, get node[0].size(): {}", rows, node[j].size());
+                    ERL_DEBUG_ASSERT(
+                        rows == static_cast<int>(node[j].size()),
+                        "expecting rows: {}, get node[0].size(): {}",
+                        rows,
+                        node[j].size());
                     auto& col_node = node[j];
                     for (int i = 0; i < rows; ++i) { rhs(i, j) = col_node[i].as<T>(); }
                 }
@@ -180,85 +212,85 @@ namespace YAML {
     };
 
     template<>
-    struct convert<Eigen::Matrix2i> : public ConvertEigenMatrix<int, 2, 2> {};
+    struct convert<Eigen::Matrix2i> : ConvertEigenMatrix<int, 2, 2> {};
 
     template<>
-    struct convert<Eigen::Matrix2f> : public ConvertEigenMatrix<float, 2, 2> {};
+    struct convert<Eigen::Matrix2f> : ConvertEigenMatrix<float, 2, 2> {};
 
     template<>
-    struct convert<Eigen::Matrix2d> : public ConvertEigenMatrix<double, 2, 2> {};
+    struct convert<Eigen::Matrix2d> : ConvertEigenMatrix<double, 2, 2> {};
 
     template<>
-    struct convert<Eigen::Matrix2Xi> : public ConvertEigenMatrix<int, 2, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix2Xi> : ConvertEigenMatrix<int, 2> {};
 
     template<>
-    struct convert<Eigen::Matrix2Xf> : public ConvertEigenMatrix<float, 2, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix2Xf> : ConvertEigenMatrix<float, 2> {};
 
     template<>
-    struct convert<Eigen::Matrix2Xd> : public ConvertEigenMatrix<double, 2, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix2Xd> : ConvertEigenMatrix<double, 2> {};
 
     template<>
-    struct convert<Eigen::MatrixX2i> : public ConvertEigenMatrix<int, Eigen::Dynamic, 2> {};
+    struct convert<Eigen::MatrixX2i> : ConvertEigenMatrix<int, Eigen::Dynamic, 2> {};
 
     template<>
-    struct convert<Eigen::MatrixX2f> : public ConvertEigenMatrix<float, Eigen::Dynamic, 2> {};
+    struct convert<Eigen::MatrixX2f> : ConvertEigenMatrix<float, Eigen::Dynamic, 2> {};
 
     template<>
-    struct convert<Eigen::MatrixX2d> : public ConvertEigenMatrix<double, Eigen::Dynamic, 2> {};
+    struct convert<Eigen::MatrixX2d> : ConvertEigenMatrix<double, Eigen::Dynamic, 2> {};
 
     template<>
-    struct convert<Eigen::Matrix3i> : public ConvertEigenMatrix<int, 3, 3> {};
+    struct convert<Eigen::Matrix3i> : ConvertEigenMatrix<int, 3, 3> {};
 
     template<>
-    struct convert<Eigen::Matrix3f> : public ConvertEigenMatrix<float, 3, 3> {};
+    struct convert<Eigen::Matrix3f> : ConvertEigenMatrix<float, 3, 3> {};
 
     template<>
-    struct convert<Eigen::Matrix3d> : public ConvertEigenMatrix<double, 3, 3> {};
+    struct convert<Eigen::Matrix3d> : ConvertEigenMatrix<double, 3, 3> {};
 
     template<>
-    struct convert<Eigen::Matrix3Xi> : public ConvertEigenMatrix<int, 3, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix3Xi> : ConvertEigenMatrix<int, 3> {};
 
     template<>
-    struct convert<Eigen::Matrix3Xf> : public ConvertEigenMatrix<float, 3, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix3Xf> : ConvertEigenMatrix<float, 3> {};
 
     template<>
-    struct convert<Eigen::Matrix3Xd> : public ConvertEigenMatrix<double, 3, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix3Xd> : ConvertEigenMatrix<double, 3> {};
 
     template<>
-    struct convert<Eigen::MatrixX3i> : public ConvertEigenMatrix<int, Eigen::Dynamic, 3> {};
+    struct convert<Eigen::MatrixX3i> : ConvertEigenMatrix<int, Eigen::Dynamic, 3> {};
 
     template<>
-    struct convert<Eigen::MatrixX3f> : public ConvertEigenMatrix<float, Eigen::Dynamic, 3> {};
+    struct convert<Eigen::MatrixX3f> : ConvertEigenMatrix<float, Eigen::Dynamic, 3> {};
 
     template<>
-    struct convert<Eigen::MatrixX3d> : public ConvertEigenMatrix<double, Eigen::Dynamic, 3> {};
+    struct convert<Eigen::MatrixX3d> : ConvertEigenMatrix<double, Eigen::Dynamic, 3> {};
 
     template<>
-    struct convert<Eigen::Matrix4i> : public ConvertEigenMatrix<int, 4, 4> {};
+    struct convert<Eigen::Matrix4i> : ConvertEigenMatrix<int, 4, 4> {};
 
     template<>
-    struct convert<Eigen::Matrix4f> : public ConvertEigenMatrix<float, 4, 4> {};
+    struct convert<Eigen::Matrix4f> : ConvertEigenMatrix<float, 4, 4> {};
 
     template<>
-    struct convert<Eigen::Matrix4d> : public ConvertEigenMatrix<double, 4, 4> {};
+    struct convert<Eigen::Matrix4d> : ConvertEigenMatrix<double, 4, 4> {};
 
     template<>
-    struct convert<Eigen::Matrix4Xi> : public ConvertEigenMatrix<int, 4, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix4Xi> : ConvertEigenMatrix<int, 4> {};
 
     template<>
-    struct convert<Eigen::Matrix4Xf> : public ConvertEigenMatrix<float, 4, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix4Xf> : ConvertEigenMatrix<float, 4> {};
 
     template<>
-    struct convert<Eigen::Matrix4Xd> : public ConvertEigenMatrix<double, 4, Eigen::Dynamic> {};
+    struct convert<Eigen::Matrix4Xd> : ConvertEigenMatrix<double, 4> {};
 
     template<>
-    struct convert<Eigen::MatrixX4i> : public ConvertEigenMatrix<int, Eigen::Dynamic, 4> {};
+    struct convert<Eigen::MatrixX4i> : ConvertEigenMatrix<int, Eigen::Dynamic, 4> {};
 
     template<>
-    struct convert<Eigen::MatrixX4f> : public ConvertEigenMatrix<float, Eigen::Dynamic, 4> {};
+    struct convert<Eigen::MatrixX4f> : ConvertEigenMatrix<float, Eigen::Dynamic, 4> {};
 
     template<>
-    struct convert<Eigen::MatrixX4d> : public ConvertEigenMatrix<double, Eigen::Dynamic, 4> {};
+    struct convert<Eigen::MatrixX4d> : ConvertEigenMatrix<double, Eigen::Dynamic, 4> {};
 
     template<typename T, int Size = Eigen::Dynamic>
     struct ConvertEigenVector {
@@ -287,53 +319,57 @@ namespace YAML {
     };
 
     template<>
-    struct convert<Eigen::VectorXd> : public ConvertEigenVector<double, Eigen::Dynamic> {};
+    struct convert<Eigen::VectorXd> : ConvertEigenVector<double> {};
 
     template<>
-    struct convert<Eigen::Vector2d> : public ConvertEigenVector<double, 2> {};
+    struct convert<Eigen::Vector2d> : ConvertEigenVector<double, 2> {};
 
     template<>
-    struct convert<Eigen::Vector3d> : public ConvertEigenVector<double, 3> {};
+    struct convert<Eigen::Vector3d> : ConvertEigenVector<double, 3> {};
 
     template<>
-    struct convert<Eigen::Vector4d> : public ConvertEigenVector<double, 4> {};
+    struct convert<Eigen::Vector4d> : ConvertEigenVector<double, 4> {};
 
     template<>
-    struct convert<Eigen::VectorXf> : public ConvertEigenVector<float, Eigen::Dynamic> {};
+    struct convert<Eigen::VectorXf> : ConvertEigenVector<float> {};
 
     template<>
-    struct convert<Eigen::Vector2f> : public ConvertEigenVector<float, 2> {};
+    struct convert<Eigen::Vector2f> : ConvertEigenVector<float, 2> {};
 
     template<>
-    struct convert<Eigen::Vector3f> : public ConvertEigenVector<float, 3> {};
+    struct convert<Eigen::Vector3f> : ConvertEigenVector<float, 3> {};
 
     template<>
-    struct convert<Eigen::Vector4f> : public ConvertEigenVector<float, 4> {};
+    struct convert<Eigen::Vector4f> : ConvertEigenVector<float, 4> {};
 
     template<>
-    struct convert<Eigen::VectorXi> : public ConvertEigenVector<int, Eigen::Dynamic> {};
+    struct convert<Eigen::VectorXi> : ConvertEigenVector<int> {};
 
     template<>
-    struct convert<Eigen::Vector2i> : public ConvertEigenVector<int, 2> {};
+    struct convert<Eigen::Vector2i> : ConvertEigenVector<int, 2> {};
 
     template<>
-    struct convert<Eigen::Vector3i> : public ConvertEigenVector<int, 3> {};
+    struct convert<Eigen::Vector3i> : ConvertEigenVector<int, 3> {};
 
     template<>
-    struct convert<Eigen::Vector4i> : public ConvertEigenVector<int, 4> {};
+    struct convert<Eigen::Vector4i> : ConvertEigenVector<int, 4> {};
 
     template<>
-    struct convert<Eigen::VectorXl> : public ConvertEigenVector<long, Eigen::Dynamic> {};
+    struct convert<Eigen::VectorXl> : ConvertEigenVector<long> {};
 
     template<>
-    struct convert<Eigen::Vector2l> : public ConvertEigenVector<long, 2> {};
+    struct convert<Eigen::Vector2l> : ConvertEigenVector<long, 2> {};
 
     template<typename... Args>
     struct convert<std::tuple<Args...>> {
         static Node
         encode(const std::tuple<Args...>& rhs) {
             Node node(NodeType::Sequence);
-            std::apply([&node](const Args&... args) { (node.push_back(convert<Args>::encode(args)), ...); }, rhs);
+            std::apply(
+                [&node](const Args&... args) {
+                    (node.push_back(convert<Args>::encode(args)), ...);
+                },
+                rhs);
             return node;
         }
 
@@ -420,7 +456,9 @@ namespace YAML {
         static Node
         encode(const std::unordered_map<KeyType, ValueType>& rhs) {
             Node node(NodeType::Map);
-            for (const auto& [key, value]: rhs) { node[convert<KeyType>::encode(key)] = convert<ValueType>::encode(value); }
+            for (const auto& [key, value]: rhs) {
+                node[convert<KeyType>::encode(key)] = convert<ValueType>::encode(value);
+            }
             return node;
         }
 
@@ -430,7 +468,8 @@ namespace YAML {
             for (auto it = node.begin(); it != node.end(); ++it) {
                 KeyType key;
                 ValueType value;
-                if (convert<KeyType>::decode(it->first, key) && convert<ValueType>::decode(it->second, value)) {
+                if (convert<KeyType>::decode(it->first, key) &&
+                    convert<ValueType>::decode(it->second, value)) {
                     rhs[key] = value;
                 } else {
                     return false;

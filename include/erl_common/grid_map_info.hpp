@@ -16,10 +16,10 @@ namespace erl::common {
     template<typename Dtype>
     Dtype
     GridToMeter(const int grid, const Dtype meter_min, const Dtype resolution) {
-        // a grid should cover a valid range, e.g. if the grid is 0, the valid range is [meter_min, meter_min + resolution)
-        // If we use rounding when converting from meter to grid, the covered range will be [meter_min - 0.5 * resolution, meter_min + 0.5 * resolution)
+        // The grid should cover a valid range, e.g., if the grid is 0, the valid range is [meter_min, meter_min + resolution).
+        // If we use rounding when converting from meter to grid, the covered range will be [meter_min - 0.5 * resolution, meter_min + 0.5 * resolution).
         // Half of the range is invalid. Therefore, we need to add 0.5 to the grid index to get the correct range.
-        // If we use floor instead, the covered range will be [meter_min, meter_min + resolution).
+        // If we use `floor` instead, the covered range will be [meter_min, meter_min + resolution).
         return (static_cast<Dtype>(grid) + 0.5) * resolution + meter_min;
     }
 

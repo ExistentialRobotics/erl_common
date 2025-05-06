@@ -26,10 +26,12 @@ namespace erl::common {
 
         ~BlockTimer() {
             const bool verbose = Logging::GetLevel() <= Logging::Level::kInfo;
-            if (this->dt == nullptr && !verbose) { return; }  // No need to measure time and print message
+            // No need to measure time and print the message.
+            if (this->dt == nullptr && !verbose) { return; }
 
             auto &&t2 = std::chrono::high_resolution_clock::now();
-            double &&t_diff = std::chrono::duration<double, typename Duration::period>(t2 - t1).count();
+            double &&t_diff =
+                std::chrono::duration<double, typename Duration::period>(t2 - t1).count();
             if (this->dt != nullptr) { *this->dt = t_diff; }
 
             if (verbose) {
@@ -54,12 +56,45 @@ namespace erl::common {
     };
 }  // namespace erl::common
 
-#define ERL_BLOCK_TIMER()                 erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__))
-#define ERL_BLOCK_TIMER_TIME(dt)          erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__), &(dt))
-#define ERL_BLOCK_TIMER_MSG(msg)          erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(msg))
-#define ERL_BLOCK_TIMER_MSG_TIME(msg, dt) erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(msg), &(dt))
+#define ERL_BLOCK_TIMER()                                     \
+    erl::common::BlockTimer<std::chrono::milliseconds> timer( \
+        LOGGING_LABELED_MSG(__PRETTY_FUNCTION__))
+#define ERL_BLOCK_TIMER_TIME(dt)                              \
+    erl::common::BlockTimer<std::chrono::milliseconds> timer( \
+        LOGGING_LABELED_MSG(__PRETTY_FUNCTION__),             \
+        &(dt))
+#define ERL_BLOCK_TIMER_MSG(msg) \
+    erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(msg))
+#define ERL_BLOCK_TIMER_MSG_TIME(msg, dt) \
+    erl::common::BlockTimer<std::chrono::milliseconds> timer(LOGGING_LABELED_MSG(msg), &(dt))
+#define ERL_BLOCK_TIMER_MICRO()                               \
+    erl::common::BlockTimer<std::chrono::microseconds> timer( \
+        LOGGING_LABELED_MSG(__PRETTY_FUNCTION__))
+#define ERL_BLOCK_TIMER_MICRO_TIME(dt)                        \
+    erl::common::BlockTimer<std::chrono::microseconds> timer( \
+        LOGGING_LABELED_MSG(__PRETTY_FUNCTION__),             \
+        &(dt))
+#define ERL_BLOCK_TIMER_MICRO_MSG(msg) \
+    erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(msg))
+#define ERL_BLOCK_TIMER_MICRO_MSG_TIME(msg, dt) \
+    erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(msg), &(dt))
 
-#define ERL_BLOCK_TIMER_MICRO()                 erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__))
-#define ERL_BLOCK_TIMER_MICRO_TIME(dt)          erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(__PRETTY_FUNCTION__), &(dt))
-#define ERL_BLOCK_TIMER_MICRO_MSG(msg)          erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(msg))
-#define ERL_BLOCK_TIMER_MICRO_MSG_TIME(msg, dt) erl::common::BlockTimer<std::chrono::microseconds> timer(LOGGING_LABELED_MSG(msg), &(dt))
+#ifdef NDEBUG
+    #define ERL_DEBUG_BLOCK_TIMER()                       (void) 0
+    #define ERL_DEBUG_BLOCK_TIMER_TIME(dt)                (void) 0
+    #define ERL_DEBUG_BLOCK_TIMER_MSG(msg)                (void) 0
+    #define ERL_DEBUG_BLOCK_TIMER_MSG_TIME(msg, dt)       (void) 0
+    #define ERL_DEBUG_BLOCK_TIMER_MICRO()                 (void) 0
+    #define ERL_DEBUG_BLOCK_TIMER_MICRO_TIME(dt)          (void) 0
+    #define ERL_DEBUG_BLOCK_TIMER_MICRO_MSG(msg)          (void) 0
+    #define ERL_DEBUG_BLOCK_TIMER_MICRO_MSG_TIME(msg, dt) (void) 0
+#else
+    #define ERL_DEBUG_BLOCK_TIMER()                       ERL_BLOCK_TIMER()
+    #define ERL_DEBUG_BLOCK_TIMER_TIME(dt)                ERL_BLOCK_TIMER_TIME(dt)
+    #define ERL_DEBUG_BLOCK_TIMER_MSG(msg)                ERL_BLOCK_TIMER_MSG(msg)
+    #define ERL_DEBUG_BLOCK_TIMER_MSG_TIME(msg, dt)       ERL_BLOCK_TIMER_MSG_TIME(msg, dt)
+    #define ERL_DEBUG_BLOCK_TIMER_MICRO()                 ERL_BLOCK_TIMER_MICRO()
+    #define ERL_DEBUG_BLOCK_TIMER_MICRO_TIME(dt)          ERL_BLOCK_TIMER_MICRO_TIME(dt)
+    #define ERL_DEBUG_BLOCK_TIMER_MICRO_MSG(msg)          ERL_BLOCK_TIMER_MICRO_MSG(msg)
+    #define ERL_DEBUG_BLOCK_TIMER_MICRO_MSG_TIME(msg, dt) ERL_BLOCK_TIMER_MICRO_MSG_TIME(msg, dt)
+#endif

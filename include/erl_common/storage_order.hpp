@@ -45,7 +45,7 @@ namespace erl::common {
 
     template<int Dim>
     [[nodiscard]] int
-    CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape, const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords, bool c_stride) {
+    CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape, const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords, const bool c_stride) {
         const auto ndim = static_cast<int>(shape.size());
 
         if (Dim == 2) {
@@ -93,8 +93,7 @@ namespace erl::common {
     template<int Dim>
     [[nodiscard]] int
     CoordsToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &strides, const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords) {
-        const auto ndim = static_cast<int>(strides.size());
-        for (int i = 0; i < ndim; ++i) { ERL_DEBUG_ASSERT(coords[i] >= 0, "%d-dim of coords is not positive: %d", i, coords[i]); }
+        ERL_DEBUG_ASSERT((coords.array() >= 0).all(), "Coords must be non-negative.");
         return strides.dot(coords);
     }
 

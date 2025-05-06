@@ -46,7 +46,10 @@ namespace erl::common {
             if (s_level_ > kInfo) { return; }
             // https://fmt.dev/latest/syntax.html
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(fmt::fg(fmt::color::deep_sky_blue) | fmt::emphasis::bold, "[{:%X}][INFO]: ", fmt::localtime(std::time(nullptr)));
+            std::string msg = fmt::format(
+                fmt::fg(fmt::color::deep_sky_blue) | fmt::emphasis::bold,
+                "[{:%X}][INFO]: ",
+                fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
@@ -57,7 +60,10 @@ namespace erl::common {
         Debug(Args... args) {
             if (s_level_ > kDebug) { return; }
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(fmt::fg(fmt::color::orange) | fmt::emphasis::bold, "[{:%X}][DEBUG]: ", fmt::localtime(std::time(nullptr)));
+            std::string msg = fmt::format(
+                fmt::fg(fmt::color::orange) | fmt::emphasis::bold,
+                "[{:%X}][DEBUG]: ",
+                fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
@@ -68,14 +74,18 @@ namespace erl::common {
         Warn(Args... args) {
             if (s_level_ > kWarn) { return; }
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(fmt::fg(fmt::color::orange_red) | fmt::emphasis::bold, "[{:%X}][WARN]: ", fmt::localtime(std::time(nullptr)));
+            std::string msg = fmt::format(
+                fmt::fg(fmt::color::orange_red) | fmt::emphasis::bold,
+                "[{:%X}][WARN]: ",
+                fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
         }
 
         /**
-         * report error but not fatal message, e.g. when an exception is handled properly and the program can continue
+         * Report the error but not fatal message when an exception is handled properly and the
+         * program can continue
          * @tparam Args
          * @param args
          */
@@ -84,14 +94,17 @@ namespace erl::common {
         Error(Args... args) {
             if (s_level_ > kError) { return; }
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[{:%X}][ERROR]: ", fmt::localtime(std::time(nullptr)));
+            std::string msg = fmt::format(
+                fmt::fg(fmt::color::red) | fmt::emphasis::bold,
+                "[{:%X}][ERROR]: ",
+                fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
         }
 
         /**
-         * report fatal message ignoring the logging level
+         * Report a fatal message ignoring the logging level.
          * @tparam Args
          * @param args
          */
@@ -99,14 +112,17 @@ namespace erl::common {
         static void
         Fatal(Args... args) {
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold, "[{:%X}][FATAL]: ", fmt::localtime(std::time(nullptr)));
+            std::string msg = fmt::format(
+                fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold,
+                "[{:%X}][FATAL]: ",
+                fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
         }
 
         /**
-         * report success message ignoring the logging level
+         * Report a success message ignoring the logging level.
          * @tparam Args
          * @param args
          */
@@ -114,14 +130,17 @@ namespace erl::common {
         static void
         Success(Args... args) {
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(fmt::fg(fmt::color::spring_green) | fmt::emphasis::bold, "[{:%X}][SUCCESS]: ", fmt::localtime(std::time(nullptr)));
+            std::string msg = fmt::format(
+                fmt::fg(fmt::color::spring_green) | fmt::emphasis::bold,
+                "[{:%X}][SUCCESS]: ",
+                fmt::localtime(std::time(nullptr)));
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
         }
 
         /**
-         * report failure message ignoring the logging level
+         * Report a failure message ignoring the logging level.
          * @tparam Args
          * @param args
          * @return
@@ -130,7 +149,10 @@ namespace erl::common {
         static std::string
         Failure(Args... args) {
             std::lock_guard lock(g_print_mutex);
-            const std::string msg = fmt::format(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "[{:%X}][FAILURE]: ", fmt::localtime(std::time(nullptr)));
+            const std::string msg = fmt::format(
+                fmt::fg(fmt::color::red) | fmt::emphasis::bold,
+                "[{:%X}][FAILURE]: ",
+                fmt::localtime(std::time(nullptr)));
             std::string failure_msg = fmt::format(std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { failure_msg += "\n"; }
             ProgressBar::Write(msg + failure_msg);
@@ -165,17 +187,29 @@ namespace erl::common {
     #endif
 #else
 
-    #define ERL_FATAL(...)                                                                          \
-        do {                                                                                        \
-            erl::common::Logging::Fatal("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-            exit(1);                                                                                \
+    #define ERL_FATAL(...)                 \
+        do {                               \
+            erl::common::Logging::Fatal(   \
+                "{}:{}: {}",               \
+                __FILE__,                  \
+                __LINE__,                  \
+                fmt::format(__VA_ARGS__)); \
+            exit(1);                       \
         } while (false)
 
-    #define ERL_ERROR(...) \
-        do { erl::common::Logging::Error("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
+    #define ERL_ERROR(...)                 \
+        do {                               \
+            erl::common::Logging::Error(   \
+                "{}:{}: {}",               \
+                __FILE__,                  \
+                __LINE__,                  \
+                fmt::format(__VA_ARGS__)); \
+        } while (false)
 
-    #define ERL_WARN(...) \
-        do { erl::common::Logging::Warn("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
+    #define ERL_WARN(...)                                                                          \
+        do {                                                                                       \
+            erl::common::Logging::Warn("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+        } while (false)
 
     #define ERL_WARN_ONCE(...)          \
         do {                            \
@@ -191,8 +225,10 @@ namespace erl::common {
             if (condition) { ERL_WARN(__VA_ARGS__); } \
         } while (false)
 
-    #define ERL_INFO(...) \
-        do { erl::common::Logging::Info("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
+    #define ERL_INFO(...)                                                                          \
+        do {                                                                                       \
+            erl::common::Logging::Info("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+        } while (false)
 
     #define ERL_INFO_ONCE(...)          \
         do {                            \
@@ -204,8 +240,14 @@ namespace erl::common {
         } while (false)
 
     #ifndef NDEBUG
-        #define ERL_DEBUG(...) \
-            do { erl::common::Logging::Debug("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); } while (false)
+        #define ERL_DEBUG(...)                 \
+            do {                               \
+                erl::common::Logging::Debug(   \
+                    "{}:{}: {}",               \
+                    __FILE__,                  \
+                    __LINE__,                  \
+                    fmt::format(__VA_ARGS__)); \
+            } while (false)
         #define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
     #else
         #define ERL_DEBUG(...)              ((void) 0)
@@ -223,12 +265,17 @@ namespace erl::common {
     } while (false)
 
 #ifndef ERL_ASSERTM
-    #define ERL_ASSERTM(expr, ...)                                                                                                                           \
-        do {                                                                                                                                                 \
-            if (!(expr)) {                                                                                                                                   \
-                std::string failure_msg = erl::common::Logging::Failure("assertion ({}) at {}:{}: {}", #expr, __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-                throw std::runtime_error(failure_msg);                                                                                                       \
-            }                                                                                                                                                \
+    #define ERL_ASSERTM(expr, ...)                                       \
+        do {                                                             \
+            if (!(expr)) {                                               \
+                std::string failure_msg = erl::common::Logging::Failure( \
+                    "assertion ({}) at {}:{}: {}",                       \
+                    #expr,                                               \
+                    __FILE__,                                            \
+                    __LINE__,                                            \
+                    fmt::format(__VA_ARGS__));                           \
+                throw std::runtime_error(failure_msg);                   \
+            }                                                            \
         } while (false)
 #endif
 
