@@ -1,6 +1,7 @@
 #pragma once
 
 #include "logging.hpp"
+#include "string_utils.hpp"
 
 #include <filesystem>
 #include <istream>
@@ -64,12 +65,14 @@ namespace erl::common {
         for (const auto &[expected_token, read_func]: token_function_pairs) {
             // skip leading whitespaces before reading and stop at the first whitespace
             // (space, tab, newline)
-            s >> token;
-            if (token.compare(0, 1, "#") == 0) {
-                // comment line, skip forward until the end of the line
-                SkipLine(s);
-                continue;
-            }
+            do {
+                s >> token;
+                if (token.compare(0, 1, "#") == 0) {
+                    SkipLine(s);  // comment line, skip forward until the end of the line
+                    continue;
+                }
+                break;
+            } while (true);
             ++token_idx;
             // non-comment line
             if (token != expected_token) {
@@ -77,10 +80,12 @@ namespace erl::common {
                 return false;
             }
             try {
+                SkipLine(s);
                 if (!read_func(obj, s)) {
                     ERL_WARN("Failed to read {}.", expected_token);
                     return false;
                 }
+                SkipLine(s);
             } catch (const std::exception &e) {
                 ERL_WARN("Exception while reading {}: {}", expected_token, e.what());
                 return false;
@@ -98,11 +103,63 @@ namespace erl::common {
      */
     template<typename T>
     struct Serialization {
+
+        template<typename Func>
+        [[nodiscard]] static bool
+        Write(const std::string &filename, Func func) {
+            std::string type_str = type_name<T>();
+            ERL_INFO("Writing {} to {}.", type_str, filename);
+            const std::filesystem::path folder = std::filesystem::absolute(filename).parent_path();
+            std::filesystem::create_directories(folder);
+            std::ofstream ofs(filename, std::ios_base::out | std::ios_base::binary);
+            if (!ofs.is_open()) {
+                ERL_WARN("Failed to open file {} for writing.", filename);
+                return false;
+            }
+            ofs << "# " << type_str
+                << "\n# (feel free to add / change comments, but leave the first line as it is!)\n";
+            const bool success = func(ofs);
+            ofs << "end_of_" << type_str << '\n';  // write end token
+            ofs.close();
+            return success;
+        }
+
+        template<typename Func>
+        [[nodiscard]] static bool
+        Read(const std::string &filename, Func func) {
+            std::string type_str = type_name<T>();
+            ERL_INFO("Reading {} from {}.", type_str, filename);
+            std::ifstream ifs(filename, std::ios_base::in | std::ios_base::binary);
+            if (!ifs.is_open()) {
+                ERL_WARN("Failed to open file {} for reading.", filename);
+                return false;
+            }
+            std::string line;
+            std::getline(ifs, line);
+            if (std::string file_header = fmt::format("# {}", type_str);
+                line != file_header) {  // check if the first line is valid
+                ERL_WARN("Header does not start with \"{}\"", file_header);
+                return false;
+            }
+            bool success = func(ifs);
+            if (!success) {
+                ERL_WARN("Failed to read {} from file.", type_str);
+                return false;
+            }
+            std::getline(ifs, line);
+            if (line != "end_of_" + type_str) {  // check if the last line is valid
+                ERL_WARN("Last line does not end with \"end_of_{}\" but \"{}\"", type_str, line);
+                return false;
+            }
+            return success;
+        }
+
         [[nodiscard]] static bool
         Write(const std::string &filename, const T &data) {
             std::string type_str = type_name(data);
             ERL_INFO("Writing {} to {}.", type_str, filename);
-            std::filesystem::create_directories(std::filesystem::path(filename).parent_path());
+            std::filesystem::path folder = std::filesystem::absolute(filename).parent_path();
+            std::filesystem::create_directories(folder);
             std::ofstream ofs(filename, std::ios_base::out | std::ios_base::binary);
             if (!ofs.is_open()) {
                 ERL_WARN("Failed to open file {} for writing.", filename);
@@ -111,7 +168,7 @@ namespace erl::common {
             ofs << "# " << type_str
                 << "\n# (feel free to add / change comments, but leave the first line as it is!)\n";
             const bool success = data.Write(ofs);
-            ofs << "end_of_" << type_str << "\n";  // write end token
+            ofs << "end_of_" << type_str << '\n';  // write end token
             ofs.close();
             return success;
         }
@@ -139,7 +196,7 @@ namespace erl::common {
             }
             std::getline(ifs, line);
             if (line != "end_of_" + type_str) {  // check if the last line is valid
-                ERL_WARN("Last line does not end with \"end_of_{}\"", type_str);
+                ERL_WARN("Last line does not end with \"end_of_{}\" but \"{}\"", type_str, line);
                 return false;
             }
             return success;

@@ -23,6 +23,12 @@ namespace Eigen {
     using Matrix3X = Matrix<T, 3, Dynamic, ColMajor>;
     template<typename T>
     using Matrix4X = Matrix<T, 4, Dynamic, ColMajor>;
+    template<typename T>
+    using Matrix2 = Matrix<T, 2, 2, ColMajor>;
+    template<typename T>
+    using Matrix3 = Matrix<T, 3, 3, ColMajor>;
+    template<typename T>
+    using Matrix4 = Matrix<T, 4, 4, ColMajor>;
     template<typename T, int Size>
     using Vector = Matrix<T, Size, 1, ColMajor>;
     template<typename T>

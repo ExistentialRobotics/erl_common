@@ -159,7 +159,7 @@ if [ -d "${SCRIPT_DIR}/../../erl_geometry" ]; then  # If erl_geometry is used
       git clone --recursive https://github.com/qhull/qhull.git
     fi
     cd qhull
-    git checkout 2022.2
+    git checkout 2020.2
     mkdir -p my_build
     cd my_build
     cmake .. -DCMAKE_BUILD_TYPE=Release \

@@ -84,12 +84,16 @@ endmacro()
 macro(erl_add_tests)
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs LIBRARIES EXCLUDE_FROM_ALL)
+    set(multiValueArgs LIBRARIES EXCLUDE_FROM_ALL IGNORE_FILES)
     cmake_parse_arguments(${PROJECT_NAME}_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (ERL_BUILD_TEST_${PROJECT_NAME})
         # add gtest
         file(GLOB GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/*.cpp)  # lexicographically sorted
+        # remove files in the ignore list
+        foreach (file IN LISTS ${PROJECT_NAME}_TEST_IGNORE_FILES)
+            list(REMOVE_ITEM GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/${file})
+        endforeach ()
         list(REVERSE GTEST_SOURCES)
 
         if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1" AND CATKIN_ENABLE_TESTING)
