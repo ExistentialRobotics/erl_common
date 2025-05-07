@@ -797,13 +797,13 @@ macro(erl_setup_lapack)
 
                 set(MKL_DIR ${MKL_ROOT}/lib/cmake/mkl)
                 if (NOT EXISTS ${MKL_DIR}/MKLConfig.cmake)
-                    set(MKL_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/modules)
+                    set(MKL_DIR ${ERL_CMAKE_DIR}/modules)
                     message(STATUS "MKLConfig.cmake is not found, using local MKLConfig.cmake")
-                    message(STATUS "MKL_DIR is set to ${MKL_DIR}")
                 endif ()
                 set(MKL_ARCH "intel64")
                 set(MKL_LINK "dynamic")
                 set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
+                message(STATUS "MKL_DIR is set to ${MKL_DIR}")
                 erl_find_package( # We need to find MKL to get MKL_H
                         PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
                         REQUIRED

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "eigen.hpp"
+
 #include <pybind11/pybind11.h>  // must be included first
 // https://github.com/pybind/pybind11/blob/d2e7e8c68711d1ebfb02e2f20bd1cb3bfc5647c0/docs/basics.rst#L81-L86
 

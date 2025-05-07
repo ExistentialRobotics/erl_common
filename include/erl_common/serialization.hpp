@@ -145,4 +145,17 @@ namespace erl::common {
             return success;
         }
     };
+
+    template<typename T>
+    using TokenWriteFunctionPair =
+        std::pair<const char *, std::function<bool(const T *, std::ostream &)>>;
+
+    template<typename T>
+    using TokenWriteFunctionPairs = std::vector<TokenWriteFunctionPair<T>>;
+
+    template<typename T>
+    using TokenReadFunctionPair = std::pair<const char *, std::function<bool(T *, std::istream &)>>;
+
+    template<typename T>
+    using TokenReadFunctionPairs = std::vector<TokenReadFunctionPair<T>>;
 }  // namespace erl::common
