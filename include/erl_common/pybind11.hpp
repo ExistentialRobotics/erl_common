@@ -118,6 +118,18 @@ namespace PYBIND11_NAMESPACE {
             std::forward<Sentinel>(last),
             std::forward<Extra>(extra)...);
     }
+#else
+    template<
+        return_value_policy Policy = return_value_policy::reference_internal,
+        typename Iterator,
+        typename Sentinel,
+        typename ValueType = typename detail::iterator_self_access<Iterator>::result_type,
+        typename... Extra>
+    auto
+    wrap_iterator(Iterator /* first */, Sentinel /* last */, Extra&&... /* extra */) {
+        py::print("pybind11 version is too old, please update to 2.12 or later.");
+        return py::none();
+    }
 #endif
 }  // namespace PYBIND11_NAMESPACE
 
