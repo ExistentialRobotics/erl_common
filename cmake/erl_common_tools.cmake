@@ -1,13 +1,21 @@
-# ######################################################################################################################
+# ##################################################################################################
 # Add this cmake module path to the cmake module path
-# ######################################################################################################################
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} CACHE INTERNAL "CMake module path")
-set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "ERL CMake directory")
+# ##################################################################################################
+if (NOT DEFINED ERL_CMAKE_DIR)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} CACHE INTERNAL "CMake module path")
+    set(ERL_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "ERL CMake directory")
+endif ()
+message(STATUS "ERL_CMAKE_DIR: ${ERL_CMAKE_DIR}")
+message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+file(GLOB MODULE_CONFIG_FILES ${ERL_CMAKE_DIR}/erl_config_*.cmake)
+foreach (file ${MODULE_CONFIG_FILES})
+    include(${file})
+endforeach ()
 
-# ######################################################################################################################
+# ##################################################################################################
 # target_link_libraries_system
-# ######################################################################################################################
+# ##################################################################################################
 function(target_link_libraries_system target)
     set(options PRIVATE PUBLIC INTERFACE)
     set(oneValueArgs)
@@ -71,21 +79,23 @@ function(target_link_libraries_system target)
     endif ()
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_set_gtest_args
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_set_gtest_args _gtest_name _gtest_args)
-    set(${_gtest_name}_GTEST_ARGS ${_gtest_args} CACHE STRING "GTest arguments for ${_gtest_name}" FORCE)
+    set(${_gtest_name}_GTEST_ARGS ${_gtest_args}
+            CACHE STRING "GTest arguments for ${_gtest_name}" FORCE)
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_add_test
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_add_tests)
     set(options)
     set(oneValueArgs)
     set(multiValueArgs LIBRARIES EXCLUDE_FROM_ALL IGNORE_FILES)
-    cmake_parse_arguments(${PROJECT_NAME}_TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    cmake_parse_arguments(${PROJECT_NAME}_TEST
+            "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (ERL_BUILD_TEST_${PROJECT_NAME})
         # add gtest
@@ -110,10 +120,12 @@ macro(erl_add_tests)
                 add_executable(${name} ${file})
 
                 if (${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS)
-                    cmake_parse_arguments("${name}" "" "" "${name}_LIBRARIES" ${${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS})
+                    cmake_parse_arguments("${name}"
+                            "" "" "${name}_LIBRARIES" ${${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS})
 
                     if (${name}_${name}_LIBRARIES)
-                        message(STATUS "Additional LIBRARIES for ${name}: ${${name}_${name}_LIBRARIES}")
+                        message(STATUS
+                                "Additional LIBRARIES for ${name}: ${${name}_${name}_LIBRARIES}")
                     endif ()
 
                     if (${name}_UNPARSED_ARGUMENTS)
@@ -121,7 +133,8 @@ macro(erl_add_tests)
                     endif ()
                 endif ()
 
-                target_link_libraries(${name} ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main ${${name}_${name}_LIBRARIES})
+                target_link_libraries(${name}
+                        ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main ${${name}_${name}_LIBRARIES})
 
                 if (${name} IN_LIST ${PROJECT_NAME}_TEST_EXCLUDE_FROM_ALL)
                     message(STATUS "Excluding gtest ${name}")
@@ -150,7 +163,7 @@ macro(erl_add_tests)
     endif ()
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # Function erl_os_release_info - Determine and return OS name and version
 # Borrowed from https://github.com/intel/compute-runtime/blob/master/os_release_info.cmake
 #
@@ -220,7 +233,8 @@ function(erl_os_release_info _vn_id _vn_version_id _vn_codename)
             string(REGEX REPLACE "\\([^)]+\\)" "" file_line "${file_line}")
 
             # Extract start and end, discard optional "version" or "release"
-            string(REGEX MATCH "^([A-Za-z0-9_]+)( +(version|release))? +(.*)$" _dummy "${file_line}")
+            string(REGEX MATCH "^([A-Za-z0-9_]+)( +(version|release))? +(.*)$"
+                    _dummy "${file_line}")
 
             # 1              2  3                    4
             set(_var_id "${CMAKE_MATCH_1}")
@@ -257,7 +271,8 @@ function(erl_os_release_info _vn_id _vn_version_id _vn_codename)
         set(file_path "/etc/lsb-release")
 
         if (EXISTS "${file_path}")
-            file(STRINGS "${file_path}" data_list REGEX "^(DISTRIB_ID|DISTRIB_RELEASE|DISTRIB_CODENAME)=")
+            file(STRINGS "${file_path}" data_list
+                    REGEX "^(DISTRIB_ID|DISTRIB_RELEASE|DISTRIB_CODENAME)=")
 
             # Look for lines like "DISTRIB_ID="..." and DISTRIB_RELEASE="..."
             foreach (_var ${data_list})
@@ -296,9 +311,9 @@ function(erl_os_release_info _vn_id _vn_version_id _vn_codename)
     endif ()
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_parse_key_value_pairs
-# ######################################################################################################################
+# ##################################################################################################
 function(erl_parse_key_value_pairs _pairs prefix)
     # _pairs is read-only and string based, so we need to unpack it into a local variable.
     set(pairs ${${_pairs}})
@@ -319,9 +334,9 @@ function(erl_parse_key_value_pairs _pairs prefix)
     endforeach ()
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_platform_based_message
-# ######################################################################################################################
+# ##################################################################################################
 function(erl_platform_based_message)
     set(options)
     set(oneValueArgs MSG_TYPE MSG_PREFIX)
@@ -350,9 +365,9 @@ function(erl_platform_based_message)
     message(${ERL_MSG_TYPE} "${ERL_MSG_PREFIX}: ${ERL_MESSAGES_${ERL_PLATFORM}}")
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_suggest_cmd_for_assert
-# ######################################################################################################################
+# ##################################################################################################
 function(erl_suggest_cmd_for_assert)
     set(options)
     set(oneValueArgs ASSERT MSG MSG_TYPE)
@@ -388,9 +403,9 @@ function(erl_suggest_cmd_for_assert)
     endif ()
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_find_package
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_find_package)
     set(options NO_RECORD QUIET REQUIRED PKGCONFIG)
     set(oneValueArgs PACKAGE)
@@ -399,12 +414,13 @@ macro(erl_find_package)
 
     if (NOT ERL_QUIET)
         if (NOT DEFINED ${ERL_PACKAGE}_VERBOSE_ONCE) # avoid printing multiple times
-            set(${ERL_PACKAGE}_VERBOSE_ONCE ON CACHE BOOL "Flag of whether print detailed logs for ${ERL_PACKAGE}" FORCE)
+            set(${ERL_PACKAGE}_VERBOSE_ONCE ON
+                    CACHE BOOL "Flag of whether print detailed logs for ${ERL_PACKAGE}" FORCE)
         else ()
             set(ERL_QUIET ON)
         endif ()
 
-        message(STATUS "=================================================================================================")
+        message(STATUS "==========================================================================")
         if (ERL_PACKAGE STREQUAL "Python3")
             message(STATUS "To specify python interpreter, run `cmake -DPython3_ROOT_DIR=/path/to/python3_bin_folder ..`")
             message(STATUS "With CLion, Python_EXECUTABLE is set to the selected python interpreter")
@@ -462,9 +478,9 @@ macro(erl_find_package)
     unset(ERL_UNPARSED_ARGUMENTS)
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_find_path
-# ######################################################################################################################
+# ##################################################################################################
 function(erl_find_path)
     set(options)
     set(oneValueArgs OUTPUT PACKAGE)
@@ -475,7 +491,7 @@ function(erl_find_path)
         set(ERL_OUTPUT "FILE_FOUND")
     endif ()
 
-    message(STATUS "=================================================================================================")
+    message(STATUS "==============================================================================")
 
     if (DEFINED ERL_PACKAGE)
         erl_platform_based_message(
@@ -498,11 +514,11 @@ function(erl_find_path)
     set(${ERL_OUTPUT} ${${ERL_OUTPUT}} PARENT_SCOPE)
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_detect_ros
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_detect_ros)
-    message(STATUS "=================================================================================================")
+    message(STATUS "==============================================================================")
 
     if (DEFINED ENV{ROS_VERSION})
         set(ROS_ACTIVATED ON)
@@ -523,16 +539,16 @@ macro(erl_detect_ros)
     endif ()
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_set_project_paths
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_set_project_paths)
     # set project paths
     set(${PROJECT_NAME}_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}
             CACHE PATH "Root directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include
             CACHE PATH "Include directory of ${PROJECT_NAME}" FORCE)
-    set(${PROJECT_NAME}_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}   # set to project root because of catkin
+    set(${PROJECT_NAME}_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}   # set to project root due to catkin
             CACHE PATH "Source directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test
             CACHE PATH "Test directory of ${PROJECT_NAME}" FORCE)
@@ -585,11 +601,13 @@ macro(erl_set_project_paths)
             set(ERL_CATKIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
             get_filename_component(ERL_CATKIN_WORKSPACE_DIR ${ERL_CATKIN_INSTALL_DIR} DIRECTORY)
             set(ERL_CATKIN_INSTALL_LIB_DIR ${ERL_CATKIN_INSTALL_DIR}/lib)
-            set(ERL_CATKIN_INSTALL_PYTHON_DIR ${ERL_CATKIN_INSTALL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
+            set(ERL_CATKIN_INSTALL_PYTHON_DIR
+                    ${ERL_CATKIN_INSTALL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
 
             set(ERL_CATKIN_DEVEL_DIR ${ERL_CATKIN_WORKSPACE_DIR}/devel)
             set(ERL_CATKIN_DEVEL_LIB_DIR ${ERL_CATKIN_DEVEL_DIR}/lib)
-            set(ERL_CATKIN_DEVEL_PYTHON_DIR ${ERL_CATKIN_DEVEL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
+            set(ERL_CATKIN_DEVEL_PYTHON_DIR
+                    ${ERL_CATKIN_DEVEL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
         endif ()
     elseif (ROS_VERSION STREQUAL "2")
         message(FATAL_ERROR "ROS2 is not supported yet")
@@ -627,9 +645,9 @@ macro(erl_set_project_paths)
     endif ()
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_print_variables
-# ######################################################################################################################
+# ##################################################################################################
 function(erl_print_variables)
     get_cmake_property(VARIABLE_NAMES VARIABLES)
     list(SORT VARIABLE_NAMES)
@@ -639,16 +657,16 @@ function(erl_print_variables)
     endforeach ()
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_print_variable
-# ######################################################################################################################
+# ##################################################################################################
 function(erl_print_variable VARIABLE_NAME)
     message(STATUS "${VARIABLE_NAME}=${${VARIABLE_NAME}}")
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_setup_compiler
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_setup_compiler)
     option(ERL_IGNORE_CONDA_LIBRARIES "Ignore conda libraries" ON)
     option(ERL_PRINT_HEADER_DEPENDENCIES "Print header dependencies" OFF)
@@ -675,11 +693,14 @@ macro(erl_setup_compiler)
     endif ()
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--disable-new-dtags")  # pass arguments to the linker
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--disable-new-dtags") # pass arguments to the linker
     # disable new DTAGS (DT_RUNPATH) since it is not supported in Ubuntu
-    # old DTAGS (DT_RPATH) is used to specify paths for libraries that are directly linked to the executable
-    # new DTAGS (DT_RUNPATH) is used to specify paths for libraries that are transitively linked to the executable
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree -ftrack-macro-expansion=2")
+    # old DTAGS (DT_RPATH) is used to specify paths for libraries that are
+    # directly linked to the executable
+    # new DTAGS (DT_RUNPATH) is used to specify paths for libraries that are
+    # transitively linked to the executable
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color -fdiagnostics-show-template-tree")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -ftrack-macro-expansion=2")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -funroll-loops -g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -funroll-loops -flto=auto")
@@ -706,9 +727,9 @@ macro(erl_setup_compiler)
     add_definitions(-D${PROJECT_NAME_UPPER}_ROOT_DIR="${${PROJECT_NAME}_ROOT_DIR}")
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_enable_cuda
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_enable_cuda)
     set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER} CACHE STRING "Host compiler for CUDA" FORCE)
     enable_language(CUDA)
@@ -718,355 +739,30 @@ macro(erl_enable_cuda)
     set(CMAKE_CUDA_FLAGS_DEBUG "-G")
 endmacro()
 
-# ######################################################################################################################
-# erl_setup_lapack
-# ######################################################################################################################
-macro(erl_setup_lapack)
-    option(ERL_USE_LAPACK "Use LAPACK" ON)
-    option(ERL_USE_LAPACK_STRICT "Use robust LAPACK algorithms only" OFF)
-    option(ERL_USE_INTEL_MKL "Use Intel MKL (Math Kernel Library)" ON)
-    option(ERL_USE_AOCL "Use AMD Optimizing CPU Library" OFF)
-    option(ERL_USE_SINGLE_THREADED_BLAS "Use single-threaded BLAS" ON)
-
-    if (ERL_USE_INTEL_MKL AND ERL_USE_AOCL)
-        message(FATAL_ERROR "ERL_USE_INTEL_MKL and ERL_USE_AOCL cannot be both ON")
-    endif ()
-
-    if (ERL_USE_INTEL_MKL OR ERL_USE_AOCL)
-        set(ERL_USE_LAPACK ON)
-    endif ()
-
-    if (ERL_USE_LAPACK)
-        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-            set(ERL_USE_LAPACK_STRICT ON)
-        endif ()
-
-        erl_find_path(
-                OUTPUT LAPACKE_INCLUDE_DIR
-                PACKAGE LAPACKE
-                REQUIRED
-                NAMES lapacke.h
-                PATHS /usr/include /usr/local/include /usr/local/Cellar/lapack/*/include
-                COMMANDS UBUNTU_LINUX "try `sudo apt install liblapacke-dev`"
-                COMMANDS ARCH_LINUX "try `sudo pacman -S lapacke`")
-
-        if (ERL_USE_INTEL_MKL)
-            message(STATUS "Use Intel Math Kernel Library")
-
-            if (ERL_USE_LAPACK_STRICT)
-                # We don't turn on some unstable MKL routines: https://eigen.tuxfamily.org/dox/TopicUsingIntelMKL.html
-                add_definitions(-DEIGEN_USE_BLAS)
-                add_definitions(-DEIGEN_USE_LAPACKE_STRICT)
-                add_definitions(-DEIGEN_USE_MKL_VML)
-            else ()
-                add_definitions(-DEIGEN_USE_MKL_ALL)
-            endif ()
-
-            if (ERL_USE_SINGLE_THREADED_BLAS)
-                # we use MKL inside our OpenMP for loop or threaded code, so we need sequential BLAS
-                set(BLA_VENDOR Intel10_64lp_seq)
-                set(MKL_THREADING "sequential")
-            else ()
-                # MKL is used outside OpenMP for loop or threaded code, so we can use threaded BLAS
-                set(BLA_VENDOR Intel10_64lp)
-                set(MKL_THREADING "intel_thread")
-            endif ()
-
-            if (NOT TARGET MKL::mkl_core)  # suppose MKL is not configured yet.
-                if (NOT DEFINED MKL_ROOT)
-                    unset(MKL_INCLUDE_DIRS CACHE)
-                    erl_find_path(
-                            OUTPUT MKL_INCLUDE_DIRS
-                            PACKAGE MKL
-                            mkl.h
-                            PATHS /usr/include /usr/include/mkl /usr/local/include /usr/local/include/mkl /opt/intel/oneapi/mkl/*/include
-                            REQUIRED
-                            COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
-                            COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
-                    get_filename_component(MKL_ROOT ${MKL_INCLUDE_DIRS} DIRECTORY)
-                    get_filename_component(MKL_ROOT ${MKL_ROOT} REALPATH)
-                endif ()
-                message(STATUS "MKL_ROOT is set to ${MKL_ROOT}")
-
-                if (NOT DEFINED IOMP_ROOT)
-                    erl_find_path(
-                            OUTPUT IOMP_ROOT
-                            libiomp5.so
-                            REQUIRED
-                            PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib /opt/intel/oneapi/compiler/*/lib)
-                    get_filename_component(IOMP_ROOT ${IOMP_ROOT} DIRECTORY)
-                    get_filename_component(IOMP_ROOT ${IOMP_ROOT} REALPATH)
-                endif ()
-                message(STATUS "IOMP_ROOT is set to ${IOMP_ROOT}")
-
-                set(MKL_DIR ${MKL_ROOT}/lib/cmake/mkl)
-                if (NOT EXISTS ${MKL_DIR}/MKLConfig.cmake)
-                    set(MKL_DIR ${ERL_CMAKE_DIR}/modules)
-                    message(STATUS "MKLConfig.cmake is not found, using local MKLConfig.cmake")
-                endif ()
-                set(MKL_ARCH "intel64")
-                set(MKL_LINK "dynamic")
-                set(MKL_INTERFACE "lp64") # 32-bit integer indexing, for 64-bit integer indexing, use "intel_ilp64"
-                message(STATUS "MKL_DIR is set to ${MKL_DIR}")
-                erl_find_package( # We need to find MKL to get MKL_H
-                        PACKAGE MKL # MKL_LIBRARIES contains library names instead of full path, so we cannot use it
-                        REQUIRED
-                        COMMANDS ARCH_LINUX "try `sudo pacman -S intel-oneapi-basekit`"
-                        COMMANDS GENERAL "visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html")
-            endif ()
-
-            list(APPEND BLAS_mkl_MKLROOT ${MKL_ROOT})
-            list(APPEND BLAS_mkl_MKLROOT ${IOMP_ROOT})
-            erl_find_package( # LAPACK will resolve the full paths of MKL libraries
-                    PACKAGE LAPACK
-                    REQUIRED
-                    COMMANDS APPLE "try `brew install lapack`"
-                    COMMANDS UBUNTU_LINUX "try `sudo apt install liblapack-dev`"
-                    COMMANDS ARCH_LINUX "try `sudo pacman -S lapack`")
-
-            # set MKL_INCLUDE_DIRS to please catkin
-            if (MKL_H)
-                set(MKL_INCLUDE_DIRS ${MKL_H} CACHE PATH "Path to MKL include directory" FORCE)
-            elseif (MKL_INCLUDE)
-                set(MKL_INCLUDE_DIRS ${MKL_INCLUDE} CACHE PATH "Path to MKL include directory" FORCE)
-            endif ()
-            # some packages depending on MKL may use MKL_LIBRARIES, which is set by MKLConfig.cmake
-            # MKL_LIBRARIES is a list of library names, not full paths, which will not work correctly without MKL_LIBRARY_DIR
-            if (NOT DEFINED MKL_LIBRARY_DIR)
-                get_filename_component(mkl_dir ${MKL_INCLUDE_DIRS} DIRECTORY)
-                set(MKL_LIBRARY_DIR ${mkl_dir}/lib CACHE PATH "Path to MKL library directory" FORCE)
-                unset(mkl_dir)  # remove temporary variable
-                message(STATUS "Set MKL_LIBRARY_DIR to ${MKL_LIBRARY_DIR}")
-            endif ()
-
-            # Update: Since Intel-MKL 2024.02, don't set or use MKL_LIBRARIES since it is used by MKLConfig.cmake
-            # internally. Instead, we should use MKL::MKL and MKL::<library_name>. MKL::MKL is a target that holds only
-            # linker arguments and linked to all MKL::<library_name> targets. MKL::<library_name> is a target that holds
-            # the full path of the library. e.g.
-            # target_link_libraries(<my_linkable_target>
-            #       PUBLIC MKL::mkl_core MKL::mkl_sequential MKL::mkl_intel_lp64
-            #       PUBLIC MKL::mkl_scalapack_lp64 MKL::mkl_cdft_core MKL::mkl_blacs_intelmpi_lp64
-            # )
-            # target_link_options(<my_linkable_target> PUBLIC MKL::MKL)
-
-            # we should unset MKL_DIR and MKLROOT in case some other packages have their own FindMKL scripts.
-            unset(MKL_DIR)
-            unset(MKL_ROOT)
-            unset(IOMP_ROOT)
-        elseif (ERL_USE_AOCL)
-            message(STATUS "Use AMD Optimizing CPU Library")
-            add_definitions(-DEIGEN_USE_BLAS)
-            add_definitions(-DEIGEN_ERL_USE_LAPACKE)
-            set(BLA_VENDOR AOCL)
-            erl_find_path(
-                    OUTPUT AOCL_LIB_DIR
-                    PACKAGE AMD-AOCL
-                    REQUIRED
-                    NAMES libblis.so
-                    PATHS /opt/AMD/aocl/*/lib
-                    COMMANDS GENERAL "visit https://www.amd.com/en/developer/aocl.html"
-                    COMMANDS ARCH_LINUX "try `paru -Ss blas-aocl-gcc`")
-            get_filename_component(AOCL_ROOT ${AOCL_LIB_DIR} DIRECTORY)
-
-            if (ERL_USE_SINGLE_THREADED_BLAS)
-                set(BLAS_LIBRARIES ${AOCL_ROOT}/lib/libblis.so ${AOCL_ROOT}/lib/libalm.so -lm) # single-threaded BLAS
-            else ()
-                set(BLAS_LIBRARIES ${AOCL_ROOT}/lib/libblis-mt.so ${AOCL_ROOT}/lib/libalm.so -lm) # multi-threaded BLAS
-            endif ()
-
-            set(LAPACK_LIBRARIES ${AOCL_ROOT}/lib/libflame.so)
-        else ()
-            message(STATUS "Use OpenBLAS")
-            add_definitions(-DEIGEN_USE_BLAS)
-            add_definitions(-DEIGEN_ERL_USE_LAPACKE)
-            set(BLA_VENDOR OpenBLAS)
-
-            if (ERL_USE_SINGLE_THREADED_BLAS)
-                erl_find_path(
-                        OUTPUT BLAS_LIB_DIR
-                        PACKAGE OpenBLAS
-                        REQUIRED
-                        NAMES libopenblas.so
-                        PATHS /usr/lib/x86_64-linux-gnu /opt/OpenBLAS/lib
-                        COMMANDS APPLE "try `brew install openblas`"
-                        COMMANDS UBUNTU_LINUX "try `bash scripts/install_openblas_seq.bash`")
-            endif ()
-
-            erl_find_package(
-                    PACKAGE LAPACK
-                    REQUIRED
-                    COMMANDS APPLE "try `brew install lapack`"
-                    COMMANDS UBUNTU_LINUX "try `sudo apt install liblapack-dev`"
-                    COMMANDS ARCH_LINUX "try `sudo pacman -S lapack`")
-        endif ()
-
-        message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
-        message(STATUS "LAPACK_LIBRARIES: ${LAPACK_LIBRARIES}")
-    else ()
-        unset(BLAS_LIBRARIES)
-        unset(LAPACK_LIBRARIES)
-    endif ()
-endmacro()
-
-# ######################################################################################################################
+# ##################################################################################################
 # erl_setup_common_packages
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_setup_common_packages)
-    option(ERL_USE_TRACY "Use Tracy Profiler" OFF)
-    option(ERL_TRACY_PROFILE_MEMORY "Profile memory usage" OFF)
+    # must be before erl_config_eigen
+    # because some flags about Eigen3 are set.
+    erl_config_lapack()
 
-    if (ERL_USE_TRACY)
-        set(TRACY_ENABLE ON)
-        if (ERL_TRACY_PROFILE_MEMORY)
-            add_compile_definitions(ERL_TRACY_PROFILE_MEMORY)
-        endif ()
-    endif ()
+    erl_config_boost()  # Boost libraries
+    erl_config_fmt()    # string formatting
+    erl_config_openmp() # OpenMP support
+    erl_config_eigen()  # Eigen3 library
 
-    erl_find_package(
-            PACKAGE fmt
-            REQUIRED
-            COMMANDS ARCH_LINUX "try `sudo pacman -S fmt`"
-    )
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.25)
-        set_target_properties(fmt::fmt PROPERTIES SYSTEM ON)
-        set_target_properties(fmt::fmt-header-only PROPERTIES SYSTEM ON)
-    endif ()
-    get_target_property(fmt_INCLUDE_DIRS fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
-    get_target_property(fmt_LIBRARIES fmt::fmt IMPORTED_LOCATION_RELEASE)
+    # file format libraries
+    erl_config_json()
+    erl_config_nanoflann()
+    erl_config_yaml()
 
-    erl_find_package(
-            PACKAGE OpenMP
-            REQUIRED
-            COMMANDS APPLE "try `brew install libomp`"
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libomp-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S openmp`")
-    erl_find_package(
-            PACKAGE Boost
-            REQUIRED CONFIG COMPONENTS program_options graph
-            COMMANDS APPLE "try `brew install boost`"
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libboost-all-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S boost`")
+    # image processing, visualization libraries
+    erl_config_opencv()
+    erl_config_pangolin()
+    erl_config_plplot()
 
-    # There are some bugs in Eigen3.4.0 when EIGEN_USE_MKL_ALL is defined. We should use the latest version.
-    # enable vectorization of Eigen, borrow from https://github.com/dev-cafe/cmake-cookbook/tree/v1.0/chapter-02/recipe-06
-    if (ERL_USE_INTEL_MKL)
-        include(CheckCXXCompilerFlag)
-
-        # check -march=native -xHost -mavx -mavx2 -mfma -mfma4
-        unset(_CXX_FLAGS)
-
-        foreach (_flag IN ITEMS "-march=native" "-xHost" "-mavx" "-mavx2" "-mfma" "-mfma4")
-            string(REPLACE "=" "_" _flag_works ${_flag})
-            string(REPLACE "-" "_" _flag_works ${_flag_works})
-            check_cxx_compiler_flag("${_flag}" ${_flag_works})
-
-            if (${_flag_work})
-                message(STATUS "Use ${_flag} for Release build")
-                set(_CXX_FLAGS "${_CXX_FLAGS} ${_flag}")
-            endif ()
-        endforeach ()
-
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${_CXX_FLAGS}")
-        unset(_CXX_FLAGS)
-    endif ()
-
-    if (ERL_USE_INTEL_MKL) # option from erl_setup_lapack
-        # set(EIGEN3_VERSION_STRING "3.4.90" CACHE STRING "Eigen3 version" FORCE)  # some other packages may read this variable.
-        erl_find_package(
-                PACKAGE Eigen3
-                ${EIGEN3_VERSION_STRING} REQUIRED CONFIG # in case some other packages define FindEigen3.cmake
-                COMMANDS ARCH_LINUX "try `paru -S eigen-git`"
-                COMMANDS GENERAL "visit https://gitlab.com/libeigen/eigen to install the required version")
-    else ()
-        erl_find_package(
-                PACKAGE Eigen3
-                REQUIRED CONFIG  # in case some other packages define FindEigen3.cmake
-                COMMANDS APPLE "try `brew install eigen`"
-                COMMANDS UBUNTU_LINUX "try `sudo apt install libeigen3-dev`"
-                COMMANDS ARCH_LINUX "try `sudo pacman -S eigen`")
-    endif ()
-
-    set(EIGEN3_VERSION_STRING ${Eigen3_VERSION} CACHE STRING "Eigen3 version" FORCE)
-
-    if (EIGEN3_VERSION_STRING VERSION_LESS "3.4.0")
-        message(WARNING "Eigen3 version is older than 3.4.0")
-    endif ()
-
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.25)
-        set_target_properties(Eigen3::Eigen PROPERTIES SYSTEM ON)
-    endif ()
-
-    erl_find_package(
-            PACKAGE nlohmann_json
-            REQUIRED
-            COMMANDS APPLE "try `brew install nlohmann-json`"
-            COMMANDS UBUNTU_LINUX "try `sudo apt install nlohmann-json3-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S nlohmann-json`")
-    erl_find_package(
-            PACKAGE OpenCV
-            REQUIRED COMPONENTS core imgproc highgui
-            COMMANDS APPLE "run scripts/install_opencv.bash"
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libopencv-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S opencv`")
-
-    if (EXISTS /usr/lib/libOpenGL.so)
-        set(OpenGL_GL_PREFERENCE "GLVND")
-    else ()
-        set(OpenGL_GL_PREFERENCE "LEGACY")
-    endif ()
-
-    include(${ERL_CMAKE_DIR}/config_pangolin.cmake)
-    include(${ERL_CMAKE_DIR}/config_plplot.cmake)
-
-    # erl_find_package(
-    # PACKAGE PCL
-    # REQUIRED
-    # COMMANDS UBUNTU_LINUX "try `sudo apt install libpcl-dev`"
-    # COMMANDS ARCH_LINUX "try `paru -S pcl` or install from https://github.com/daizhirui/pcl-git.git")
-    erl_find_package(
-            PACKAGE nanoflann
-            REQUIRED
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libnanoflann-dev`"
-            COMMANDS ARCH_LINUX "try `paru -S nanoflann`")
-    erl_find_package(
-            PACKAGE yaml-cpp
-            REQUIRED
-            COMMANDS UBUNTU_LINUX "try `sudo apt install libyaml-cpp-dev`"
-            COMMANDS ARCH_LINUX "try `sudo pacman -S yaml-cpp`")
-
-    if (ROS_ACTIVATED)
-        if (ROS_VERSION STREQUAL "1")
-            set(OpenMP_INCLUDE_DIRS /usr/include)
-            get_target_property(OpenMP_LIBRARIES OpenMP::OpenMP_CXX INTERFACE_LINK_LIBRARIES)
-            message(STATUS "OpenMP_INCLUDE_DIRS: ${OpenMP_INCLUDE_DIRS}")
-            message(STATUS "OpenMP_LIBRARIES: ${OpenMP_LIBRARIES}")
-            get_target_property(Eigen3_INCLUDE_DIRS Eigen3::Eigen INTERFACE_INCLUDE_DIRECTORIES)
-            message(STATUS "Eigen3_INCLUDE_DIRS: ${Eigen3_INCLUDE_DIRS}")
-            get_target_property(nlohmann_json_INCLUDE_DIRS nlohmann_json::nlohmann_json INTERFACE_INCLUDE_DIRECTORIES)
-            message(STATUS "nlohmann_json_INCLUDE_DIRS: ${nlohmann_json_INCLUDE_DIRS}")
-            get_target_property(nanoflann_INCLUDE_DIRS nanoflann::nanoflann INTERFACE_INCLUDE_DIRECTORIES)
-            message(STATUS "nanoflann_INCLUDE_DIRS: ${nanoflann_INCLUDE_DIRS}")
-
-            if (YAML_CPP_INCLUDE_DIR OR YAML_CPP_LIBRARIES)
-                set(yaml-cpp_INCLUDE_DIRS ${YAML_CPP_INCLUDE_DIR} CACHE PATH "yaml-cpp include directories" FORCE)
-                set(yaml-cpp_LIBRARIES ${YAML_CPP_LIBRARIES} CACHE STRING "yaml-cpp libraries" FORCE)
-            else () # noconfig version of yaml-cpp: yaml-cpp is installed without setting CMAKE_BUILD_TYPE
-                get_target_property(yaml-cpp_LIBRARIES yaml-cpp IMPORTED_LOCATION_NOCONFIG)
-                get_filename_component(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_LIBRARIES} DIRECTORY)
-                get_filename_component(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_INCLUDE_DIRS}/../include ABSOLUTE)
-                set(yaml-cpp_INCLUDE_DIRS ${yaml-cpp_INCLUDE_DIRS} CACHE PATH "yaml-cpp include directories" FORCE)
-                set(yaml-cpp_LIBRARIES ${yaml-cpp_LIBRARIES} CACHE STRING "yaml-cpp libraries" FORCE)
-            endif ()
-
-            message(STATUS "yaml-cpp_INCLUDE_DIRS: ${yaml-cpp_INCLUDE_DIRS}")
-            message(STATUS "yaml-cpp_LIBRARIES: ${yaml-cpp_LIBRARIES}")
-
-            # get_target_property(Matplot++_INCLUDE_DIRS Matplot++::matplot INTERFACE_INCLUDE_DIRECTORIES)
-            # get_target_property(Matplot++_LIBRARIES Matplot++::matplot LOCATION)
-            # message(STATUS "Matplot++_INCLUDE_DIRS: ${Matplot++_INCLUDE_DIRS}")
-            # message(STATUS "Matplot++_LIBRARIES: ${Matplot++_LIBRARIES}")
-        endif ()
-    endif ()
+    erl_config_tracy()   # profiling tool
 endmacro()
 
 # ######################################################################################################################
@@ -1074,37 +770,15 @@ endmacro()
 # ######################################################################################################################
 macro(erl_setup_python)
     option(ERL_BUILD_PYTHON "Build Python binding" ON)
-
     if (ERL_BUILD_PYTHON)
-        erl_find_package(
-                PACKAGE Python3
-                REQUIRED COMPONENTS Interpreter Development
-                COMMANDS APPLE "try `brew install python3`"
-                COMMANDS UBUNTU_LINUX "try `sudo apt install python3-dev`"
-                COMMANDS ARCH_LINUX "try `sudo pacman -S python`")
-        set_target_properties(Python3::Python PROPERTIES SYSTEM ON)
-        message(STATUS "Python3_EXECUTABLE: ${Python3_EXECUTABLE}")
-        erl_find_package(
-                PACKAGE pybind11
-                REQUIRED
-                COMMANDS APPLE "try `brew install pybind11`"
-                COMMANDS UBUNTU_LINUX "try `sudo apt install pybind11-dev`"
-                COMMANDS ARCH_LINUX "try `sudo pacman -S pybind11`")
-
-        foreach (item IN ITEMS python_link_helper python_headers headers module embed windows_extras thin_lto lto opt_size)
-            if (TARGET pybind11::${item})
-                get_target_property(item_type pybind11::${item} TYPE)
-                if (NOT item_type STREQUAL "INTERFACE_LIBRARY")  # check if it is an interface library
-                    set_target_properties(pybind11::${item} PROPERTIES SYSTEM ON)
-                endif ()
-            endif ()
-        endforeach ()
+        erl_config_python3()
+        erl_config_pybind11()
     endif ()
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_setup_test
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_setup_test)
     option(ERL_BUILD_TEST "Build executables for test" ON)
 
@@ -1128,9 +802,9 @@ macro(erl_setup_test)
     endif ()
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_setup_ros
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_setup_ros)
     set(options)
     set(oneValueArgs)
@@ -1152,9 +826,11 @@ macro(erl_setup_ros)
 
             if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/setup.py)
                 catkin_python_setup()
-                set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP TRUE CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
+                set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP TRUE
+                        CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
             else ()
-                set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP FALSE CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
+                set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP FALSE
+                        CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
             endif ()
 
             if (${PROJECT_NAME}_MSG_FILES)
@@ -1178,9 +854,9 @@ macro(erl_setup_ros)
     endif ()
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_catkin_package
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_catkin_package)
     if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
         catkin_package(${ARGV})
@@ -1241,9 +917,9 @@ macro(erl_catkin_package)
     endif ()
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_project_setup
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_project_setup _name)
     set(options ENABLE_CUDA)
     set(oneValueArgs)
@@ -1291,7 +967,7 @@ macro(erl_project_setup _name)
         endif ()
     endif ()
 
-    erl_setup_lapack()
+
     erl_setup_common_packages()
     if (NOT ERL_PROJECT_SETUP_DONE OR ROS_ACTIVATED)
         erl_setup_python()
@@ -1351,13 +1027,16 @@ function(erl_add_pybind_module)
     endif ()
     pybind11_add_module(${arg_PYBIND_MODULE_NAME} ${SRC_FILES})
 
-    # # ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
-    # # Use separate rpaths during build and install phases
+    # ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+    # Use separate rpaths during build and install phases
     # set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-    # # Don't use the install-rpath during the build phase
+
+    # Don't use the install-rpath during the build phase
     # set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
     # set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-    # # Automatically add all linked folders that are NOT in the build directory to the rpath (per library?)
+
+    # Automatically add all linked folders that are NOT in the build directory to the rpath
+    # (per library?)
     # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
     if (APPLE)
         set(CMAKE_MACOSX_RPATH ON)
@@ -1406,9 +1085,9 @@ function(erl_add_pybind_module)
     endif ()
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_add_python_package
-# ######################################################################################################################
+# ##################################################################################################
 function(erl_add_python_package)
     set(options)
     set(oneValueArgs PYTHON_PKG_DIR)
@@ -1481,9 +1160,9 @@ function(erl_add_python_package)
     endif ()
 endfunction()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_install
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_install)
     set(options)
     set(oneValueArgs)
@@ -1536,7 +1215,7 @@ macro(erl_install)
 
     # Install cmake files, only for erl_common
     if (PROJECT_NAME STREQUAL "erl_common")
-        file(GLOB CMAKE_FILES ${ERL_CMAKE_DIR}/*.cmake)
+        file(GLOB_RECURSE CMAKE_FILES ${ERL_CMAKE_DIR}/*.cmake)
         install(FILES ${CMAKE_FILES}
                 DESTINATION ${${PROJECT_NAME}_INSTALL_CMAKE_DIR})
     endif ()
@@ -1621,9 +1300,9 @@ macro(erl_install)
     endif ()
 endmacro()
 
-# ######################################################################################################################
+# ##################################################################################################
 # erl_mark_project_found
-# ######################################################################################################################
+# ##################################################################################################
 macro(erl_mark_project_found _name)
     set(${_name}_FOUND
             TRUE
