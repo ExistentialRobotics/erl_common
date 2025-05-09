@@ -66,6 +66,7 @@ namespace Eigen {
 
     // VECTOR
     using Vector2l = Vector2<long>;
+    using Vector3l = Vector3<long>;
     using VectorXl = VectorX<long>;
     using VectorXb = VectorX<bool>;
     using VectorX8U = VectorX<uint8_t>;

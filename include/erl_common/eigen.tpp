@@ -314,10 +314,7 @@ namespace erl::common {
         std::vector<Eigen::Matrix<T, Rows, Cols>>& matrices) {
         std::size_t num_matrices = 0;
         s.read(reinterpret_cast<char*>(&num_matrices), sizeof(std::size_t));
-        if (num_matrices == 0) {
-            ERL_WARN("Reading empty matrix from stream.");
-            return s.good();
-        }
+        if (num_matrices == 0) { return s.good(); }
         matrices.resize(num_matrices);
 
         if (Rows != Eigen::Dynamic && Cols != Eigen::Dynamic) {

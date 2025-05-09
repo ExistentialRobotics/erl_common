@@ -1,7 +1,9 @@
 `erl_common`
 ============
 
-This CMake project provides `erl_common` which is a collection of commonly used C++ libraries such as 
+This CMake project provides `erl_common` which is a collection of commonly used C++ libraries such
+as
+
 - Eigen: linear algebra
 - LAPACK: linear algebra
 - Intel MKL: linear algebra
@@ -17,10 +19,11 @@ This CMake project provides `erl_common` which is a collection of commonly used 
 - nlohmann_json: JSON parser
 - YAML-CPP: YAML parser
 
-and some utility functions and data structures like 
+and some utility functions and data structures like
+
 - **adaptive catkin build system**: support both catkin and native CMake build
 - color print / logging
-- assertion, timing, check results 
+- assertion, timing, check results
 - binary IO, csv IO
 - C++ template helper
 - C++ tqdm implementation
@@ -35,6 +38,7 @@ and some utility functions and data structures like
 - grid map and visualization
 
 # Install Dependencies
+
 - CMake >= 3.24
 - OpenMP
 - Boost
@@ -53,12 +57,12 @@ and some utility functions and data structures like
 - pybind11
 - GTest
 
-
 [Scripts for installing dependencies on Ubuntu 22.04](scripts/setup_ubuntu_22.04.bash)
 
 [Scripts for installing dependencies on Arch Linux](scripts/setup_archlinux.bash)
 
 # Getting Started
+
 ## Use as a standard CMake package
 
 ```bash
@@ -68,6 +72,7 @@ touch CMakeLists.txt
 ```
 
 Add the following lines to your `CMakeLists.txt`:
+
 ```cmake
 cmake_minimum_required(VERSION 3.24)
 project(<your_project_name>)
@@ -75,6 +80,7 @@ add_subdirectory(erl_common)
 ```
 
 ## Use as a catkin package
+
 ```bash
 cd <your_workspace>/src
 git clone https://github.com/ExistentialRobotics/erl_common.git
@@ -83,16 +89,30 @@ catkin build
 ```
 
 ## Install as a Python package
+
 - Make sure you have installed all dependencies.
 - Make sure you have the correct Python environment activated, `pipenv` is recommended.
+
 ```bash
 cd erl_common
 pip install . --verbose
 ```
 
 # CMake helper functions and macros
-`erl_common` also provides some helper functions and macros to make other packages support both catkin and native CMake 
+
+`erl_common` also provides some helper functions and macros to make other packages support both
+catkin and native CMake
 build easily. See [cmake/README.md](cmake/README.md) for more details.
 
 # Functionalities
+
 - [Azimuth Elevation](include/erl_common/angle_utils.hpp)
+
+# Docker
+
+```shell
+cd docker
+./build.bash
+# if you get errors about apt 404, try to use different mirror source, e.g.
+# ./build.bash --build-arg APT_MIRROR=http://mirror.arizona.edu/ubuntu/
+```

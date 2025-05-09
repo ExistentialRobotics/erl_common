@@ -3,11 +3,17 @@ FROM ${BASE_IMAGE}
 
 ARG TZ=America/Los_Angeles
 ARG LOCALE=en_US.UTF-8
+ARG APT_MIRROR=""
 
 ENV TZ=${TZ}
 ENV LANG=${LOCALE}
 ENV LANGUAGE=${LOCALE}
 ENV LC_ALL=${LOCALE}
+
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.backup &&\
+    if [ -n "$APT_MIRROR" ]; then \
+        sed -i "s|http://archive.ubuntu.com/ubuntu/|$APT_MIRROR|g" /etc/apt/sources.list; \
+    fi
 
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -60,3 +66,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # clean
 RUN apt-get clean  && rm -rf /var/lib/apt/lists/*
+RUN if [ -n "$APT_MIRROR" ]; then \
+        mv /etc/apt/sources.list.backup /etc/apt/sources.list; \
+    fi

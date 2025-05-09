@@ -66,7 +66,7 @@ namespace erl::common {
         Compact();
 
         [[nodiscard]] bool
-        Write(std::ostream &s) const;
+        Write(std::ostream &s) const;  // TODO: check implementation
 
         [[nodiscard]] bool
         Read(std::istream &s);

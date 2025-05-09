@@ -155,6 +155,15 @@ namespace erl::common {
         }
 
         [[nodiscard]] static bool
+        Write(const std::string &filename, const std::shared_ptr<const T> &data) {
+            if (data == nullptr) {
+                ERL_WARN("Data is nullptr.");
+                return false;
+            }
+            return Write(filename, *data);
+        }
+
+        [[nodiscard]] static bool
         Write(const std::string &filename, const T &data) {
             std::string type_str = type_name(data);
             ERL_INFO("Writing {} to {}.", type_str, filename);
@@ -171,6 +180,15 @@ namespace erl::common {
             ofs << "end_of_" << type_str << '\n';  // write end token
             ofs.close();
             return success;
+        }
+
+        [[nodiscard]] static bool
+        Read(const std::string &filename, const std::shared_ptr<T> &data) {
+            if (data == nullptr) {
+                ERL_WARN("Data is nullptr.");
+                return false;
+            }
+            return Read(filename, *data);
         }
 
         [[nodiscard]] static bool

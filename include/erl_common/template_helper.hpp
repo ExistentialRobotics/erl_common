@@ -1,10 +1,11 @@
 #pragma once
 
 #include "logging.hpp"
+#include "string_utils.hpp"
 
 #include <memory>
 
-/// Check if T is an instantiation of the template `Class`. For example:
+/// Check if T is an instantiation of the template `Class`. For example,
 /// `is_instantiation<shared_ptr, T>` is true if `T == shared_ptr<U>` where U can be anything.
 template<template<typename...> class Class, typename T>
 struct is_instantiation : std::false_type {};
@@ -28,7 +29,7 @@ using IsWeakPtr = is_instantiation<std::weak_ptr, T>;
 template<typename T>
 using IsSmartPtr = std::disjunction<IsSharedPtr<T>, IsUniquePtr<T>, IsWeakPtr<T>>;
 
-/// assert if pointer is null
+/// assert if the pointer is null
 template<typename T, typename... Args>
 T
 NotNull(T ptr, const bool fatal, const std::string &msg, Args &&...args) {
@@ -37,6 +38,26 @@ NotNull(T ptr, const bool fatal, const std::string &msg, Args &&...args) {
         erl::common::Logging::Error(msg, std::forward<Args>(args)...);
     }
     return ptr;
+}
+
+template<typename T>
+bool
+CheckRuntimeType([[maybe_unused]] const T *ptr, const bool debug_only = false) {
+    if (debug_only) {
+#ifdef NDEBUG
+        return true;  // in release mode, we don't check the type
+#endif
+    }
+    const std::string runtime_type = type_name(*ptr);
+    const std::string compile_time_type = type_name<T>();
+    const bool same = runtime_type == compile_time_type;
+    ERL_DEBUG_WARN_ONCE_COND(
+        !same,
+        "Runtime type {} does not match compile time type {}. This may cause memory "
+        "corruption if the two types have different memory sizes.",
+        runtime_type,
+        compile_time_type);
+    return same;
 }
 
 template<typename T1, typename T2>

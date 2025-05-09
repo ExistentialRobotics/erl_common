@@ -1,6 +1,11 @@
 ARG BASE_IMAGE=ubuntu:20.04
 FROM ${BASE_IMAGE}
 
+ARG APT_MIRROR=""
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.backup &&\
+    if [ -n "$APT_MIRROR" ]; then \
+        sed -i "s|http://archive.ubuntu.com/ubuntu/|$APT_MIRROR|g" /etc/apt/sources.list; \
+    fi
 RUN DEBIAN_FRONTEND=noninteractive apt update -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y ubuntu-desktop-minimal
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -23,3 +28,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     python3-tqdm
 RUN rosdep init && rosdep fix-permissions
 RUN apt-get clean  && rm -rf /var/lib/apt/lists/*
+RUN if [ -n "$APT_MIRROR" ]; then \
+        mv /etc/apt/sources.list.backup /etc/apt/sources.list; \
+    fi
