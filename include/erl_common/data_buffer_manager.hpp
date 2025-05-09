@@ -1,7 +1,8 @@
 #pragma once
 
-#include "erl_common/logging.hpp"
+#include "logging.hpp"
 
+#include <unordered_map>
 #include <vector>
 
 namespace erl::common {
@@ -9,6 +10,30 @@ namespace erl::common {
     template<typename T, class Buffer = std::vector<T>>
     class DataBufferManager {
     public:
+        template<typename, typename = void>
+        struct Writer {
+            static bool
+            Run(const T &entry, std::ostream &stream);
+        };
+
+        template<typename C>
+        struct Writer<C, std::void_t<decltype(std::declval<C>().Write())>> {
+            static bool
+            Run(const T &entry, std::ostream &stream);
+        };
+
+        template<typename, typename = void>
+        struct Reader {
+            static bool
+            Run(T &entry, std::istream &stream);
+        };
+
+        template<typename C>
+        struct Reader<C, std::void_t<decltype(std::declval<C>().Read())>> {
+            static bool
+            Run(T &entry, std::istream &stream);
+        };
+
         using DataBuffer = Buffer;
 
     private:
@@ -66,7 +91,7 @@ namespace erl::common {
         Compact();
 
         [[nodiscard]] bool
-        Write(std::ostream &s) const;  // TODO: check implementation
+        Write(std::ostream &s) const;
 
         [[nodiscard]] bool
         Read(std::istream &s);

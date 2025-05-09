@@ -2,10 +2,44 @@
 
 #include "serialization.hpp"
 
-#include <unordered_map>
 #include <unordered_set>
 
 namespace erl::common {
+
+    template<typename T, class Buffer>
+    template<typename T0, typename T1>
+    bool
+    DataBufferManager<T, Buffer>::Writer<T0, T1>::Run(const T &entry, std::ostream &stream) {
+        stream.write(reinterpret_cast<const char *>(&entry), sizeof(T));
+        return stream.good();
+    }
+
+    template<typename T, class Buffer>
+    template<typename C>
+    bool
+    DataBufferManager<T, Buffer>::Writer<C, std::void_t<decltype(std::declval<C>().Write())>>::Run(
+        const T &entry,
+        std::ostream &stream) {
+        return entry.Write(stream);
+    }
+
+    template<typename T, class Buffer>
+    template<typename T0, typename T1>
+    bool
+    DataBufferManager<T, Buffer>::Reader<T0, T1>::Run(T &entry, std::istream &stream) {
+        stream.read(reinterpret_cast<char *>(&entry), sizeof(T));
+        return stream.good();
+    }
+
+    template<typename T, class Buffer>
+    template<typename C>
+    bool
+    DataBufferManager<T, Buffer>::Reader<C, std::void_t<decltype(std::declval<C>().Read())>>::Run(
+        T &entry,
+        std::istream &stream) {
+        return entry.Read(stream);
+    }
+
     template<typename T, class Buffer>
     std::size_t
     DataBufferManager<T, Buffer>::Size() const {
@@ -134,75 +168,70 @@ namespace erl::common {
     template<typename T, class Buffer>
     bool
     DataBufferManager<T, Buffer>::Write(std::ostream &s) const {
-        static const std::vector<
-            std::pair<const char *, std::function<bool(const DataBufferManager *, std::ostream &)>>>
-            token_function_pairs = {
-                {
-                    "entries",
-                    [](const DataBufferManager *self, std::ostream &stream) {
-                        const std::size_t size = self->m_entries_.size();
-                        stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
-                        for (const auto &entry: self->m_entries_) {
-                            if (!entry.Write(stream)) {
-                                ERL_WARN("Failed to write entry.");
-                                return false;
-                            }
+        static const TokenWriteFunctionPairs<DataBufferManager> token_function_pairs = {
+            {
+                "entries",
+                [](const DataBufferManager *self, std::ostream &stream) {
+                    const std::size_t size = self->m_entries_.size();
+                    stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
+                    for (const auto &entry: self->m_entries_) {
+                        if (!Writer<T>::Run(entry, stream)) {
+                            ERL_WARN("Failed to write entry.");
+                            return false;
                         }
-                        return true;
-                    },
+                    }
+                    return true;
                 },
-                {
-                    "available_indices",
-                    [](const DataBufferManager *self, std::ostream &stream) {
-                        const std::size_t size = self->m_available_indices_.size();
-                        stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
-                        for (const auto &index: self->m_available_indices_) {
-                            stream.write(reinterpret_cast<const char *>(&index), sizeof(index));
-                        }
-                        return true;
-                    },
+            },
+            {
+                "available_indices",
+                [](const DataBufferManager *self, std::ostream &stream) {
+                    const std::size_t size = self->m_available_indices_.size();
+                    stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
+                    for (const auto &index: self->m_available_indices_) {
+                        stream.write(reinterpret_cast<const char *>(&index), sizeof(index));
+                    }
+                    return true;
                 },
-            };
+            },
+        };
         return common::WriteTokens(s, this, token_function_pairs);
     }
 
     template<typename T, class Buffer>
     bool
     DataBufferManager<T, Buffer>::Read(std::istream &s) {
-        static const std::vector<
-            std::pair<const char *, std::function<bool(DataBufferManager *, std::istream &)>>>
-            token_function_pairs = {
-                {
-                    "entries",
-                    [](DataBufferManager *self, std::istream &stream) {
-                        std::size_t size;
-                        stream.read(reinterpret_cast<char *>(&size), sizeof(size));
-                        self->m_entries_.resize(size);
-                        for (std::size_t i = 0; i < size; ++i) {
-                            if (!self->m_entries_[i].Read(stream)) {
-                                ERL_WARN("Failed to read entry.");
-                                return false;
-                            }
+        static const TokenReadFunctionPairs<DataBufferManager> token_function_pairs = {
+            {
+                "entries",
+                [](DataBufferManager *self, std::istream &stream) {
+                    std::size_t size;
+                    stream.read(reinterpret_cast<char *>(&size), sizeof(size));
+                    self->m_entries_.resize(size);
+                    for (std::size_t i = 0; i < size; ++i) {
+                        if (!Reader<T>::Run(self->m_entries_[i], stream)) {
+                            ERL_WARN("Failed to read entry.");
+                            return false;
                         }
-                        return true;
-                    },
+                    }
+                    return true;
                 },
-                {
-                    "available_indices",
-                    [](DataBufferManager *self, std::istream &stream) {
-                        std::size_t size;
-                        stream.read(reinterpret_cast<char *>(&size), sizeof(size));
-                        self->m_available_indices_.resize(size);
-                        for (std::size_t i = 0; i < size; ++i) {
-                            stream.read(
-                                reinterpret_cast<char *>(&self->m_available_indices_[i]),
-                                sizeof(std::size_t));
-                        }
-                        return true;
-                    },
+            },
+            {
+                "available_indices",
+                [](DataBufferManager *self, std::istream &stream) {
+                    std::size_t size;
+                    stream.read(reinterpret_cast<char *>(&size), sizeof(size));
+                    self->m_available_indices_.resize(size);
+                    for (std::size_t i = 0; i < size; ++i) {
+                        stream.read(
+                            reinterpret_cast<char *>(&self->m_available_indices_[i]),
+                            sizeof(std::size_t));
+                    }
+                    return true;
                 },
-            };
+            },
+        };
         return common::ReadTokens(s, this, token_function_pairs);
     }
-
 }  // namespace erl::common
