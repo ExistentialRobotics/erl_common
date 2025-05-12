@@ -72,7 +72,10 @@ namespace erl::common {
 
         [[nodiscard]] bool
         FromYamlFile(const std::string& yaml_file) {
-            ERL_ASSERTM(std::filesystem::exists(yaml_file), "File does not exist: {}", yaml_file);
+            if (!std::filesystem::exists(yaml_file)) {
+                ERL_WARN("File does not exist: {}", yaml_file);
+                return false;
+            }
             const auto node = YAML::LoadFile(yaml_file);
             return FromYamlNode(node);
         }
@@ -80,7 +83,10 @@ namespace erl::common {
         void
         AsYamlFile(const std::string& yaml_file) const {
             std::ofstream ofs(yaml_file);
-            ERL_ASSERTM(ofs.is_open(), "Failed to open file: {}", yaml_file);
+            if (!ofs.good()) {
+                ERL_WARN("Failed to open file: {}", yaml_file);
+                return;
+            }
             YAML::Emitter emitter(ofs);
             emitter.SetIndent(4);
             emitter.SetSeqFormat(YAML::Flow);
