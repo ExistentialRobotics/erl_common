@@ -19,6 +19,16 @@ TEST(EigenTest, MatrixCreation) {
     std::cout << matrix << std::endl;
 }
 
+// TEST(EigenTest, Equality) {
+//     // what happen if we compare two matrices with different sizes?
+//     Eigen::MatrixXd mat1 = Eigen::MatrixXd::Random(3, 4);
+//     Eigen::MatrixXd mat2 = Eigen::MatrixXd::Random(3, 5);
+//     bool equal = mat1 == mat2;  // a size-mismatch error will occur here!
+//     bool not_equal = mat1 != mat2;
+//     std::cout << "mat1 == mat2: " << equal << std::endl;
+//     std::cout << "mat1 != mat2: " << not_equal << std::endl;
+// }
+
 TEST(EigenTest, FormatToString) {
     Eigen::Matrix3d matrix;
 

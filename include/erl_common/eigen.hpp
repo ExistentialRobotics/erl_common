@@ -85,6 +85,43 @@ AbslHashValue(H h, const Eigen::Matrix<T, Rows, Cols>& mat) {
 }
 
 namespace erl::common {
+    template<typename T, int Rows1, int Cols1, int Rows2, int Cols2>
+    bool
+    SafeEigenMatrixEqual(
+        const Eigen::Matrix<T, Rows1, Cols1>& lhs,
+        const Eigen::Matrix<T, Rows2, Cols2>& rhs) {
+        static_assert(Rows1 == Eigen::Dynamic || Rows2 == Eigen::Dynamic || Rows1 == Rows2);
+        static_assert(Cols1 == Eigen::Dynamic || Cols2 == Eigen::Dynamic || Cols1 == Cols2);
+        if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) { return false; }
+        // we use `std::memcmp` to compare the data of the two matrices.
+        // it is safe because the data is contiguous and the size of the data is the same.
+        return std::memcmp(lhs.data(), rhs.data(), sizeof(T) * lhs.size()) == 0;
+    }
+
+    template<typename T>
+    bool
+    SafeEigenMatrixRefEqual(
+        const Eigen::Ref<const Eigen::MatrixX<T>>& lhs,
+        const Eigen::Ref<const Eigen::MatrixX<T>>& rhs) {
+        if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) { return false; }
+        return lhs == rhs;
+    }
+
+    template<typename T>
+    bool
+    SafeSparseEigenMatrixEqual(
+        const Eigen::SparseMatrix<T>& lhs,
+        const Eigen::SparseMatrix<T>& rhs) {
+        if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) { return false; }
+        if (lhs.nonZeros() != rhs.nonZeros()) { return false; }
+        for (int i = 0; i < lhs.outerSize(); ++i) {
+            for (typename Eigen::SparseMatrix<T>::InnerIterator it(lhs, i); it; ++it) {
+                if (it.value() != rhs.coeff(it.row(), it.col())) { return false; }
+            }
+        }
+        return true;
+    }
+
     // https://eigen.tuxfamily.org/dox/structEigen_1_1IOFormat.html
     enum class EigenTextFormat {
         kDefaultFmt = 0,
