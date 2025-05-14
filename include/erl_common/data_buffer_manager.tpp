@@ -9,8 +9,8 @@ namespace erl::common {
     template<typename T, class Buffer>
     template<typename T0, typename T1>
     bool
-    DataBufferManager<T, Buffer>::Writer<T0, T1>::Run(const T &entry, std::ostream &stream) {
-        stream.write(reinterpret_cast<const char *>(&entry), sizeof(T));
+    DataBufferManager<T, Buffer>::Writer<T0, T1>::Run(const T *entry, std::ostream &stream) {
+        stream.write(reinterpret_cast<const char *>(entry), sizeof(T));
         return stream.good();
     }
 
@@ -18,16 +18,16 @@ namespace erl::common {
     template<typename C>
     bool
     DataBufferManager<T, Buffer>::Writer<C, std::void_t<decltype(std::declval<C>().Write())>>::Run(
-        const T &entry,
+        const T *entry,
         std::ostream &stream) {
-        return entry.Write(stream);
+        return entry->Write(stream);
     }
 
     template<typename T, class Buffer>
     template<typename T0, typename T1>
     bool
-    DataBufferManager<T, Buffer>::Reader<T0, T1>::Run(T &entry, std::istream &stream) {
-        stream.read(reinterpret_cast<char *>(&entry), sizeof(T));
+    DataBufferManager<T, Buffer>::Reader<T0, T1>::Run(T *entry, std::istream &stream) {
+        stream.read(reinterpret_cast<char *>(entry), sizeof(T));
         return stream.good();
     }
 
@@ -35,9 +35,9 @@ namespace erl::common {
     template<typename C>
     bool
     DataBufferManager<T, Buffer>::Reader<C, std::void_t<decltype(std::declval<C>().Read())>>::Run(
-        T &entry,
+        T *entry,
         std::istream &stream) {
-        return entry.Read(stream);
+        return entry->Read(stream);
     }
 
     template<typename T, class Buffer>
@@ -174,9 +174,10 @@ namespace erl::common {
                 [](const DataBufferManager *self, std::ostream &stream) {
                     const std::size_t size = self->m_entries_.size();
                     stream.write(reinterpret_cast<const char *>(&size), sizeof(size));
-                    for (const auto &entry: self->m_entries_) {
+                    const T *entry = self->m_entries_.data();
+                    for (std::size_t i = 0; i < size; ++i, ++entry) {
                         if (!Writer<T>::Run(entry, stream)) {
-                            ERL_WARN("Failed to write entry.");
+                            ERL_WARN("Failed to write entry {}.", i);
                             return false;
                         }
                     }
@@ -208,9 +209,10 @@ namespace erl::common {
                     std::size_t size;
                     stream.read(reinterpret_cast<char *>(&size), sizeof(size));
                     self->m_entries_.resize(size);
-                    for (std::size_t i = 0; i < size; ++i) {
-                        if (!Reader<T>::Run(self->m_entries_[i], stream)) {
-                            ERL_WARN("Failed to read entry.");
+                    T *entry = self->m_entries_.data();
+                    for (std::size_t i = 0; i < size; ++i, ++entry) {
+                        if (!Reader<T>::Run(entry, stream)) {
+                            ERL_WARN("Failed to read entry {}.", i);
                             return false;
                         }
                     }

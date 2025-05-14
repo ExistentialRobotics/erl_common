@@ -13,25 +13,25 @@ namespace erl::common {
         template<typename, typename = void>
         struct Writer {
             static bool
-            Run(const T &entry, std::ostream &stream);
+            Run(const T *entry, std::ostream &stream);
         };
 
         template<typename C>
         struct Writer<C, std::void_t<decltype(std::declval<C>().Write())>> {
             static bool
-            Run(const T &entry, std::ostream &stream);
+            Run(const T *entry, std::ostream &stream);
         };
 
         template<typename, typename = void>
         struct Reader {
             static bool
-            Run(T &entry, std::istream &stream);
+            Run(T *entry, std::istream &stream);
         };
 
         template<typename C>
         struct Reader<C, std::void_t<decltype(std::declval<C>().Read())>> {
             static bool
-            Run(T &entry, std::istream &stream);
+            Run(T *entry, std::istream &stream);
         };
 
         using DataBuffer = Buffer;

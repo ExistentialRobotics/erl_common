@@ -111,6 +111,36 @@ namespace erl::common {
         return s.good();
     }
 
+    template<typename T>
+    bool
+    SaveSparseEigenMatrixToBinaryStream(std::ostream& s, const Eigen::SparseMatrix<T>& matrix) {
+        const long rows = matrix.rows();
+        const long cols = matrix.cols();
+        const long non_zeros = matrix.nonZeros();
+        s.write(reinterpret_cast<const char*>(&rows), sizeof(long));
+        s.write(reinterpret_cast<const char*>(&cols), sizeof(long));
+        s.write(reinterpret_cast<const char*>(&non_zeros), sizeof(long));
+        if (rows == 0 || cols == 0 || non_zeros == 0) { return s.good(); }
+        long cnt = 0;
+        for (long k = 0; k < matrix.outerSize(); ++k) {
+            for (typename Eigen::SparseMatrix<T>::InnerIterator it(matrix, k); it; ++it) {
+                T value = it.value();
+                long row = it.row();
+                long col = it.col();
+                s.write(reinterpret_cast<const char*>(&row), sizeof(long));
+                s.write(reinterpret_cast<const char*>(&col), sizeof(long));
+                s.write(reinterpret_cast<const char*>(&value), sizeof(T));
+                ++cnt;
+            }
+        }
+        ERL_WARN_COND(
+            non_zeros != cnt,
+            "Non-zero count mismatch. Expected {}, got {}",
+            non_zeros,
+            cnt);
+        return s.good();
+    }
+
     template<typename T, int Rows, int Cols>
     bool
     SaveEigenMatrixToBinaryStream(std::ostream& s, const Eigen::Matrix<T, Rows, Cols>& matrix) {
@@ -239,6 +269,29 @@ namespace erl::common {
             ERL_WARN("Error reading matrix from stream.");
             return false;
         }
+        return s.good();
+    }
+
+    template<typename T>
+    bool
+    LoadSparseEigenMatrixFromBinaryStream(std::istream& s, Eigen::SparseMatrix<T>& matrix) {
+        long rows, cols, non_zeros;
+        s.read(reinterpret_cast<char*>(&rows), sizeof(long));
+        s.read(reinterpret_cast<char*>(&cols), sizeof(long));
+        s.read(reinterpret_cast<char*>(&non_zeros), sizeof(long));
+        matrix = Eigen::SparseMatrix<T>(rows, cols);
+        if (rows == 0 || cols == 0 || non_zeros == 0) { return s.good(); }
+        std::vector<Eigen::Triplet<T>> triplets;
+        triplets.reserve(non_zeros);
+        for (long i = 0; i < non_zeros; ++i) {
+            T value;
+            long row, col;
+            s.read(reinterpret_cast<char*>(&row), sizeof(long));
+            s.read(reinterpret_cast<char*>(&col), sizeof(long));
+            s.read(reinterpret_cast<char*>(&value), sizeof(T));
+            triplets.emplace_back(row, col, value);
+        }
+        matrix.setFromTriplets(triplets.begin(), triplets.end());
         return s.good();
     }
 

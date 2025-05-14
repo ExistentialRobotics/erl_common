@@ -16,22 +16,42 @@ namespace erl::common {
 
     std::string
     Logging::GetDateStr() {
-        return fmt::format("{:%Y-%m-%d}", fmt::localtime(std::time(nullptr)));
+        time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+        return fmt::format("{:%Y-%m-%d}", *std::localtime(&now));
+#else
+        return fmt::format("{:%Y-%m-%d}", fmt::localtime(now));
+#endif
     }
 
     std::string
     Logging::GetTimeStr() {
-        return fmt::format("{:%X}", fmt::localtime(std::time(nullptr)));
+        time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+        return fmt::format("{:%X}", *std::localtime(&now));
+#else
+        return fmt::format("{:%X}", fmt::localtime(now));
+#endif
     }
 
     std::string
     Logging::GetDateTimeStr() {
-        return fmt::format("{:%Y-%m-%d %X}", fmt::localtime(std::time(nullptr)));
+        time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+        return fmt::format("{:%Y-%m-%d %X}", *std::localtime(&now));
+#else
+        return fmt::format("{:%Y-%m-%d %X}", fmt::localtime(now));
+#endif
     }
 
     std::string
     Logging::GetTimeStamp() {
-        return fmt::format("{:%Y%m%d-%H%M%S}", fmt::localtime(std::time(nullptr)));
+        time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+        return fmt::format("{:%Y%m%d-%H%M%S}", *std::localtime(&now));
+#else
+        return fmt::format("{:%Y%m%d-%H%M%S}", fmt::localtime(now));
+#endif
     }
 
 }  // namespace erl::common

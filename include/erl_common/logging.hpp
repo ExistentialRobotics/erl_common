@@ -46,10 +46,16 @@ namespace erl::common {
             if (s_level_ > kInfo) { return; }
             // https://fmt.dev/latest/syntax.html
             std::lock_guard lock(g_print_mutex);
+            time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+            auto time = *std::localtime(&now);
+#else
+            auto time = fmt::localtime(now);
+#endif
             std::string msg = fmt::format(
                 fmt::fg(fmt::color::deep_sky_blue) | fmt::emphasis::bold,
                 "[{:%X}][INFO]: ",
-                fmt::localtime(std::time(nullptr)));
+                time);
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
@@ -60,10 +66,16 @@ namespace erl::common {
         Debug(Args... args) {
             if (s_level_ > kDebug) { return; }
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(
+            time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+            auto time = *std::localtime(&now);
+#else
+            auto time = fmt::localtime(now);
+#endif
+            std::string msg = Format(  //
                 fmt::fg(fmt::color::orange) | fmt::emphasis::bold,
                 "[{:%X}][DEBUG]: ",
-                fmt::localtime(std::time(nullptr)));
+                time);
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
@@ -74,10 +86,16 @@ namespace erl::common {
         Warn(Args... args) {
             if (s_level_ > kWarn) { return; }
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(
+            time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+            auto time = *std::localtime(&now);
+#else
+            auto time = fmt::localtime(now);
+#endif
+            std::string msg = Format(
                 fmt::fg(fmt::color::orange_red) | fmt::emphasis::bold,
                 "[{:%X}][WARN]: ",
-                fmt::localtime(std::time(nullptr)));
+                time);
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
@@ -94,10 +112,16 @@ namespace erl::common {
         Error(Args... args) {
             if (s_level_ > kError) { return; }
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(
+            time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+            auto time = *std::localtime(&now);
+#else
+            auto time = fmt::localtime(now);
+#endif
+            std::string msg = Format(  //
                 fmt::fg(fmt::color::red) | fmt::emphasis::bold,
                 "[{:%X}][ERROR]: ",
-                fmt::localtime(std::time(nullptr)));
+                time);
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
@@ -112,10 +136,16 @@ namespace erl::common {
         static void
         Fatal(Args... args) {
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(
+            time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+            auto time = *std::localtime(&now);
+#else
+            auto time = fmt::localtime(now);
+#endif
+            std::string msg = Format(
                 fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold,
                 "[{:%X}][FATAL]: ",
-                fmt::localtime(std::time(nullptr)));
+                time);
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
@@ -130,10 +160,16 @@ namespace erl::common {
         static void
         Success(Args... args) {
             std::lock_guard lock(g_print_mutex);
-            std::string msg = fmt::format(
+            time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+            auto time = *std::localtime(&now);
+#else
+            auto time = fmt::localtime(now);
+#endif
+            std::string msg = Format(
                 fmt::fg(fmt::color::spring_green) | fmt::emphasis::bold,
                 "[{:%X}][SUCCESS]: ",
-                fmt::localtime(std::time(nullptr)));
+                time);
             fmt::format_to(std::back_inserter(msg), std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { msg += "\n"; }
             ProgressBar::Write(msg);
@@ -149,10 +185,16 @@ namespace erl::common {
         static std::string
         Failure(Args... args) {
             std::lock_guard lock(g_print_mutex);
-            const std::string msg = fmt::format(
+            time_t now = std::time(nullptr);
+#if FMT_VERSION >= 110200
+            auto time = *std::localtime(&now);
+#else
+            auto time = fmt::localtime(now);
+#endif
+            const std::string msg = Format(  //
                 fmt::fg(fmt::color::red) | fmt::emphasis::bold,
                 "[{:%X}][FAILURE]: ",
-                fmt::localtime(std::time(nullptr)));
+                time);
             std::string failure_msg = fmt::format(std::forward<Args>(args)...);
             if (ProgressBar::GetNumBars() == 0) { failure_msg += "\n"; }
             ProgressBar::Write(msg + failure_msg);
@@ -163,6 +205,17 @@ namespace erl::common {
         Write(const std::string& msg) {
             std::lock_guard lock(g_print_mutex);
             ProgressBar::Write(msg);
+        }
+
+    private:
+        template<typename... Args>
+        static std::string
+        Format(fmt::text_style style, const char* fmt, Args... args) {
+#if FMT_VERSION >= 110200
+            return fmt::format(style, fmt, std::forward<Args>(args)...);
+#else
+            return fmt::format(style, fmt, std::forward<Args>(args)...);
+#endif
         }
     };
 }  // namespace erl::common

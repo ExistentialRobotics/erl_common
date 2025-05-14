@@ -3,6 +3,7 @@
 #include "factory_pattern.hpp"
 #include "logging.hpp"
 #include "opencv.hpp"
+#include "version_check.hpp"
 
 #include <yaml-cpp/yaml.h>
 
@@ -127,15 +128,77 @@ namespace erl::common {
             return YAML::convert<T>::encode(*static_cast<const T*>(this));
         }
     };
-
-#define ERL_YAML_SAVE_ATTR(node, obj, attr)            node[#attr] = (obj).attr
-#define ERL_YAML_LOAD_ATTR_TYPE(node, obj, attr, type) obj.attr = (node)[#attr].as<type>()
-#define ERL_YAML_LOAD_ATTR(node, obj, attr) \
-    ERL_YAML_LOAD_ATTR_TYPE(node, obj, attr, decltype((obj).attr))
-
-    // #define ERL_REGISTER_YAMLABLE(Derived) inline const volatile bool kRegistered##Derived =
-    // erl::common::YamlableBase::Register<Derived>()
 }  // namespace erl::common
+
+template<
+    typename T,
+    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+void
+SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+    node[name] = obj.AsYamlNode();
+}
+
+template<
+    typename T,
+    std::enable_if_t<!std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+void
+SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+    node[name] = obj;
+}
+
+template<
+    typename T,
+    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+void
+SaveToNode(YAML::Node& node, const char* name, const std::shared_ptr<T>& obj) {
+    node[name] = obj->AsYamlNode();
+}
+
+template<
+    typename T,
+    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+void
+LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+    obj.FromYamlNode(node[name]);
+}
+
+template<
+    typename T,
+    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+void
+LoadFromNode(const YAML::Node& node, const char* name, const std::shared_ptr<T>& obj) {
+    LoadFromNode(node, name, *obj);
+}
+
+template<typename T, std::enable_if_t<std::is_floating_point_v<T>, void>* = nullptr>
+void
+LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+#if ERL_CHECK_VERSION_GE(   \
+    YAML_CPP_VERSION_MAJOR, \
+    YAML_CPP_VERSION_MINOR, \
+    YAML_CPP_VERSION_PATCH, \
+    0,                      \
+    6,                      \
+    3)
+    obj = node[name].as<T>();
+#else
+    // YAML 0.6.2 fails to parse "inf".
+    obj = static_cast<T>(std::stod(node[name].as<std::string>()));
+#endif
+}
+
+template<
+    typename T,
+    std::enable_if_t<
+        !std::is_base_of_v<erl::common::YamlableBase, T> && !std::is_floating_point_v<T>,
+        void>* = nullptr>
+void
+LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+    obj = node[name].as<T>();
+}
+
+#define ERL_YAML_SAVE_ATTR(node, obj, attr) SaveToNode(node, #attr, (obj).attr)
+#define ERL_YAML_LOAD_ATTR(node, obj, attr) LoadFromNode(node, #attr, (obj).attr)
 
 namespace YAML {
     template<

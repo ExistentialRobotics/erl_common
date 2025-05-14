@@ -13,8 +13,8 @@ TEST(DataBufferManager, Basic) {
     EXPECT_EQ(manager.Size(), num_entries);
     for (int i = 0; i < num_entries; ++i) { EXPECT_EQ(manager[i], i); }
 
-    ASSERT_TRUE(Serialization<Manager>::Write("data_buffer_manager.bin", manager));
+    ASSERT_TRUE(Serialization<Manager>::Write("data_buffer_manager.bin", &manager));
     Manager manager_read;
-    ASSERT_TRUE(Serialization<Manager>::Read("data_buffer_manager.bin", manager_read));
+    ASSERT_TRUE(Serialization<Manager>::Read("data_buffer_manager.bin", &manager_read));
     EXPECT_EQ(manager, manager_read);
 }
