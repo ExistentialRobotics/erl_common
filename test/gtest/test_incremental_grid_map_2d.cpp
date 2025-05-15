@@ -59,8 +59,8 @@ TEST(IncrementalGridMap2DTest, ExtendToTopLeft) {
     ASSERT_EQ(new_grid_map_info->Min(0), -1 - x_res);
     ASSERT_EQ(new_grid_map_info->Min(1), -1 - y_res);
 
-    int x_grid = new_grid_map_info->MeterToGridForValue(x, 0);
-    int y_grid = new_grid_map_info->MeterToGridForValue(y, 1);
+    int x_grid = new_grid_map_info->MeterToGridAtDim(x, 0);
+    int y_grid = new_grid_map_info->MeterToGridAtDim(y, 1);
     ASSERT_EQ(*grid_map.GetMutableData(x_grid, y_grid), 1);
 }
 
@@ -91,8 +91,8 @@ TEST(IncrementalGridMap2DTest, ExtendToCentralLeft) {
     ASSERT_EQ(new_grid_map_info->Min(0), -1 - x_res);
     ASSERT_EQ(new_grid_map_info->Min(1), -1 - y_res);
 
-    int x_grid = new_grid_map_info->MeterToGridForValue(x, 0);
-    int y_grid = new_grid_map_info->MeterToGridForValue(y, 1);
+    int x_grid = new_grid_map_info->MeterToGridAtDim(x, 0);
+    int y_grid = new_grid_map_info->MeterToGridAtDim(y, 1);
     ASSERT_EQ(*grid_map.GetMutableData(x_grid, y_grid), 1);
 }
 
@@ -123,8 +123,8 @@ TEST(IncrementalGridMap2DTest, ExtendToTopCentral) {
     ASSERT_EQ(new_grid_map_info->Min(0), -1 - x_res);
     ASSERT_EQ(new_grid_map_info->Max(1), 2 + y_res);
 
-    int x_grid = new_grid_map_info->MeterToGridForValue(x, 0);
-    int y_grid = new_grid_map_info->MeterToGridForValue(y, 1);
+    int x_grid = new_grid_map_info->MeterToGridAtDim(x, 0);
+    int y_grid = new_grid_map_info->MeterToGridAtDim(y, 1);
     ASSERT_EQ(*grid_map.GetMutableData(x_grid, y_grid), 1);
 }
 
@@ -155,8 +155,8 @@ TEST(IncrementalGridMap2DTest, ExtendToTopRight) {
     ASSERT_EQ(new_grid_map_info->Min(0), -1 - x_res);
     ASSERT_EQ(new_grid_map_info->Max(1), 2 + y_res);
 
-    int x_grid = new_grid_map_info->MeterToGridForValue(x, 0);
-    int y_grid = new_grid_map_info->MeterToGridForValue(y, 1);
+    int x_grid = new_grid_map_info->MeterToGridAtDim(x, 0);
+    int y_grid = new_grid_map_info->MeterToGridAtDim(y, 1);
     ASSERT_EQ(*grid_map.GetMutableData(x_grid, y_grid), 1);
 }
 
@@ -187,8 +187,8 @@ TEST(IncrementalGridMap2DTest, ExtendToCentalRight) {
     ASSERT_EQ(new_grid_map_info->Max(0), 2 + x_res);
     ASSERT_EQ(new_grid_map_info->Max(1), 2 + y_res);
 
-    int x_grid = new_grid_map_info->MeterToGridForValue(x, 0);
-    int y_grid = new_grid_map_info->MeterToGridForValue(y, 1);
+    int x_grid = new_grid_map_info->MeterToGridAtDim(x, 0);
+    int y_grid = new_grid_map_info->MeterToGridAtDim(y, 1);
     ASSERT_EQ(*grid_map.GetMutableData(x_grid, y_grid), 1);
 }
 
@@ -219,8 +219,8 @@ TEST(IncrementalGridMap2DTest, ExtendToBottomRight) {
     ASSERT_EQ(new_grid_map_info->Max(0), 2 + x_res);
     ASSERT_EQ(new_grid_map_info->Max(1), 2 + y_res);
 
-    int x_grid = new_grid_map_info->MeterToGridForValue(x, 0);
-    int y_grid = new_grid_map_info->MeterToGridForValue(y, 1);
+    int x_grid = new_grid_map_info->MeterToGridAtDim(x, 0);
+    int y_grid = new_grid_map_info->MeterToGridAtDim(y, 1);
     ASSERT_EQ(*grid_map.GetMutableData(x_grid, y_grid), 1);
 }
 
@@ -251,8 +251,8 @@ TEST(IncrementalGridMap2DTest, ExtendToBottomCentral) {
     ASSERT_EQ(new_grid_map_info->Max(0), 2 + x_res);
     ASSERT_EQ(new_grid_map_info->Min(1), -1 - y_res);
 
-    int x_grid = new_grid_map_info->MeterToGridForValue(x, 0);
-    int y_grid = new_grid_map_info->MeterToGridForValue(y, 1);
+    int x_grid = new_grid_map_info->MeterToGridAtDim(x, 0);
+    int y_grid = new_grid_map_info->MeterToGridAtDim(y, 1);
     ASSERT_EQ(*grid_map.GetMutableData(x_grid, y_grid), 1);
 }
 
@@ -283,7 +283,7 @@ TEST(IncrementalGridMap2DTest, ExtendToBottomLeft) {
     ASSERT_EQ(new_grid_map_info->Max(0), 2 + x_res);
     ASSERT_EQ(new_grid_map_info->Min(1), -1 - y_res);
 
-    int x_grid = new_grid_map_info->MeterToGridForValue(x, 0);
-    int y_grid = new_grid_map_info->MeterToGridForValue(y, 1);
+    int x_grid = new_grid_map_info->MeterToGridAtDim(x, 0);
+    int y_grid = new_grid_map_info->MeterToGridAtDim(y, 1);
     ASSERT_EQ(*grid_map.GetMutableData(x_grid, y_grid), 1);
 }

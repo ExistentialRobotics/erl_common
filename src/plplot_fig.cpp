@@ -515,6 +515,60 @@ namespace erl::common {
     }
 
     PlplotFig &
+    PlplotFig::DrawContour(
+        const double *data,
+        const int n_rows,
+        const int n_cols,
+        double min_x,
+        double max_x,
+        double min_y,
+        double max_y,
+        const bool col_major,
+        const std::vector<double> &levels) {
+        std::vector<double *> z_ptrs;
+        if (col_major) {
+            z_ptrs.resize(n_cols);
+            for (int i = 0; i < n_cols; ++i) {
+                z_ptrs[i] = const_cast<double *>(data + i * n_rows);
+            }
+        } else {
+            z_ptrs.resize(n_rows);
+            for (int i = 0; i < n_rows; ++i) {
+                z_ptrs[i] = const_cast<double *>(data + i * n_cols);
+            }
+        }
+        PLcGrid2 grid;
+        grid.nx = n_cols;
+        grid.ny = n_rows;
+        m_pls_->Alloc2dGrid(&grid.xg, grid.nx, grid.ny);
+        m_pls_->Alloc2dGrid(&grid.yg, grid.nx, grid.ny);
+        const double res_x = (max_x - min_x) / static_cast<double>(grid.nx - 1);
+        const double res_y = (max_y - min_y) / static_cast<double>(grid.ny - 1);
+        for (int i = 0; i < grid.nx; ++i) {
+            const double x = min_x + static_cast<double>(i) * res_x;
+            for (int j = 0; j < grid.ny; ++j) {
+                grid.xg[i][j] = x;
+                grid.yg[i][j] = min_y + static_cast<double>(j) * res_y;
+            }
+        }
+        m_pls_->cont(
+            z_ptrs.data(),
+            n_rows,
+            n_cols,
+            1,
+            n_rows,
+            1,
+            n_cols,
+            levels.data(),
+            static_cast<int>(levels.size()),
+            plcallback::tr2,  // identical mapping
+            &grid);
+        m_pls_->Free2dGrid(grid.xg, grid.nx, grid.ny);
+        m_pls_->Free2dGrid(grid.yg, grid.nx, grid.ny);
+        return *this;
+    }
+
+    PlplotFig &
     PlplotFig::SetLabels(const char *x_label, const char *y_label, const char *title) {
         m_pls_->lab(x_label, y_label, title);  // 17.69
         return *this;
@@ -929,7 +983,7 @@ namespace erl::common {
             std::vector{255, 51, 5, 0,  0,   0},
             // clang-format on
         };
-        static const std::array<std::vector<int>, 3> cmap_jet = {
+        static const std::array<std::vector<int>, 3> cmap_jet_r = {
             std::vector{128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240,
                         248, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
                         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -957,10 +1011,15 @@ namespace erl::common {
                         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
                         255, 255, 255, 255, 255, 255, 255, 252, 244, 236, 228, 220, 212, 204, 196,
                         188, 180, 172, 164, 156, 148, 140, 128}};
+        static const std::array<std::vector<int>, 3> cmap_jet = {
+            std::vector(cmap_jet_r[0].rbegin(), cmap_jet_r[0].rend()),
+            std::vector(cmap_jet_r[1].rbegin(), cmap_jet_r[1].rend()),
+            std::vector(cmap_jet_r[2].rbegin(), cmap_jet_r[2].rend())};
 
         const std::vector<int> *rgb = cmap_default0.data();
         if (cmap == Default1) { rgb = cmap_default1.data(); }
         if (cmap == Jet) { rgb = cmap_jet.data(); }
+        if (cmap == JetReversed) { rgb = cmap_jet_r.data(); }
 
         if (map_index == 0) {
             m_pls_->scmap0n(num_colors);
@@ -1091,7 +1150,7 @@ namespace erl::common {
     }
 
     PlplotFig::ShadesOpt &
-    PlplotFig::ShadesOpt::SetTransformData(PLPointer const transform_data_) {
+    PlplotFig::ShadesOpt::SetTransformData(PLPointer transform_data_) {
         transform_data = transform_data_;
         return *this;
     }

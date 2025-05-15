@@ -26,6 +26,22 @@ namespace erl::common {
     }
 
     /**
+     * Convert discrete coordinate to vertex coordinate in meters. This function is used when we
+     * are dealing with the grid points in the grid map. If we want to deal with the grid cells,
+     * we should use the `GridToMeter` function.
+     * @tparam Dtype data type.
+     * @param index discrete coordinate.
+     * @param meter_min min vertex coordinate in meters.
+     * @param resolution grid resolution in meters.
+     * @return vertex coordinate in meters.
+     */
+    template<typename Dtype>
+    Dtype
+    VertexIndexToMeter(const int index, const Dtype meter_min, const Dtype resolution) {
+        return static_cast<Dtype>(index) * resolution + meter_min;
+    }
+
+    /**
      * GridMapInfo defines
      * 1. the mapping between right-handed n-dim world system and right-handed n-dim grid map
      * (xy-indexing).
@@ -317,12 +333,12 @@ namespace erl::common {
         }
 
         [[nodiscard]] Dtype
-        GridToMeterForValue(const int grid_value, const int dim) const {
+        GridToMeterAtDim(const int grid_value, const int dim) const {
             return GridToMeter(grid_value, m_min_[dim], m_resolution_[dim]);
         }
 
         [[nodiscard]] Eigen::VectorX<Dtype>
-        GridToMeterForValues(const Eigen::Ref<const Eigen::VectorXi>& grid_values, int dim) const {
+        GridToMeterAtDim(const Eigen::Ref<const Eigen::VectorXi>& grid_values, int dim) const {
             const Dtype& min = m_min_[dim];
             const Dtype& res = m_resolution_[dim];
             return grid_values.unaryExpr(
@@ -330,12 +346,12 @@ namespace erl::common {
         }
 
         [[nodiscard]] int
-        MeterToGridForValue(const Dtype meter_value, int dim) const {
+        MeterToGridAtDim(const Dtype meter_value, int dim) const {
             return MeterToGrid(meter_value, m_min_[dim], m_resolution_[dim]);
         }
 
         [[nodiscard]] Eigen::VectorXi
-        MeterToGridForValues(const Eigen::Ref<const Eigen::VectorX<Dtype>>& meter_values, int dim)
+        MeterToGridAtDim(const Eigen::Ref<const Eigen::VectorX<Dtype>>& meter_values, int dim)
             const {
             const Dtype& min = m_min_[dim];
             const Dtype& res = m_resolution_[dim];
@@ -715,7 +731,7 @@ namespace erl::common {
                     t_max[i] = std::numeric_limits<Dtype>::infinity();
                     t_delta[i] = std::numeric_limits<Dtype>::infinity();
                 } else {
-                    const Dtype voxel_border = GridToMeterForValue(cur_grid[i], i) +
+                    const Dtype voxel_border = GridToMeterAtDim(cur_grid[i], i) +
                                                static_cast<Dtype>(step[i]) * 0.5 * m_resolution_[i];
                     t_max[i] = (voxel_border - start[i]) / direction[i];
                     t_delta[i] = m_resolution_[i] / std::abs(direction[i]);

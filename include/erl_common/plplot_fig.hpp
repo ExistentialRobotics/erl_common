@@ -347,6 +347,18 @@ namespace erl::common {
         PlplotFig&
         ColorBar(ColorBarOpt& opt);
 
+        PlplotFig&
+        DrawContour(
+            const double* data,
+            int n_rows,
+            int n_cols,
+            double min_x,
+            double max_x,
+            double min_y,
+            double max_y,
+            bool col_major,
+            const std::vector<double>& levels);
+
         /**
          *
          * @param line_style 1: solid, 2: short-dash-short-gap, 3: long-dash-log-gap, 4:
@@ -740,6 +752,7 @@ namespace erl::common {
             Default0 = 0,
             Default1 = 1,
             Jet = 2,
+            JetReversed = 3,
         };
 
         PlplotFig&

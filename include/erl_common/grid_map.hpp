@@ -100,11 +100,11 @@ namespace erl::common {
         [[nodiscard]] MetricCoords
         GetCanonicalMetricCoords(const Eigen::Ref<const MetricCoords> &metric_coords) const {
             return {
-                m_grid_map_info_->GridToMeterForValue(
-                    m_grid_map_info_->MeterToGridForValue(metric_coords[0], 0),
+                m_grid_map_info_->GridToMeterAtDim(
+                    m_grid_map_info_->MeterToGridAtDim(metric_coords[0], 0),
                     0),
-                m_grid_map_info_->GridToMeterForValue(
-                    m_grid_map_info_->MeterToGridForValue(metric_coords[1], 1),
+                m_grid_map_info_->GridToMeterAtDim(
+                    m_grid_map_info_->MeterToGridAtDim(metric_coords[1], 1),
                     1)};
         }
 
@@ -127,13 +127,13 @@ namespace erl::common {
             } else {
                 image.setConstant(grid_map_info->Shape(0), grid_map_info->Shape(1), 0);
                 for (int i = 0; i < n_rows; ++i) {
-                    InfoDtype x = m_grid_map_info_->GridToMeterForValue(i, 0);
-                    const int ii = grid_map_info->MeterToGridForValue(x, 0);
+                    InfoDtype x = m_grid_map_info_->GridToMeterAtDim(i, 0);
+                    const int ii = grid_map_info->MeterToGridAtDim(x, 0);
                     for (int j = 0; j < n_cols; ++j) {
                         auto &data = m_data_(i, j);
-                        InfoDtype y = m_grid_map_info_->GridToMeterForValue(j, 1);
+                        InfoDtype y = m_grid_map_info_->GridToMeterAtDim(j, 1);
                         if (!grid_map_info->InMap(MetricCoords(x, y))) { continue; }
-                        const int jj = grid_map_info->MeterToGridForValue(y, 1);
+                        const int jj = grid_map_info->MeterToGridAtDim(y, 1);
                         image(ii, jj) = cast_func(data);
                     }
                 }
@@ -176,8 +176,8 @@ namespace erl::common {
         Dtype
         operator()(const InfoDtype x, const InfoDtype y) const {
             return operator()(
-                m_grid_map_info_->MeterToGridForValue(x, 0),
-                m_grid_map_info_->MeterToGridForValue(y, 1));
+                m_grid_map_info_->MeterToGridAtDim(x, 0),
+                m_grid_map_info_->MeterToGridAtDim(y, 1));
         }
 
         /**
@@ -214,13 +214,13 @@ namespace erl::common {
         Dtype &
         GetMutableData(const double x, const double y) {
             ERL_DEBUG_ASSERT(!omp_in_parallel(), "The grid map is not thread safe.");
-            int x_grid = m_grid_map_info_->MeterToGridForValue(x, 0);
-            int y_grid = m_grid_map_info_->MeterToGridForValue(y, 1);
+            int x_grid = m_grid_map_info_->MeterToGridAtDim(x, 0);
+            int y_grid = m_grid_map_info_->MeterToGridAtDim(y, 1);
             while (x_grid < 0 || y_grid < 0 || x_grid >= m_grid_map_info_->Shape(0) ||
                    y_grid >= m_grid_map_info_->Shape(1)) {
                 Extend(GetExtendCode(x_grid, y_grid));
-                x_grid = m_grid_map_info_->MeterToGridForValue(x, 0);
-                y_grid = m_grid_map_info_->MeterToGridForValue(y, 1);
+                x_grid = m_grid_map_info_->MeterToGridAtDim(x, 0);
+                y_grid = m_grid_map_info_->MeterToGridAtDim(y, 1);
             }
             return GetMutableData(x_grid, y_grid);
         }
@@ -262,10 +262,10 @@ namespace erl::common {
             const double x_max,
             const double y_max,
             const bool safe_crop = true) {
-            int x_min_grid = m_grid_map_info_->MeterToGridForValue(x_min, 0);
-            int y_min_grid = m_grid_map_info_->MeterToGridForValue(y_min, 1);
-            int x_max_grid = m_grid_map_info_->MeterToGridForValue(x_max, 0);
-            int y_max_grid = m_grid_map_info_->MeterToGridForValue(y_max, 1);
+            int x_min_grid = m_grid_map_info_->MeterToGridAtDim(x_min, 0);
+            int y_min_grid = m_grid_map_info_->MeterToGridAtDim(y_min, 1);
+            int x_max_grid = m_grid_map_info_->MeterToGridAtDim(x_max, 0);
+            int y_max_grid = m_grid_map_info_->MeterToGridAtDim(y_max, 1);
             if (safe_crop) {
                 x_min_grid = std::max(x_min_grid, 0);
                 y_min_grid = std::max(y_min_grid, 0);
@@ -294,10 +294,10 @@ namespace erl::common {
             const double x_max,
             const double y_max,
             std::vector<Dtype> &data) {
-            int x_min_grid = m_grid_map_info_->MeterToGridForValue(x_min, 0);
-            int y_min_grid = m_grid_map_info_->MeterToGridForValue(y_min, 1);
-            int x_max_grid = m_grid_map_info_->MeterToGridForValue(x_max, 0);
-            int y_max_grid = m_grid_map_info_->MeterToGridForValue(y_max, 1);
+            int x_min_grid = m_grid_map_info_->MeterToGridAtDim(x_min, 0);
+            int y_min_grid = m_grid_map_info_->MeterToGridAtDim(y_min, 1);
+            int x_max_grid = m_grid_map_info_->MeterToGridAtDim(x_max, 0);
+            int y_max_grid = m_grid_map_info_->MeterToGridAtDim(y_max, 1);
             x_min_grid = std::max(x_min_grid, 0);
             y_min_grid = std::max(y_min_grid, 0);
             x_max_grid = std::min(x_max_grid, m_grid_map_info_->Shape(0) - 1);

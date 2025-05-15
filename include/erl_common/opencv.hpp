@@ -502,15 +502,15 @@ namespace erl::common {
         if (pixel_based) {
             for (long i = 0; i < num_points; ++i) {
                 points.emplace_back(
-                    grid_map_info->MeterToGridForValue(trajectory(0, i), 0),
+                    grid_map_info->MeterToGridAtDim(trajectory(0, i), 0),
                     grid_map_info->Shape(1) -
-                        grid_map_info->MeterToGridForValue(trajectory(1, i), 1));
+                        grid_map_info->MeterToGridAtDim(trajectory(1, i), 1));
             }
         } else {
             for (long i = 0; i < num_points; ++i) {
                 points.emplace_back(
-                    grid_map_info->MeterToGridForValue(trajectory(1, i), 1),
-                    grid_map_info->MeterToGridForValue(trajectory(0, i), 0));
+                    grid_map_info->MeterToGridAtDim(trajectory(1, i), 1),
+                    grid_map_info->MeterToGridAtDim(trajectory(0, i), 0));
             }
         }
         cv::polylines(map, points, false, color, thickness);
@@ -534,14 +534,14 @@ namespace erl::common {
         auto &contour = contours[0];
         contour.reserve(num_points + 1);
         contour.emplace_back(
-            grid_map_info->MeterToGridForValue(position[1], 1),
-            grid_map_info->MeterToGridForValue(position[0], 0));
+            grid_map_info->MeterToGridAtDim(position[1], 1),
+            grid_map_info->MeterToGridAtDim(position[0], 0));
         for (long i = 0; i < num_points; ++i) {
             const double &angle = angles_in_world[i];
             const double &range = ranges[i];
             contour.emplace_back(
-                grid_map_info->MeterToGridForValue(position[1] + range * std::sin(angle), 1),
-                grid_map_info->MeterToGridForValue(position[0] + range * std::cos(angle), 0));
+                grid_map_info->MeterToGridAtDim(position[1] + range * std::sin(angle), 1),
+                grid_map_info->MeterToGridAtDim(position[0] + range * std::cos(angle), 0));
         }
         cv::fillPoly(map, contours, color);
 
@@ -565,15 +565,15 @@ namespace erl::common {
         std::vector<cv::Point2i> points;
         points.reserve(num_points * 2);
         const cv::Point2i start_point(
-            grid_map_info->MeterToGridForValue(position[1], 1),
-            grid_map_info->MeterToGridForValue(position[0], 0));
+            grid_map_info->MeterToGridAtDim(position[1], 1),
+            grid_map_info->MeterToGridAtDim(position[0], 0));
         for (long i = 0; i < num_points; ++i) {
             const double &angle = angles_in_world[i];
             const double &range = ranges[i];
             points.push_back(start_point);
             points.emplace_back(
-                grid_map_info->MeterToGridForValue(position[1] + range * std::sin(angle), 1),
-                grid_map_info->MeterToGridForValue(position[0] + range * std::cos(angle), 0));
+                grid_map_info->MeterToGridAtDim(position[1] + range * std::sin(angle), 1),
+                grid_map_info->MeterToGridAtDim(position[0] + range * std::cos(angle), 0));
         }
         cv::polylines(map, points, false, color, ray_thickness);
 
