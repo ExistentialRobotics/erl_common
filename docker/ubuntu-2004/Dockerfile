@@ -52,6 +52,8 @@ RUN touch /usr/lib/python3/dist-packages/_Pltk_init.so
 RUN touch /usr/lib/python3/dist-packages/_plplotc.so
 RUN touch /usr/lib/python3/dist-packages/plplot_pyqt5.so
 RUN touch /usr/bin/pltek
+RUN sed 's/..\/..\/..\/..\/..\/include/..\/..\/..\/..\/include/g' \
+    /usr/lib/x86_64-linux-gnu/cmake/yaml-cpp/yaml-cpp-config.cmake
 
 WORKDIR /root
 RUN git clone https://github.com/jlblancoc/nanoflann && \

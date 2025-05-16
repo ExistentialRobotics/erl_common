@@ -22,6 +22,7 @@
     <build_depend>Boost</build_depend>
     <build_depend>fmt</build_depend>
     <build_depend>nanoflann</build_depend>
+    <build_depend>plplot</build_depend>
     <build_depend>Python3</build_depend>
     <build_depend>pybind11</build_depend>
 
@@ -35,6 +36,7 @@
     <build_export_depend>Boost</build_export_depend>
     <build_export_depend>fmt</build_export_depend>
     <build_export_depend>nanoflann</build_export_depend>  <!-- header only -->
+    <build_export_depend>plplot</build_export_depend>
     <build_export_depend>Python3</build_export_depend>
     <build_export_depend>pybind11</build_export_depend>  <!-- header only -->
 
@@ -46,5 +48,6 @@
     <exec_depend>Boost</exec_depend>
     <exec_depend>Python3</exec_depend>
     <exec_depend>fmt</exec_depend>
+    <exec_depend>plplot</exec_depend>
 
 </package>

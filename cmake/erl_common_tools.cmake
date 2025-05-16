@@ -14,77 +14,106 @@ foreach (file ${MODULE_CONFIG_FILES})
 endforeach ()
 
 # ##################################################################################################
-# target_link_libraries_system
+# erl_append_property
 # ##################################################################################################
-function(target_link_libraries_system target)
-    set(options PRIVATE PUBLIC INTERFACE)
-    set(oneValueArgs)
-    set(multiValueArgs)
-    cmake_parse_arguments(ERL "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+function(erl_append_property target_name property_name output_var)
+    get_target_property(_property ${target_name} ${property_name})
+    if (_property)
+        list(APPEND ${output_var} ${_property})
+        set(${output_var} ${${output_var}} PARENT_SCOPE)
+    endif ()
+endfunction()
 
-    foreach (op ${options})
-        if (ERL_${op})
-            set(scope ${op})
+# ##################################################################################################
+# erl_collect_library_dependencies
+# ##################################################################################################
+function(erl_collect_library_dependencies target_name includes_out libs_out)
+
+    set(queue ${target_name})
+    set(visited "")
+    set(_includes)
+    set(_libs)
+
+    while (queue)
+        list(POP_FRONT queue current)
+
+        list(FIND visited ${current} already_seen)
+        if (already_seen EQUAL -1)
+            list(APPEND visited ${current})  # mark as visited
+
+            set(_local_libs "")
+            get_target_property(_cfg ${current} IMPORTED_CONFIGURATIONS)
+            if (_cfg)
+                set(_cfg "_${_cfg}")
+                # check libraries
+                erl_append_property(${current} IMPORTED_LINK_DEPENDENT_LIBRARIES${_cfg} _local_libs)
+                erl_append_property(${current} IMPORTED_LINK_INTERFACE_LIBRARIES${_cfg} _local_libs)
+                erl_append_property(${current} IMPORTED_LOCATION${_cfg} _local_libs)
+                erl_append_property(${current} INTERFACE_LINK_LIBRARIES${_cfg} _local_libs)
+                erl_append_property(${current} LOCATION${_cfg} _local_libs)
+            endif ()
+            # check includes
+            erl_append_property(${current} INCLUDE_DIRECTORIES _includes)
+            erl_append_property(${current} INTERFACE_INCLUDE_DIRECTORIES _includes)
+            erl_append_property(${current} INTERFACE_SYSTEM_INCLUDE_DIRECTORIES _includes)
+            # check libraries
+            erl_append_property(${current} IMPORTED_LINK_DEPENDENT_LIBRARIES _local_libs)
+            erl_append_property(${current} IMPORTED_LINK_INTERFACE_LIBRARIES _local_libs)
+            erl_append_property(${current} IMPORTED_LOCATION _local_libs)
+            erl_append_property(${current} INTERFACE_LINK_LIBRARIES _local_libs)
+            erl_append_property(${current} LINK_LIBRARIES _local_libs)
+            erl_append_property(${current} LOCATION _local_libs)
+
+            foreach (_lib IN LISTS _local_libs)
+                if (TARGET ${_lib})
+                    list(APPEND queue ${_lib})
+                else ()
+                    list(APPEND _libs ${_lib})
+                endif ()
+            endforeach ()
+            list(REMOVE_DUPLICATES _includes)
+            list(REMOVE_DUPLICATES _libs)
         endif ()
-    endforeach ()
+    endwhile ()
 
-    if (NOT scope)
-        message(FATAL_ERROR "No scope is specified: PRIVATE, PUBLIC, or INTERFACE")
-    endif ()
+    # message(STATUS "All deps: ${visited}")
+    # message(STATUS "Includes: ${_includes}")
+    # message(STATUS "Libs: ${_libs}")
 
-    set(libs ${ERL_UNPARSED_ARGUMENTS})
-
-    foreach (lib ${libs})
-        if (TARGET ${lib})
-            get_target_property(lib_include_dirs ${lib} INTERFACE_INCLUDE_DIRECTORIES)
-
-            get_target_property(include_dir ${lib} INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
-
-            if (include_dir)
-                list(APPEND lib_include_dirs ${include_dir})
-            endif ()
-
-            get_target_property(include_dir ${lib} INCLUDE_DIRECTORIES)
-
-            if (include_dir)
-                list(APPEND lib_include_dirs ${include_dir})
-            endif ()
-
-            unset(include_dir)
-
-            if (lib_include_dirs)
-                list(APPEND dirs_to_include ${lib_include_dirs})
-            else ()
-                message(WARNING "Cannot find [INTERFACE_]INCLUDE_DIRECTORIES for ${lib}")
-            endif ()
-
-            get_target_property(lib_type ${lib} TYPE)
-
-            if (NOT lib_type STREQUAL "INTERFACE_LIBRARY")
-                list(APPEND libs_to_link ${lib})
-            endif ()
-        else ()
-            list(APPEND libs_to_link ${lib})
-        endif ()
-    endforeach ()
-
-    if (dirs_to_include)
-        list(REMOVE_DUPLICATES dirs_to_include)
-        target_include_directories(${target} SYSTEM ${scope} ${dirs_to_include})
-    endif ()
-
-    if (libs_to_link)
-        list(REMOVE_DUPLICATES libs_to_link)
-        target_link_libraries(${target} ${scope} ${libs_to_link})
-    endif ()
+    set(${includes_out} ${_includes} PARENT_SCOPE)
+    set(${libs_out} ${_libs} PARENT_SCOPE)
 endfunction()
 
 # ##################################################################################################
 # erl_set_gtest_args
 # ##################################################################################################
-macro(erl_set_gtest_args _gtest_name _gtest_args)
+macro(erl_set_gtest_args)
+    set(_gtest_name ${ARGV0})
+    set(_gtest_args ${ARGN})
+    list(POP_FRONT _gtest_args)  # get the remaining arguments
     set(${_gtest_name}_GTEST_ARGS ${_gtest_args}
-            CACHE STRING "GTest arguments for ${_gtest_name}" FORCE)
+            CACHE STRING "GTest arguments for ${_gtest_args}" FORCE)
+    message(STATUS "GTest arguments for ${_gtest_name}: ${${_gtest_name}_GTEST_ARGS}")
+endmacro()
+
+# ##################################################################################################
+# erl_set_gtest_extra_libraries
+# ##################################################################################################
+macro(erl_set_gtest_extra_libraries)
+    set(_gtest_name ${ARGV0})
+    set(_gtest_libraries ${ARGN})
+    list(POP_FRONT _gtest_libraries)  # get the remaining arguments
+    set(${_gtest_name}_EXTRA_LIBRARIES ${_gtest_libraries}
+            CACHE STRING "GTest extra libraries for ${_gtest_libraries}" FORCE)
+    message(STATUS "Extra libraries for GTest ${_gtest_name}: ${${_gtest_name}_EXTRA_LIBRARIES}")
+endmacro()
+
+# ##################################################################################################
+# erl_set_gtest_working_directory
+# ##################################################################################################
+macro(erl_set_gtest_working_directory _gtest_name _gtest_working_directory)
+    set(${_gtest_name}_GTEST_WORKING_DIRECTORY ${_gtest_working_directory}
+            CACHE STRING "GTest working directory for ${_gtest_name}" FORCE)
 endmacro()
 
 # ##################################################################################################
@@ -109,52 +138,45 @@ macro(erl_add_tests)
         if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1" AND CATKIN_ENABLE_TESTING)
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
-                catkin_add_gtest(${name} ${file})
-                target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
-                target_link_libraries(${name} ${catkin_LIBRARIES} ${${PROJECT_NAME}_TEST_LIBRARIES})
-                message(STATUS "Adding gtest ${name}")
+                if (${name} IN_LIST ${PROJECT_NAME}_TEST_EXCLUDE_FROM_ALL)
+                    message(STATUS "Excluding gtest ${name}")
+                    add_executable(${name} ${file})
+                    target_link_libraries(${name}
+                            ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main
+                            ${${name}_${name}_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
+                    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+                else ()
+                    catkin_add_gtest(${name} ${file})
+                    target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
+                    target_link_libraries(${name}
+                            ${catkin_LIBRARIES} ${${PROJECT_NAME}_TEST_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
+                    message(STATUS "Adding gtest ${name}")
+                endif ()
             endforeach ()
         else ()
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
                 add_executable(${name} ${file})
 
-                if (${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS)
-                    cmake_parse_arguments("${name}"
-                            "" "" "${name}_LIBRARIES" ${${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS})
-
-                    if (${name}_${name}_LIBRARIES)
-                        message(STATUS
-                                "Additional LIBRARIES for ${name}: ${${name}_${name}_LIBRARIES}")
-                    endif ()
-
-                    if (${name}_UNPARSED_ARGUMENTS)
-                        set(${PROJECT_NAME}_TEST_UNPARSED_ARGUMENTS ${${name}_UNPARSED_ARGUMENTS})
-                    endif ()
-                endif ()
-
                 target_link_libraries(${name}
-                        ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main ${${name}_${name}_LIBRARIES})
+                        ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main
+                        ${${name}_${name}_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
 
                 if (${name} IN_LIST ${PROJECT_NAME}_TEST_EXCLUDE_FROM_ALL)
                     message(STATUS "Excluding gtest ${name}")
                     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
                 else ()
                     message(STATUS "Adding gtest ${name}")
+                    list(APPEND _args ${name})
                     if (DEFINED ${name}_GTEST_ARGS)
-                        gtest_discover_tests(
-                                ${name}
-                                EXTRA_ARGS ${${name}_GTEST_ARGS}
-                                # WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                                DISCOVERY_TIMEOUT 60
-                        )
-                    else ()
-                        gtest_discover_tests(
-                                ${name}
-                                # WORKING_DIRECTORY ${${PROJECT_NAME}_TEST_DIR}
-                                DISCOVERY_TIMEOUT 60
-                        )
+                        list(APPEND _args "EXTRA_ARGS" ${${name}_GTEST_ARGS})
                     endif ()
+                    if (DEFINED ${name}_GTEST_WORKING_DIRECTORY)
+                        list(APPEND _args "WORKING_DIRECTORY" ${${name}_GTEST_WORKING_DIRECTORY})
+                    endif ()
+                    list(APPEND _args "DISCOVERY_TIMEOUT" 60)
+                    gtest_discover_tests(${_args})
+                    unset(_args)
                 endif ()
             endforeach ()
         endif ()

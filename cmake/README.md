@@ -19,15 +19,18 @@ This is a CMake module that provides some utilities for configuring C++ projects
         - `USE_LAPACK`: Use LAPACK for linear algebra, e.g. Eigen (default: `ON`)
         - `USE_INTEL_MKL`: Use Intel MKL, will set `USE_LAPACK` to `ON` (default: `ON`)
         - `USE_AOCL`: Use AMD Optimizing CPU Library (default: `OFF`)
-        - `USE_SINGLE_THREADED_BLAS`: Use single-threaded BLAS when you have BLAS call in your threaded code (
+        - `USE_SINGLE_THREADED_BLAS`: Use single-threaded BLAS when you have BLAS call in your
+          threaded code (
           default: `ON`)
         - `BUILD_TEST`: Config GoogleTest (default: `ON`)
-        - `Python3_ROOT_DIR`: Path to Python3 installation (default: given by CMake `FindPython3` module)
+        - `Python3_ROOT_DIR`: Path to Python3 installation (default: given by CMake `FindPython3`
+          module)
           Or you can load the `erl_common` module directly:
     ```cmake
     add_subdirectory(erl_common)
     ```
-3. Then, you can use the utilities provided by `erl_common_tools.cmake` in other `CMakeLists.txt`. For example:
+3. Then, you can use the utilities provided by `erl_common_tools.cmake` in other `CMakeLists.txt`.
+   For example:
     ```cmake
     cmake_minimum_required(VERSION 3.24)
     
@@ -50,11 +53,15 @@ This is a CMake module that provides some utilities for configuring C++ projects
             DEPENDS ${${PROJECT_NAME}_DEPENDS})
     # ...
     ```
-    Full example can be found in [erl_covariance](https://github.com/ExistentialRobotics/erl_covariance/blob/main/CMakeLists.txt).
+   Full example can be found
+   in [erl_covariance](https://github.com/ExistentialRobotics/erl_covariance/blob/main/CMakeLists.txt).
 
 # Utilities
+
 ## erl_project_setup
+
 This a macro that does the following things:
+
 - Detect ROS environment: call `erl_detect_ros`
 - Setup compiler flags: call `erl_setup_compiler`
 - Setup LAPACK: call `erl_setup_lapack`
@@ -63,31 +70,44 @@ This a macro that does the following things:
 - Setup test: call `erl_setup_test`
 
 ## erl_setup_ros
+
 This is a macro that does the following things:
+
 - find catkin with required catkin components if ROS1 is detected
 - setup python for catkin if `setup.py` is found in the package root directory
 - ROS2 is not supported yet
 
 ## erl_catkin_package
+
 This is a macro that does the following things:
+
 - define catkin package
 - setup paths related to build and install: call `erl_set_project_paths`
 
 ## erl_add_python_package
+
 This is a macro that does the following things:
+
 - add pybind11 module if C++ source files are found in `python/binding`
-- add three custom targets: `<project_name>_py_wheel`, `<project_name>_py_develop`, `<project_name>_py_install`
+- add three custom targets: `<project_name>_py_wheel`, `<project_name>_py_develop`,
+  `<project_name>_py_install`
 
 ## erl_add_test
-This is a macro that automatically detects and adds GoogleTest/PythonNose tests stored in `test/gtest` and 
+
+This is a macro that automatically detects and adds GoogleTest/PythonNose tests stored in
+`test/gtest` and
 `test/pytest` respectively. e.g.
+
 ```cmake
 erl_add_test(
         LIBRARIES ${PROJECT_NAME}
 )
 ```
+
 **Notes**:
-- For GoogleTest, when building with ROS1 activated, `catkin` cannot provide `gtest` with `main` entrypoint. So you need
+
+- For GoogleTest, when building with ROS1 activated, `catkin` cannot provide `gtest` with `main`
+  entrypoint. So you need
   to add the main function in your gtest source code:
    ```c++
    #if defined(ERL_ROS_VERSION_1)
@@ -100,7 +120,10 @@ erl_add_test(
    ```
 
 ## erl_find_package
-This is a macro that prints suggestions for installing a required package on different platforms. e.g.
+
+This is a macro that prints suggestions for installing a required package on different platforms.
+e.g.
+
 ```cmake
 erl_find_package(
      PACKAGE OpenMP
@@ -111,7 +134,9 @@ erl_find_package(
 ```
 
 ## erl_find_path
+
 This is a function to find a directory that contains required files. e.g.
+
 ```cmake
 erl_find_path(
        OUTPUT LAPACKE_INCLUDE_DIR
@@ -124,7 +149,9 @@ erl_find_path(
 ```
 
 ## erl_install
+
 This is a macro that generates install rules for executables, libraries, and Python packages. e.g.
+
 ```cmake
 erl_install(
         LIBRARIES ${PROJECT_NAME}
@@ -132,6 +159,7 @@ erl_install(
 ```
 
 ## other utilities
+
 - `erl_detect_ros`: detect ROS environment
 - `erl_setup_compiler`: setup compiler flags
 - `erl_setup_lapack`: setup LAPACK
