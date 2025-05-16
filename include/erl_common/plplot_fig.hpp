@@ -25,7 +25,7 @@ namespace erl::common {
             bool use_fixed_point_numeric = false;         // f: use fixed point numeric labels
             bool draw_grid_major = false;                 // g: draw major grid
             bool draw_grid_minor = false;                 // h: draw minor grid
-            bool invert_tick_markers = false;             // i: draw tick markers outwards
+            bool invert_tick_markers = true;              // i: draw tick markers outwards
             bool log_scale = false;                       // l: label axis logarithmically but don't affect the data
             bool draw_top_right_tick_labels = false;      // m: draw tick labels on top (x) or right (y)
             bool draw_bottom_left_tick_labels = true;     // n: draw tick labels on the bottom (x) or left (y)

@@ -294,6 +294,16 @@ namespace erl::common {
             return m_min_[dim];
         }
 
+        [[nodiscard]] Eigen::Vector<Dtype, Dim>
+        GetMinMeterCoords() const {
+            return m_min_ + 0.5f * m_resolution_;
+        }
+
+        [[nodiscard]] Dtype
+        GetMinMeterCoord(int dim) const {
+            return m_min_[dim] + 0.5f * m_resolution_[dim];
+        }
+
         [[nodiscard]] const Eigen::Vector<Dtype, Dim>&
         Max() const {
             return m_max_;
@@ -302,6 +312,16 @@ namespace erl::common {
         [[nodiscard]] Dtype
         Max(int dim) const {
             return m_max_[dim];
+        }
+
+        [[nodiscard]] Eigen::Vector<Dtype, Dim>
+        GetMaxMeterCoords() const {
+            return m_max_ - 0.5f * m_resolution_;
+        }
+
+        [[nodiscard]] Dtype
+        GetMaxMeterCoord(int dim) const {
+            return m_max_[dim] - 0.5f * m_resolution_[dim];
         }
 
         [[nodiscard]] const Eigen::Vector<Dtype, Dim>&

@@ -3,27 +3,36 @@
 void
 BindStorage(py::module &m) {
     using namespace erl::common;
-    auto submodule = m.def_submodule("storage", "This module handles linear continuous data storage.");
+    auto submodule =
+        m.def_submodule("storage", "This module handles linear continuous data storage.");
 
     submodule
         .def(
             "compute_c_strides",
-            [](const std::vector<int> &shape, const int item_size) { return ComputeCStrides(shape, item_size); },
+            [](const std::vector<int> &shape, const int item_size) {
+                return ComputeCStrides(shape, item_size);
+            },
             py::arg("shape"),
             py::arg("item_size"))
         .def(
             "compute_c_strides",
-            [](const Eigen::Ref<const Eigen::VectorX<int>> &shape, const int item_size) { return ComputeCStrides(shape, item_size); },
+            [](const Eigen::VectorX<int> &shape, const int item_size) {
+                return ComputeCStrides(shape, item_size);
+            },
             py::arg("shape"),
             py::arg("item_size"))
         .def(
             "compute_f_strides",
-            [](const std::vector<int> &shape, const int item_size) { return ComputeFStrides(shape, item_size); },
+            [](const std::vector<int> &shape, const int item_size) {
+                return ComputeFStrides(shape, item_size);
+            },
             py::arg("shape"),
             py::arg("item_size"))
         .def(
             "compute_f_strides",
-            [](const Eigen::Ref<const Eigen::VectorX<int>> &shape, const int item_size) { return ComputeFStrides(shape, item_size); },
+            [](const Eigen::VectorX<int> &shape, const int item_size) {
+                return ComputeFStrides(shape, item_size);
+            },
             py::arg("shape"),
             py::arg("item_size"));
 

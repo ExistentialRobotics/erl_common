@@ -16,10 +16,10 @@ namespace erl::common {
         return strides;
     }
 
-    template<typename T>
+    template<typename T, int Dim>
     Eigen::VectorX<T>
-    ComputeCStrides(const Eigen::Ref<const Eigen::VectorX<T>> &shape, const T item_size) {
-        const auto ndim = static_cast<T>(shape.size());
+    ComputeCStrides(const Eigen::Vector<T, Dim> &shape, const T item_size) {
+        const auto ndim = Dim == Eigen::Dynamic ? static_cast<T>(shape.size()) : Dim;
         Eigen::VectorX<T> strides = Eigen::VectorX<T>::Constant(ndim, item_size);
         for (T i = ndim - 1; i > 0; --i) { strides[i - 1] = strides[i] * shape[i]; }
         return strides;
@@ -34,10 +34,10 @@ namespace erl::common {
         return strides;
     }
 
-    template<typename T>
+    template<typename T, int Dim>
     Eigen::VectorX<T>
-    ComputeFStrides(const Eigen::Ref<const Eigen::VectorX<T>> &shape, const T item_size) {
-        const auto ndim = static_cast<T>(shape.size());
+    ComputeFStrides(const Eigen::Vector<T, Dim> &shape, const T item_size) {
+        const auto ndim = Dim == Eigen::Dynamic ? static_cast<T>(shape.size()) : Dim;
         Eigen::VectorX<T> strides = Eigen::VectorX<T>::Constant(ndim, item_size);
         for (T i = 1; i < ndim; ++i) { strides[i] = strides[i - 1] * shape[i - 1]; }
         return strides;
@@ -46,8 +46,8 @@ namespace erl::common {
     template<int Dim>
     [[nodiscard]] int
     CoordsToIndex(
-        const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape,
-        const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords,
+        const Eigen::Vector<int, Dim> &shape,
+        const Eigen::Vector<int, Dim> &coords,
         const bool c_stride) {
         const auto ndim = static_cast<int>(shape.size());
 
@@ -84,20 +84,15 @@ namespace erl::common {
 
     template<int Dim>
     [[nodiscard]] int
-    CoordsToIndex(
-        const Eigen::Ref<const Eigen::Vector<int, Dim>> &strides,
-        const Eigen::Ref<const Eigen::Vector<int, Dim>> &coords) {
+    CoordsToIndex(const Eigen::Vector<int, Dim> &strides, const Eigen::Vector<int, Dim> &coords) {
         ERL_DEBUG_ASSERT((coords.array() >= 0).all(), "Coords must be non-negative.");
         return strides.dot(coords);
     }
 
     template<int Dim>
     [[nodiscard]] Eigen::Vector<int, Dim>
-    IndexToCoords(
-        const Eigen::Ref<const Eigen::Vector<int, Dim>> &shape,
-        int index,
-        bool c_stride) {
-        const auto ndim = static_cast<int>(shape.size());
+    IndexToCoords(const Eigen::Vector<int, Dim> &shape, int index, const bool c_stride) {
+        const auto ndim = Dim == Eigen::Dynamic ? static_cast<int>(shape.size()) : Dim;
         Eigen::Vector<int, Dim> coords;
         coords.setZero(ndim);
 
@@ -169,6 +164,77 @@ namespace erl::common {
             coords[i] = index % shape[i];
             index -= coords[i];
             index /= shape[i];
+        }
+        return coords;
+    }
+
+    template<int Dim>
+    [[nodiscard]] Eigen::Vector<int, Dim>
+    IndexToCoordsWithStrides(
+        const Eigen::Vector<int, Dim> &strides,
+        int index,
+        const bool c_stride) {
+
+        const auto ndim = Dim == Eigen::Dynamic ? static_cast<int>(strides.size()) : Dim;
+        Eigen::Vector<int, Dim> coords;
+        coords.setZero(ndim);
+
+        if (Dim == 2) {
+            if (c_stride) {
+                coords[0] = index / strides[0];
+                coords[1] = index - coords[0] * strides[0];
+            } else {
+                coords[1] = index / strides[1];
+                coords[0] = index - coords[1] * strides[1];
+            }
+            return coords;
+        }
+
+        if (Dim == 3) {
+            if (c_stride) {  // (shape[1] * shape[2], shape[2], 1)
+                coords[0] = index / strides[0];
+                index -= coords[0] * strides[0];
+                coords[1] = index / strides[1];
+                coords[2] = index - coords[1] * strides[1];
+            } else {  // (1, shape[0], shape[0] * shape[1])
+                coords[2] = index / strides[2];
+                index -= coords[2] * strides[2];
+                coords[1] = index / strides[1];
+                coords[0] = index - coords[1] * strides[1];
+            }
+            return coords;
+        }
+
+        if (Dim == 4) {
+            if (c_stride) {
+                coords[0] = index / strides[0];
+                index -= coords[0] * strides[0];
+                coords[1] = index / strides[1];
+                index -= coords[1] * strides[1];
+                coords[2] = index / strides[2];
+                coords[3] = index - coords[2] * strides[2];
+            } else {
+                coords[3] = index / strides[3];
+                index -= coords[3] * strides[3];
+                coords[2] = index / strides[2];
+                index -= coords[2] * strides[2];
+                coords[1] = index / strides[1];
+                coords[0] = index - coords[1] * strides[1];
+            }
+            return coords;
+        }
+
+        if (c_stride) {
+            for (int i = 0; i < ndim; ++i) {
+                coords[i] = index / strides[i];
+                index -= coords[i] * strides[i];
+            }
+            return coords;
+        }
+
+        for (int i = ndim - 1; i >= 0; --i) {
+            coords[i] = index / strides[i];
+            index -= coords[i] * strides[i];
         }
         return coords;
     }

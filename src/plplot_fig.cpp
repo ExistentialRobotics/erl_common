@@ -80,7 +80,7 @@ namespace erl::common {
         opt.use_fixed_point_numeric = false;
         opt.draw_grid_major = false;
         opt.draw_grid_minor = false;
-        opt.invert_tick_markers = false;
+        opt.invert_tick_markers = true;
         opt.log_scale = false;
         opt.draw_top_right_tick_labels = false;
         opt.draw_bottom_left_tick_labels = false;
