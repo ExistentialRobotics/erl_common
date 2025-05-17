@@ -14,8 +14,19 @@ RUN cp /etc/apt/sources.list /etc/apt/sources.list.backup &&\
     if [ -n "$APT_MIRROR" ]; then \
         sed -i "s|http://archive.ubuntu.com/ubuntu/|$APT_MIRROR|g" /etc/apt/sources.list; \
     fi
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    DEBIAN_FRONTEND=noninteractive apt update && apt install -y locales && locale-gen en_US.UTF-8
+RUN DEBIAN_FRONTEND=noninteractive apt install -y \
+    apt-utils \
+    software-properties-common \
+    lsb-release \
+    ca-certificates \
+    wget
+RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
+    | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+RUN echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y intel-basekit-2024.1  # use oneAPI instead of intel-mkl-full from ubuntu-apt
 
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     sudo \
     python3 \
@@ -28,7 +39,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     cmake \
     liblapack-dev \
     liblapacke-dev \
-    intel-mkl-full \
     libomp-dev \
     libeigen3-dev \
     libfmt-dev \
@@ -62,9 +72,6 @@ RUN git clone https://github.com/jlblancoc/nanoflann && \
     cmake .. -DCMAKE_BUILD_TYPE=Release && \
     make install && \
     cd /root && rm -rf nanoflann
-
-RUN DEBIAN_FRONTEND=noninteractive apt install -y locales && locale-gen en_US.UTF-8
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # clean
 RUN apt-get clean  && rm -rf /var/lib/apt/lists/*
