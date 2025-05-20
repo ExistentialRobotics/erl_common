@@ -84,6 +84,12 @@ namespace erl::common {
         IsRegistered() const {
             return IsRegistered(demangle(typeid(Derived).name()));
         }
+
+        void
+        PrintRegisteredClasses() const {
+            ERL_INFO("Registered classes in the factory {}:", type_name<FactoryPattern>());
+            for (const auto &pair: m_class_id_mapping_) { ERL_INFO("  - {}", pair.first); }
+        }
     };
 
 }  // namespace erl::common
