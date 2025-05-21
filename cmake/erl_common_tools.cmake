@@ -135,7 +135,7 @@ macro(erl_add_tests)
         endforeach ()
         list(REVERSE GTEST_SOURCES)
 
-        if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1" AND CATKIN_ENABLE_TESTING)
+        if (ROS1_ACTIVATED AND CATKIN_ENABLE_TESTING)
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
                 if (${name} IN_LIST ${PROJECT_NAME}_TEST_EXCLUDE_FROM_ALL)
@@ -488,7 +488,7 @@ macro(erl_find_package)
         if (NOT ERL_QUIET)
             message(STATUS "${ERL_PACKAGE} is not added to ${PROJECT_NAME}_DEPENDS")
         endif ()
-    else ()
+    elseif (${ERL_PACKAGE}_FOUND)
         list(APPEND ${PROJECT_NAME}_DEPENDS ${ERL_PACKAGE})
     endif ()
 
@@ -557,9 +557,11 @@ macro(erl_detect_ros)
     if (ROS_VERSION STREQUAL "1")
         message(STATUS "ROS_VERSION: ${ROS_VERSION}")
         add_definitions(-DERL_ROS_VERSION_1)
+        set(ROS1_ACTIVATED ON)
     elseif (ROS_VERSION STREQUAL "2")
         message(STATUS "ROS_VERSION: ${ROS_VERSION}")
         add_definitions(-DERL_ROS_VERSION_2)
+        set(ROS2_ACTIVATED ON)
     endif ()
 endmacro()
 
@@ -605,7 +607,7 @@ macro(erl_set_project_paths)
             CACHE PATH "Build test directory of ${PROJECT_NAME}" FORCE)
 
     # set project devel & install paths
-    if (ROS_VERSION STREQUAL "1")
+    if (ROS1_ACTIVATED)
         set(${PROJECT_NAME}_INSTALL_BINARY_DIR ${CATKIN_GLOBAL_BIN_DESTINATION} # `bin`
                 CACHE PATH "Binary directory of ${PROJECT_NAME}" FORCE)
         set(${PROJECT_NAME}_INSTALL_ETC_DIR ${CATKIN_PACKAGE_ETC_DESTINATION}
@@ -633,7 +635,7 @@ macro(erl_set_project_paths)
             set(ERL_CATKIN_DEVEL_PYTHON_DIR
                     ${ERL_CATKIN_DEVEL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
         endif ()
-    elseif (ROS_VERSION STREQUAL "2")
+    elseif (ROS2_ACTIVATED)
         message(FATAL_ERROR "ROS2 is not supported yet")
     else ()
         include(GNUInstallDirs)
@@ -835,46 +837,52 @@ macro(erl_setup_ros)
     set(multiValueArgs MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES)
     cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (ROS_ACTIVATED)
-        if (ROS_VERSION STREQUAL "1")
-            if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/package.xml)
-                message(FATAL_ERROR "No package.xml found in ${CMAKE_CURRENT_LIST_DIR}")
-            endif ()
-
-            erl_find_package(
-                    PACKAGE catkin
-                    NO_RECORD
-                    REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_COMPONENTS}
-                    COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-catkin python3-catkin-pkg python3-empy python3-nose python3-setuptools`"
-                    COMMANDS ARCH_LINUX "try `paru -S python-catkin_tools ros-${ROS_DISTRO}-catkin`")
-
-            if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/setup.py)
-                catkin_python_setup()
-                set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP TRUE
-                        CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
-            else ()
-                set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP FALSE
-                        CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
-            endif ()
-
-            if (${PROJECT_NAME}_MSG_FILES)
-                add_message_files(FILES ${${PROJECT_NAME}_MSG_FILES})
-            endif ()
-
-            if (${PROJECT_NAME}_SRV_FILES)
-                add_service_files(FILES ${${PROJECT_NAME}_SRV_FILES})
-            endif ()
-
-            if (${PROJECT_NAME}_ACTION_FILES)
-                add_action_files(FILES ${${PROJECT_NAME}_ACTION_FILES})
-            endif ()
-
-            if (${PROJECT_NAME}_MSG_DEPENDENCIES)
-                generate_messages(DEPENDENCIES ${${PROJECT_NAME}_MSG_DEPENDENCIES})
-            endif ()
-        else ()
-            message(FATAL_ERROR "ROS2 is not supported yet")
+    if (ROS1_ACTIVATED)
+        if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/package.xml)
+            message(FATAL_ERROR "No package.xml found in ${CMAKE_CURRENT_LIST_DIR}")
         endif ()
+
+        erl_find_package(
+                PACKAGE catkin
+                NO_RECORD
+                REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_COMPONENTS}
+                COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-catkin python3-catkin-pkg python3-empy python3-nose python3-setuptools`"
+                COMMANDS ARCH_LINUX "try `paru -S python-catkin_tools ros-${ROS_DISTRO}-catkin`")
+
+        if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/setup.py)
+            catkin_python_setup()
+            set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP TRUE
+                    CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
+        else ()
+            set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP FALSE
+                    CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
+        endif ()
+
+        if (${PROJECT_NAME}_MSG_FILES)
+            add_message_files(
+                    DIRECTORY msg
+                    FILES ${${PROJECT_NAME}_MSG_FILES})
+        endif ()
+
+        if (${PROJECT_NAME}_SRV_FILES)
+            add_service_files(
+                    DIRECTORY srv
+                    FILES ${${PROJECT_NAME}_SRV_FILES})
+        endif ()
+
+        if (${PROJECT_NAME}_ACTION_FILES)
+            add_action_files(
+                    DIRECTORY action
+                    FILES ${${PROJECT_NAME}_ACTION_FILES})
+        endif ()
+
+        if (${PROJECT_NAME}_MSG_DEPENDENCIES)
+            generate_messages(DEPENDENCIES ${${PROJECT_NAME}_MSG_DEPENDENCIES})
+        endif ()
+    endif ()
+
+    if (ROS2_ACTIVATED)
+        message(FATAL_ERROR "ROS2 is not supported yet")
     endif ()
 endmacro()
 
@@ -882,7 +890,7 @@ endmacro()
 # erl_catkin_package
 # ##################################################################################################
 macro(erl_catkin_package)
-    if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
+    if (ROS1_ACTIVATED)
         catkin_package(${ARGV})
 
         # filter out Eigen3 installed at `/usr/include/eigen3` from catkin_INCLUDE_DIRS
@@ -927,11 +935,15 @@ macro(erl_catkin_package)
 
         set(catkin_LIBRARIES ${filtered_catkin_LIBRARIES})
         unset(filtered_catkin_LIBRARIES)
+
+        list(REMOVE_DUPLICATES catkin_INCLUDE_DIRS)
+        list(REMOVE_DUPLICATES catkin_LIBRARY_DIRS)
+        list(REMOVE_DUPLICATES catkin_LIBRARIES)
     endif ()
 
     erl_set_project_paths()
 
-    if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
+    if (ROS1_ACTIVATED)
         set(CATKIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
         get_filename_component(CATKIN_WORKSPACE_DIR ${CATKIN_INSTALL_DIR} DIRECTORY)
         set(CATKIN_DEVEL_DIR ${CATKIN_WORKSPACE_DIR}/devel)
@@ -982,17 +994,15 @@ macro(erl_project_setup _name)
     erl_setup_compiler()
     erl_detect_ros()
 
-    if (ROS_ACTIVATED)
-        if (ROS_VERSION STREQUAL "1")
-            list(APPEND ${_name}_CATKIN_COMPONENTS ${${PROJECT_NAME}_ERL_PACKAGES})
-            list(REMOVE_DUPLICATES ${_name}_CATKIN_COMPONENTS)
-            list(APPEND ${_name}_CATKIN_DEPENDS ${${PROJECT_NAME}_ERL_PACKAGES})
-            list(REMOVE_DUPLICATES ${_name}_CATKIN_DEPENDS)
-        endif ()
+    if (ROS1_ACTIVATED)
+        list(APPEND ${_name}_CATKIN_COMPONENTS ${${PROJECT_NAME}_ERL_PACKAGES})
+        list(REMOVE_DUPLICATES ${_name}_CATKIN_COMPONENTS)
+        list(APPEND ${_name}_CATKIN_DEPENDS ${${PROJECT_NAME}_ERL_PACKAGES})
+        list(REMOVE_DUPLICATES ${_name}_CATKIN_DEPENDS)
     endif ()
 
-
     erl_setup_common_packages()
+
     if (NOT ERL_PROJECT_SETUP_DONE OR ROS_ACTIVATED)
         erl_setup_python()
 
@@ -1094,7 +1104,7 @@ function(erl_add_pybind_module)
     # put the library in the source python package directory, such that setup.py can find it
     # set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
     # LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_PYTHON_PKG_DIR})
-    if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
+    if (ROS1_ACTIVATED)
         # copy file to a regular library name so that catkin does not throw an error, but this file may not
         # work with Python3 because the filename is lib<name>.so, which does not match the module name.
         set(LIB_NAME lib${arg_PYBIND_MODULE_NAME}.so)
@@ -1245,7 +1255,7 @@ macro(erl_install)
     endif ()
 
     # ROS Support
-    if (ROS_ACTIVATED AND ROS_VERSION STREQUAL "1")
+    if (ROS1_ACTIVATED)
         # Install the pybind module
         if (${PROJECT_NAME}_INSTALL_PYBIND_MODULES)
             foreach (module ${${PROJECT_NAME}_INSTALL_PYBIND_MODULES})
@@ -1275,7 +1285,7 @@ macro(erl_install)
         endif ()
 
         # TODO: install other files, e.g. launch files, config files, etc.
-    elseif (BUILD_FOR_ROS2)
+    elseif (ROS2_ACTIVATED)
         message(FATAL_ERROR "Not implemented yet")
     else ()
         # Install the pybind module if pip install is used
