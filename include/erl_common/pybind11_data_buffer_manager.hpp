@@ -22,7 +22,7 @@ namespace erl::common {
                 "__getitem__",
                 py::overload_cast<std::size_t>(&Manager::operator[], py::const_),
                 py::arg("index"))
-            .def_property_readonly("entries", &Manager::GetEntries)
+            .def_property_readonly("buffer", &Manager::GetBuffer)
             .def("clear", &Manager::Clear);
     }
 }  // namespace erl::common

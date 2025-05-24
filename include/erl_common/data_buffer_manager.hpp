@@ -82,7 +82,10 @@ namespace erl::common {
         operator!=(const DataBufferManager &other) const;
 
         const Buffer &
-        GetEntries() const;
+        GetBuffer() const;
+
+        const std::vector<std::size_t> &
+        GetAvailableIndices() const;
 
         void
         Clear();

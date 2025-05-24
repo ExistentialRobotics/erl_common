@@ -133,8 +133,14 @@ namespace erl::common {
 
     template<typename T, class Buffer>
     const Buffer &
-    DataBufferManager<T, Buffer>::GetEntries() const {
+    DataBufferManager<T, Buffer>::GetBuffer() const {
         return m_entries_;
+    }
+
+    template<typename T, class Buffer>
+    const std::vector<std::size_t> &
+    DataBufferManager<T, Buffer>::GetAvailableIndices() const {
+        return m_available_indices_;
     }
 
     template<typename T, class Buffer>
@@ -148,19 +154,23 @@ namespace erl::common {
     std::unordered_map<std::size_t, std::size_t>
     DataBufferManager<T, Buffer>::Compact() {
         std::unordered_map<std::size_t, std::size_t> index_mapping;
-        std::size_t new_index = 0;
-        const std::unordered_set available_indices(
-            m_available_indices_.begin(),
-            m_available_indices_.end());
-        for (std::size_t i = 0; i < m_entries_.size(); ++i) {
-            if (!available_indices.count(i)) {
-                index_mapping[i] = new_index;
-                m_entries_[new_index] = m_entries_[i];
-                ++new_index;
-            }
+        if (m_available_indices_.empty()) {
+            for (std::size_t i = 0; i < m_entries_.size(); ++i) { index_mapping[i] = i; }
+            return index_mapping;
         }
-
-        m_entries_.resize(new_index);
+        std::sort(m_available_indices_.begin(), m_available_indices_.end());
+        std::size_t remove_idx = 0;
+        std::size_t write_idx = 0;
+        for (std::size_t read_idx = 0; read_idx < m_entries_.size(); ++read_idx) {
+            if (remove_idx < m_available_indices_.size() &&
+                read_idx == m_available_indices_[remove_idx]) {
+                ++remove_idx;
+                continue;
+            }
+            index_mapping[read_idx] = write_idx;
+            m_entries_[write_idx++] = std::move(m_entries_[read_idx]);
+        }
+        m_entries_.resize(write_idx);
         m_available_indices_.clear();
         return index_mapping;
     }
