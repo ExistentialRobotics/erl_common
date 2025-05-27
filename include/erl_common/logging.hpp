@@ -72,7 +72,7 @@ namespace erl::common {
 #else
             auto time = fmt::localtime(now);
 #endif
-            std::string msg = Format(  //
+            std::string msg = fmt::format(  //
                 fmt::fg(fmt::color::orange) | fmt::emphasis::bold,
                 "[{:%X}][DEBUG]: ",
                 time);
@@ -92,7 +92,7 @@ namespace erl::common {
 #else
             auto time = fmt::localtime(now);
 #endif
-            std::string msg = Format(
+            std::string msg = fmt::format(
                 fmt::fg(fmt::color::orange_red) | fmt::emphasis::bold,
                 "[{:%X}][WARN]: ",
                 time);
@@ -118,7 +118,7 @@ namespace erl::common {
 #else
             auto time = fmt::localtime(now);
 #endif
-            std::string msg = Format(  //
+            std::string msg = fmt::format(  //
                 fmt::fg(fmt::color::red) | fmt::emphasis::bold,
                 "[{:%X}][ERROR]: ",
                 time);
@@ -142,7 +142,7 @@ namespace erl::common {
 #else
             auto time = fmt::localtime(now);
 #endif
-            std::string msg = Format(
+            std::string msg = fmt::format(
                 fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold,
                 "[{:%X}][FATAL]: ",
                 time);
@@ -166,7 +166,7 @@ namespace erl::common {
 #else
             auto time = fmt::localtime(now);
 #endif
-            std::string msg = Format(
+            std::string msg = fmt::format(
                 fmt::fg(fmt::color::spring_green) | fmt::emphasis::bold,
                 "[{:%X}][SUCCESS]: ",
                 time);
@@ -191,7 +191,7 @@ namespace erl::common {
 #else
             auto time = fmt::localtime(now);
 #endif
-            const std::string msg = Format(  //
+            const std::string msg = fmt::format(  //
                 fmt::fg(fmt::color::red) | fmt::emphasis::bold,
                 "[{:%X}][FAILURE]: ",
                 time);
@@ -205,17 +205,6 @@ namespace erl::common {
         Write(const std::string& msg) {
             std::lock_guard lock(g_print_mutex);
             ProgressBar::Write(msg);
-        }
-
-    private:
-        template<typename... Args>
-        static std::string
-        Format(fmt::text_style style, const char* fmt, Args... args) {
-#if FMT_VERSION >= 110200
-            return fmt::format(style, fmt, std::forward<Args>(args)...);
-#else
-            return fmt::format(style, fmt, std::forward<Args>(args)...);
-#endif
         }
     };
 }  // namespace erl::common
