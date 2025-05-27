@@ -1,5 +1,6 @@
 #pragma once
 
+#include "eigen.hpp"
 #include "factory_pattern.hpp"
 #include "logging.hpp"
 #include "opencv.hpp"

@@ -503,8 +503,7 @@ namespace erl::common {
             for (long i = 0; i < num_points; ++i) {
                 points.emplace_back(
                     grid_map_info->MeterToGridAtDim(trajectory(0, i), 0),
-                    grid_map_info->Shape(1) -
-                        grid_map_info->MeterToGridAtDim(trajectory(1, i), 1));
+                    grid_map_info->Shape(1) - grid_map_info->MeterToGridAtDim(trajectory(1, i), 1));
             }
         } else {
             for (long i = 0; i < num_points; ++i) {
