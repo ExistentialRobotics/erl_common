@@ -113,7 +113,7 @@ namespace erl::common {
         Height() const;
 
         PlplotFig&
-        Clear(double r = 0, double g = 0, double b = 0, double a = 1);
+        Clear(double r = 1, double g = 1, double b = 1, double a = 1);
 
         PlplotFig&
         DrawArc(
@@ -350,8 +350,8 @@ namespace erl::common {
         PlplotFig&
         DrawContour(
             const double* data,
-            int n_rows,
-            int n_cols,
+            int nx,
+            int ny,
             double min_x,
             double max_x,
             double min_y,
@@ -853,7 +853,7 @@ namespace erl::common {
         };
 
         PlplotFig&
-        Shades(const double* z, int n_rows, int n_cols, bool col_major, const ShadesOpt& opt);
+        Shades(const double* z, int nx, int ny, bool col_major, const ShadesOpt& opt);
 
         /**
          * Split the window into subplots (subpages).
@@ -939,6 +939,97 @@ namespace erl::common {
          */
         PlplotFig&
         SetAxisLimits(double x_min, double x_max, double y_min, double y_max);
+
+        PlplotFig&
+        VectorField(
+            const double* u,
+            const double* v,
+            int nx,
+            int ny,
+            double min_x,
+            double max_x,
+            double min_y,
+            double max_y,
+            bool col_major,
+            double scale);
+
+        PlplotFig&
+        VectorField(
+            const double* x,
+            const double* y,
+            const double* u,
+            const double* v,
+            int n,
+            double scale);
+
+    private:
+        class GridBase {
+        protected:
+            static void
+            FillGrid(
+                int nx,
+                int ny,
+                double min_x,
+                double max_x,
+                double min_y,
+                double max_y,
+                double** xg,
+                double** yg);
+
+            static void
+            FillGrid(int nx, int ny, const double* x, const double* y, double** xg, double** yg);
+        };
+
+        class Grid {
+            std::shared_ptr<plstream> m_pls_;
+
+        public:
+            PLcGrid grid{};
+
+            Grid(
+                std::shared_ptr<plstream> pls,
+                int nx,
+                int ny,
+                double min_x,
+                double max_x,
+                double min_y,
+                double max_y);
+
+            ~Grid();
+        };
+
+        class Grid2 : GridBase {
+            std::shared_ptr<plstream> m_pls_;
+
+        public:
+            PLcGrid2 grid{};
+
+            Grid2(
+                std::shared_ptr<plstream> pls,
+                int nx,
+                int ny,
+                double min_x,
+                double max_x,
+                double min_y,
+                double max_y);
+
+            Grid2(std::shared_ptr<plstream> pls, const double* x, const double* y, int n);
+
+            ~Grid2();
+        };
+
+        template<typename T>
+        class ColMajorPointers : std::vector<T*> {
+            const T* m_data_;
+            Eigen::MatrixX<T> m_matrix_;
+
+        public:
+            ColMajorPointers(const T* data, int n_rows, int n_cols, bool col_major);
+
+            using std::vector<T*>::operator[];
+            using std::vector<T*>::data;
+        };
     };
+
 }  // namespace erl::common
 #endif

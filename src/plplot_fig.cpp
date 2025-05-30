@@ -2,6 +2,8 @@
 
     #include "erl_common/plplot_fig.hpp"
 
+    #include "erl_common/eigen.hpp"
+
 namespace erl::common {
 
     const std::string PlplotFig::kDefaultAxisOpt = std::string(AxisOpt());
@@ -517,54 +519,29 @@ namespace erl::common {
     PlplotFig &
     PlplotFig::DrawContour(
         const double *data,
-        const int n_rows,
-        const int n_cols,
-        double min_x,
-        double max_x,
-        double min_y,
-        double max_y,
+        const int nx,
+        const int ny,
+        const double min_x,
+        const double max_x,
+        const double min_y,
+        const double max_y,
         const bool col_major,
         const std::vector<double> &levels) {
-        std::vector<double *> z_ptrs;
-        if (col_major) {
-            z_ptrs.resize(n_cols);
-            for (int i = 0; i < n_cols; ++i) {
-                z_ptrs[i] = const_cast<double *>(data + i * n_rows);
-            }
-        } else {
-            z_ptrs.resize(n_rows);
-            for (int i = 0; i < n_rows; ++i) {
-                z_ptrs[i] = const_cast<double *>(data + i * n_cols);
-            }
-        }
-        PLcGrid2 grid;
-        grid.nx = n_cols;
-        grid.ny = n_rows;
-        m_pls_->Alloc2dGrid(&grid.xg, grid.nx, grid.ny);
-        m_pls_->Alloc2dGrid(&grid.yg, grid.nx, grid.ny);
-        const double res_x = (max_x - min_x) / static_cast<double>(grid.nx - 1);
-        const double res_y = (max_y - min_y) / static_cast<double>(grid.ny - 1);
-        for (int i = 0; i < grid.nx; ++i) {
-            const double x = min_x + static_cast<double>(i) * res_x;
-            for (int j = 0; j < grid.ny; ++j) {
-                grid.xg[i][j] = x;
-                grid.yg[i][j] = min_y + static_cast<double>(j) * res_y;
-            }
-        }
+
+        const ColMajorPointers<double> z_ptrs(data, ny, nx, col_major);
+        Grid2 grid(m_pls_, nx, ny, min_x, max_x, min_y, max_y);
         m_pls_->cont(
             z_ptrs.data(),
-            n_rows,
-            n_cols,
+            ny,
+            nx,
             1,
-            n_rows,
+            ny,
             1,
-            n_cols,
+            nx,
             levels.data(),
             static_cast<int>(levels.size()),
-            plcallback::tr2,  // identical mapping
-            &grid);
-        m_pls_->Free2dGrid(grid.xg, grid.nx, grid.ny);
-        m_pls_->Free2dGrid(grid.yg, grid.nx, grid.ny);
+            plcallback::tr2,
+            &grid.grid);
         return *this;
     }
 
@@ -1158,22 +1135,15 @@ namespace erl::common {
     PlplotFig &
     PlplotFig::Shades(
         const double *z,
-        const int n_rows,
-        const int n_cols,
+        const int nx,
+        const int ny,
         const bool col_major,
         const ShadesOpt &opt) {
-        std::vector<double *> z_ptrs;
-        if (col_major) {
-            z_ptrs.resize(n_cols);
-            for (int i = 0; i < n_cols; ++i) { z_ptrs[i] = const_cast<double *>(z + i * n_rows); }
-        } else {
-            z_ptrs.resize(n_rows);
-            for (int i = 0; i < n_rows; ++i) { z_ptrs[i] = const_cast<double *>(z + i * n_cols); }
-        }
+        const ColMajorPointers<double> z_ptrs(z, ny, nx, col_major);
         m_pls_->shades(
             z_ptrs.data(),
-            n_rows,
-            n_cols,
+            nx,
+            ny,
             opt.defined_callback,
             opt.x_min,
             opt.x_max,
@@ -1248,6 +1218,137 @@ namespace erl::common {
         const double y_max) {
         m_pls_->wind(x_min, x_max, y_min, y_max);  // 17.173
         return *this;
+    }
+
+    PlplotFig &
+    PlplotFig::VectorField(
+        const double *u,
+        const double *v,
+        const int nx,
+        const int ny,
+        const double min_x,
+        const double max_x,
+        const double min_y,
+        const double max_y,
+        const bool col_major,
+        const double scale) {
+
+        const ColMajorPointers<double> u_ptrs(u, ny, nx, col_major);
+        const ColMajorPointers<double> v_ptrs(v, ny, nx, col_major);
+        Grid2 grid(m_pls_, nx, ny, min_x, max_x, min_y, max_y);
+        m_pls_->vect(u_ptrs.data(), v_ptrs.data(), nx, ny, scale, plcallback::tr2, &grid.grid);
+        return *this;
+    }
+
+    PlplotFig &
+    PlplotFig::VectorField(
+        const double *x,
+        const double *y,
+        const double *u,
+        const double *v,
+        const int n,
+        const double scale) {
+        std::vector<const double *> u_ptrs = {u};
+        std::vector<const double *> v_ptrs = {v};
+        Grid2 grid(m_pls_, x, y, n);
+        m_pls_->vect(u_ptrs.data(), v_ptrs.data(), 1, n, scale, plcallback::tr2, &grid.grid);
+        return *this;
+    }
+
+    PlplotFig::Grid::Grid(
+        std::shared_ptr<plstream> pls,
+        const int nx,
+        const int ny,
+        const double min_x,
+        const double max_x,
+        const double min_y,
+        const double max_y)
+        : m_pls_(std::move(pls)) {
+        grid.xg = nullptr;
+        grid.yg = nullptr;
+        grid.zg = nullptr;
+
+        grid.nx = nx;
+        grid.ny = ny;
+        grid.xg = new double[nx];
+        grid.yg = new double[ny];
+        const double res_x = (max_x - min_x) / static_cast<double>(nx - 1);
+        for (int i = 0; i < nx; i++) { grid.xg[i] = min_x + i * res_x; }
+        const double res_y = (max_y - min_y) / static_cast<double>(ny - 1);
+        for (int i = 0; i < ny; i++) { grid.yg[i] = min_y + i * res_y; }
+    }
+
+    PlplotFig::Grid::~Grid() {
+        delete grid.xg;
+        delete grid.yg;
+        delete grid.zg;
+    }
+
+    PlplotFig::Grid2::Grid2(
+        std::shared_ptr<plstream> pls,
+        const int nx,
+        const int ny,
+        const double min_x,
+        const double max_x,
+        const double min_y,
+        const double max_y)
+        : m_pls_(std::move(pls)) {
+
+        grid.nx = nx;
+        grid.ny = ny;
+        m_pls_->Alloc2dGrid(&grid.xg, grid.nx, grid.ny);
+        m_pls_->Alloc2dGrid(&grid.yg, grid.nx, grid.ny);
+        const double res_x = (max_x - min_x) / static_cast<double>(grid.nx - 1);
+        const double res_y = (max_y - min_y) / static_cast<double>(grid.ny - 1);
+        for (int i = 0; i < grid.nx; ++i) {
+            const double x = min_x + static_cast<double>(i) * res_x;
+            for (int j = 0; j < grid.ny; ++j) {
+                grid.xg[i][j] = x;
+                grid.yg[i][j] = min_y + static_cast<double>(j) * res_y;
+            }
+        }
+    }
+
+    PlplotFig::Grid2::Grid2(
+        std::shared_ptr<plstream> pls,
+        const double *x,
+        const double *y,
+        const int n)
+        : m_pls_(std::move(pls)) {
+        grid.nx = 1;
+        grid.ny = n;
+        m_pls_->Alloc2dGrid(&grid.xg, grid.nx, grid.ny);
+        m_pls_->Alloc2dGrid(&grid.yg, grid.nx, grid.ny);
+        for (int i = 0; i < n; ++i) {
+            grid.xg[0][i] = x[i];
+            grid.yg[0][i] = y[i];
+        }
+    }
+
+    PlplotFig::Grid2::~Grid2() {
+        m_pls_->Free2dGrid(grid.xg, grid.nx, grid.ny);
+        m_pls_->Free2dGrid(grid.yg, grid.nx, grid.ny);
+    }
+
+    template<typename T>
+    PlplotFig::ColMajorPointers<T>::ColMajorPointers(
+        const T *data,
+        int n_rows,
+        int n_cols,
+        bool col_major) {
+        if (col_major) {
+            m_data_ = data;
+        } else {
+            m_matrix_ =
+                Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+                    data,
+                    n_rows,
+                    n_cols);
+            m_data_ = m_matrix_.data();
+        }
+
+        this->resize(n_cols);
+        for (int i = 0; i < n_cols; ++i) { this->at(i) = const_cast<T *>(m_data_ + i * n_rows); }
     }
 }  // namespace erl::common
 #endif

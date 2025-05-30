@@ -780,7 +780,6 @@ macro(erl_setup_common_packages)
 
     # file format libraries
     erl_config_json()
-    erl_config_nanoflann()
     erl_config_yaml()
 
     # image processing, visualization libraries

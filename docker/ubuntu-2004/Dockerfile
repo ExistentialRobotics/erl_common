@@ -60,14 +60,6 @@ RUN touch /usr/bin/pltek
 RUN sed 's/..\/..\/..\/..\/..\/include/..\/..\/..\/..\/include/g' \
     /usr/lib/x86_64-linux-gnu/cmake/yaml-cpp/yaml-cpp-config.cmake
 
-WORKDIR /root
-RUN git clone https://github.com/jlblancoc/nanoflann && \
-    cd nanoflann && git checkout v1.7.1 && \
-    mkdir build && cd build && \
-    cmake .. -DCMAKE_BUILD_TYPE=Release && \
-    make install && \
-    cd /root && rm -rf nanoflann
-
 # It is 300000 by default, which slows down OpenMP programs.
 ENV GOMP_SPINCOUNT=1
 
