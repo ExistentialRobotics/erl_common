@@ -16,6 +16,20 @@
 // https://yaml.org/spec/1.2.2/
 // https://www.cloudbees.com/blog/yaml-tutorial-everything-you-need-get-started
 
+template<>
+struct YAML::convert<std::filesystem::path> {
+    static Node
+    encode(const std::filesystem::path& path) {
+        return Node(path.string());
+    }
+
+    static bool
+    decode(const Node& node, std::filesystem::path& path) {
+        path = node.as<std::string>();
+        return true;
+    }
+};
+
 namespace erl::common {
 
     struct YamlableBase {

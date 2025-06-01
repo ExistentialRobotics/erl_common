@@ -3,6 +3,7 @@
 #include "logging.hpp"
 
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace erl::common {
@@ -36,6 +37,40 @@ namespace erl::common {
 
         using DataBuffer = Buffer;
 
+        class Iterator {
+            DataBufferManager *m_manager_;
+            std::unordered_set<std::size_t> m_available_indices_;
+            std::size_t m_index_ = 0;
+
+        public:
+            explicit Iterator(DataBufferManager *manager);
+
+            Iterator(const Iterator &other) = default;
+            Iterator &
+            operator=(const Iterator &other) = default;
+            Iterator(Iterator &&other) = default;
+            Iterator &
+            operator=(Iterator &&other) = default;
+
+            [[nodiscard]] bool
+            operator==(const Iterator &other) const;
+
+            [[nodiscard]] bool
+            operator!=(const Iterator &other) const;
+
+            T &
+            operator*();
+
+            T *
+            operator->();
+
+            Iterator &
+            operator++();
+
+            Iterator
+            operator++(int);
+        };
+
     private:
         DataBuffer m_entries_;
         std::vector<std::size_t> m_available_indices_;
@@ -66,6 +101,9 @@ namespace erl::common {
         [[nodiscard]] std::size_t
         AddEntry(Args &&...args);
 
+        std::enable_if_t<std::is_default_constructible_v<T>, std::pair<std::size_t, T &>>
+        AllocateEntry();
+
         void
         RemoveEntry(std::size_t index);
 
@@ -84,7 +122,7 @@ namespace erl::common {
         const Buffer &
         GetBuffer() const;
 
-        const std::vector<std::size_t> &
+        [[nodiscard]] const std::vector<std::size_t> &
         GetAvailableIndices() const;
 
         void
@@ -98,6 +136,12 @@ namespace erl::common {
 
         [[nodiscard]] bool
         Read(std::istream &s);
+
+        Iterator
+        begin();
+
+        Iterator
+        end();
     };
 }  // namespace erl::common
 

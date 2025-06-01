@@ -41,6 +41,72 @@ namespace erl::common {
     }
 
     template<typename T, class Buffer>
+    DataBufferManager<T, Buffer>::Iterator::Iterator(DataBufferManager *manager)
+        : m_manager_(manager) {
+        if (m_manager_ == nullptr) { return; }
+        if (m_manager_->m_entries_.empty()) {
+            m_manager_ = nullptr;
+            return;
+        }
+        m_available_indices_.insert(
+            m_manager_->m_available_indices_.begin(),
+            m_manager_->m_available_indices_.end());
+        m_index_ = 0;
+        while (m_index_ < m_manager_->m_entries_.size() && m_available_indices_.count(m_index_)) {
+            ++m_index_;
+        }
+        if (m_index_ >= m_manager_->m_entries_.size()) {
+            m_manager_ = nullptr;
+            return;
+        }
+    }
+
+    template<typename T, class Buffer>
+    bool
+    DataBufferManager<T, Buffer>::Iterator::operator==(const Iterator &other) const {
+        if (m_manager_ != other.m_manager_) { return false; }
+        if (m_manager_ == nullptr) { return true; }
+        return m_index_ == other.m_index_;
+    }
+
+    template<typename T, class Buffer>
+    bool
+    DataBufferManager<T, Buffer>::Iterator::operator!=(const Iterator &other) const {
+        return !(*this == other);
+    }
+
+    template<typename T, class Buffer>
+    T &
+    DataBufferManager<T, Buffer>::Iterator::operator*() {
+        return m_manager_->m_entries_[m_index_];
+    }
+
+    template<typename T, class Buffer>
+    T *
+    DataBufferManager<T, Buffer>::Iterator::operator->() {
+        return &operator*();
+    }
+
+    template<typename T, class Buffer>
+    typename DataBufferManager<T, Buffer>::Iterator &
+    DataBufferManager<T, Buffer>::Iterator::operator++() {
+        ++m_index_;
+        while (m_index_ < m_manager_->m_entries_.size() && m_available_indices_.count(m_index_)) {
+            ++m_index_;
+        }
+        if (m_index_ >= m_manager_->m_entries_.size()) { m_manager_ = nullptr; }
+        return *this;
+    }
+
+    template<typename T, class Buffer>
+    typename DataBufferManager<T, Buffer>::Iterator
+    DataBufferManager<T, Buffer>::Iterator::operator++(int) {
+        Iterator tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    template<typename T, class Buffer>
     std::size_t
     DataBufferManager<T, Buffer>::Size() const {
         return m_entries_.size() - m_available_indices_.size();
@@ -62,7 +128,7 @@ namespace erl::common {
 
         std::size_t index = m_available_indices_.back();
         m_available_indices_.pop_back();
-        ERL_ASSERTM(index < m_entries_.size(), "Index {} is out of range.", index);
+        ERL_DEBUG_ASSERT(index < m_entries_.size(), "Index {} is out of range.", index);
         m_entries_[index] = std::move(entry);
         return index;
     }
@@ -78,6 +144,20 @@ namespace erl::common {
     std::size_t
     DataBufferManager<T, Buffer>::AddEntry(Args &&...args) {
         return AddEntry(T(std::forward<Args>(args)...));
+    }
+
+    // enable if T has a default constructor
+    template<typename T, class Buffer>
+    std::enable_if_t<std::is_default_constructible_v<T>, std::pair<std::size_t, T &>>
+    DataBufferManager<T, Buffer>::AllocateEntry() {
+        if (m_available_indices_.empty()) {
+            m_entries_.emplace_back(T());  // default construct a new entry
+            return m_entries_.size() - 1;
+        }
+        std::size_t index = m_available_indices_.back();
+        m_available_indices_.pop_back();
+        ERL_DEBUG_ASSERT(index < m_entries_.size(), "Index {} is out of range.", index);
+        return {index, m_entries_[index]};
     }
 
     template<typename T, class Buffer>
@@ -246,4 +326,17 @@ namespace erl::common {
         };
         return common::ReadTokens(s, this, token_function_pairs);
     }
+
+    template<typename T, class Buffer>
+    typename DataBufferManager<T, Buffer>::Iterator
+    DataBufferManager<T, Buffer>::begin() {
+        return Iterator(this);
+    }
+
+    template<typename T, class Buffer>
+    typename DataBufferManager<T, Buffer>::Iterator
+    DataBufferManager<T, Buffer>::end() {
+        return Iterator(nullptr);
+    }
+
 }  // namespace erl::common

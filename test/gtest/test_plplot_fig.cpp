@@ -22,7 +22,7 @@ TEST(PlplotFig, Demo04) {
 
     // page 1
 
-    fig.Clear()  //
+    fig.Clear(0.0, 0.0, 0.0)  //
         .SetMargin(0.15, 0.85, 0.15, 0.9)
         .SetAxisLimits(-2.0, 3.0, -80.0, 0.0)
         .SetCurrentColor(PlplotFig::Color0::Red)
@@ -59,12 +59,9 @@ TEST(PlplotFig, Demo04) {
         .SetAxisLabelY("Phase shift (degrees)", true);
 
     PlplotFig::LegendOpt legend_opt(2, {"Amplitude", "Phase shift"});
-    legend_opt
-        .SetTextColors(
-            {static_cast<int>(PlplotFig::Color0::Yellow),
-             static_cast<int>(PlplotFig::Color0::Green)})
+    legend_opt.SetTextColors({PlplotFig::Color0::Yellow, PlplotFig::Color0::Green})
         .SetStyles({PL_LEGEND_LINE, PL_LEGEND_LINE | PL_LEGEND_SYMBOL})
-        .SetLineColors({1, 3})
+        .SetLineColors({PlplotFig::Color0::Red, PlplotFig::Color0::Green})
         .SetLineStyles({1, 1})
         .SetLineWidths({1.0, 1.0})
         .SetSymbols({"", "#(728)"})
