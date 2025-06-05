@@ -4,6 +4,7 @@
 #include "factory_pattern.hpp"
 #include "logging.hpp"
 #include "opencv.hpp"
+#include "template_helper.hpp"
 #include "version_check.hpp"
 
 #include <yaml-cpp/yaml.h>
@@ -48,8 +49,7 @@ namespace erl::common {
         template<typename Derived>
         static std::shared_ptr<Derived>
         Create(const std::string& yamlable_type) {
-            return std::reinterpret_pointer_cast<Derived>(
-                Factory::GetInstance().Create(yamlable_type));
+            return std::dynamic_pointer_cast<Derived>(Factory::GetInstance().Create(yamlable_type));
         }
 
         [[nodiscard]] bool
@@ -147,6 +147,48 @@ namespace erl::common {
 
 template<
     typename T,
+    std::enable_if_t<
+        IsSmartPtr<T>::value &&
+            std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
+        void>* = nullptr>
+void
+SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+    if (obj == nullptr) {
+        node[name] = YAML::Node(YAML::NodeType::Null);
+        return;
+    }
+    node[name] = obj->AsYamlNode();
+}
+
+template<
+    typename T,
+    std::enable_if_t<
+        IsSmartPtr<T>::value &&
+            !std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
+        void>* = nullptr>
+void
+SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+    node[name] = obj;  // this will try to call YAML::convert<T>::encode
+}
+
+template<
+    typename T,
+    std::enable_if_t<
+        IsWeakPtr<T>::value &&
+            std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
+        void>* = nullptr>
+void
+SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+    if (obj == nullptr) {
+        node[name] = YAML::Node(YAML::NodeType::Null);
+        return;
+    }
+    ERL_DEBUG_ASSERT(!obj.expired(), "Weak pointer is expired, cannot save to YAML node.");
+    node[name] = obj.lock()->AsYamlNode();
+}
+
+template<
+    typename T,
     std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
 void
 SaveToNode(YAML::Node& node, const char* name, const T& obj) {
@@ -155,7 +197,11 @@ SaveToNode(YAML::Node& node, const char* name, const T& obj) {
 
 template<
     typename T,
-    std::enable_if_t<!std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+    std::enable_if_t<
+        // don't allow raw pointers additionally. if T is a raw pointer, no SaveToNode will work.
+        !IsSmartPtr<T>::value && !IsWeakPtr<T>::value && !std::is_pointer_v<T> &&
+            !std::is_base_of_v<erl::common::YamlableBase, T>,
+        void>* = nullptr>
 void
 SaveToNode(YAML::Node& node, const char* name, const T& obj) {
     node[name] = obj;
@@ -163,10 +209,59 @@ SaveToNode(YAML::Node& node, const char* name, const T& obj) {
 
 template<
     typename T,
-    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+    std::enable_if_t<
+        IsSmartPtr<T>::value &&
+            std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
+        void>* = nullptr>
 void
-SaveToNode(YAML::Node& node, const char* name, const std::shared_ptr<T>& obj) {
-    node[name] = obj->AsYamlNode();
+LoadFromNode(const YAML::Node& node, const char* name, const T& obj) {
+    // we should not call LoadFromNode(node, name, *obj) here.
+    // otherwise, we might slice the object by mistake.
+    // we cannot call `obj = node[name].as<T>()` here, which might create a new object of wrong type
+    // because `T` is a smart pointer, and we don't know the exact derived type we need to load.
+    // here `obj` must point to a valid object created earlier when the exact type is known.
+    ERL_DEBUG_ASSERT(obj != nullptr, "Smart pointer is null, cannot load from YAML node.");
+    obj->FromYamlNode(node[name]);
+}
+
+template<
+    typename T,
+    std::enable_if_t<
+        IsSmartPtr<T>::value &&
+            !std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
+        void>* = nullptr>
+void
+LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+    // we assume T::element_type is the exact type we want to load.
+    // we might get nullptr here if `node[name]` is null.
+    obj = node[name].as<T>();
+}
+
+template<
+    typename T,
+    std::enable_if_t<
+        IsWeakPtr<T>::value &&
+            std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
+        void>* = nullptr>
+void
+LoadFromNode(const YAML::Node& node, const char* name, const T& obj) {
+    ERL_DEBUG_ASSERT(obj != nullptr, "Weak pointer is null, cannot load from YAML node.");
+    ERL_DEBUG_ASSERT(!obj.expired(), "Weak pointer is expired, cannot load from YAML node.");
+    obj.lock()->FromYamlNode(node[name]);
+}
+
+template<
+    typename T,
+    std::enable_if_t<
+        IsWeakPtr<T>::value &&
+            !std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
+        void>* = nullptr>
+void
+LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+    ERL_DEBUG_ASSERT(obj != nullptr, "Weak pointer is null, cannot load from YAML node.");
+    ERL_DEBUG_ASSERT(!obj.expired(), "Weak pointer is expired, cannot load from YAML node.");
+    auto& locked_obj = *obj.lock();
+    locked_obj = node[name].as<decltype(locked_obj)>();
 }
 
 template<
@@ -175,14 +270,6 @@ template<
 void
 LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
     obj.FromYamlNode(node[name]);
-}
-
-template<
-    typename T,
-    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
-void
-LoadFromNode(const YAML::Node& node, const char* name, const std::shared_ptr<T>& obj) {
-    LoadFromNode(node, name, *obj);
 }
 
 template<typename T, std::enable_if_t<std::is_floating_point_v<T>, void>* = nullptr>
@@ -205,7 +292,9 @@ LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
 template<
     typename T,
     std::enable_if_t<
-        !std::is_base_of_v<erl::common::YamlableBase, T> && !std::is_floating_point_v<T>,
+        // don't allow raw pointers additionally. if T is a raw pointer, no LoadFromNode will work.
+        !IsSmartPtr<T>::value && !IsWeakPtr<T>::value && !std::is_pointer_v<T> &&
+            !std::is_base_of_v<erl::common::YamlableBase, T> && !std::is_floating_point_v<T>,
         void>* = nullptr>
 void
 LoadFromNode(const YAML::Node& node, const char* name, T& obj) {

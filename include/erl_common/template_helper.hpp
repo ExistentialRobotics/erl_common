@@ -25,9 +25,9 @@ using IsUniquePtr = is_instantiation<std::unique_ptr, T>;
 template<typename T>
 using IsWeakPtr = is_instantiation<std::weak_ptr, T>;
 
-/// Check if T is smart pointer (std::shared_ptr, std::unique_ptr, std::weak_ptr)
+/// Check if T is smart pointer (std::shared_ptr, std::unique_ptr)
 template<typename T>
-using IsSmartPtr = std::disjunction<IsSharedPtr<T>, IsUniquePtr<T>, IsWeakPtr<T>>;
+using IsSmartPtr = std::disjunction<IsSharedPtr<T>, IsUniquePtr<T>>;
 
 /// assert if the pointer is null
 template<typename T, typename... Args>
