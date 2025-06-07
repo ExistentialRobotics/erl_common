@@ -213,7 +213,7 @@ template<
         IsSmartPtr<T>::value &&
             std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
         void>* = nullptr>
-void
+[[nodiscard]] bool
 LoadFromNode(const YAML::Node& node, const char* name, const T& obj) {
     // we should not call LoadFromNode(node, name, *obj) here.
     // otherwise, we might slice the object by mistake.
@@ -221,7 +221,7 @@ LoadFromNode(const YAML::Node& node, const char* name, const T& obj) {
     // because `T` is a smart pointer, and we don't know the exact derived type we need to load.
     // here `obj` must point to a valid object created earlier when the exact type is known.
     ERL_DEBUG_ASSERT(obj != nullptr, "Smart pointer is null, cannot load from YAML node.");
-    obj->FromYamlNode(node[name]);
+    return obj->FromYamlNode(node[name]);
 }
 
 template<
@@ -243,11 +243,11 @@ template<
         IsWeakPtr<T>::value &&
             std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
         void>* = nullptr>
-void
+[[nodiscard]] bool
 LoadFromNode(const YAML::Node& node, const char* name, const T& obj) {
     ERL_DEBUG_ASSERT(obj != nullptr, "Weak pointer is null, cannot load from YAML node.");
     ERL_DEBUG_ASSERT(!obj.expired(), "Weak pointer is expired, cannot load from YAML node.");
-    obj.lock()->FromYamlNode(node[name]);
+    return obj.lock()->FromYamlNode(node[name]);
 }
 
 template<
@@ -267,9 +267,9 @@ LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
 template<
     typename T,
     std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
-void
+[[nodiscard]] bool
 LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
-    obj.FromYamlNode(node[name]);
+    return obj.FromYamlNode(node[name]);
 }
 
 template<typename T, std::enable_if_t<std::is_floating_point_v<T>, void>* = nullptr>
