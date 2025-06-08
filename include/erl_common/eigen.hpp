@@ -85,6 +85,26 @@ AbslHashValue(H h, const Eigen::Matrix<T, Rows, Cols>& mat) {
 }
 
 namespace erl::common {
+
+    template<typename T, int Rows, int Cols>
+    Eigen::MatrixX<T>
+    DownsampleEigenMatrix(const Eigen::Matrix<T, Rows, Cols>& mat, int row_stride, int col_stride) {
+        ERL_ASSERTM(
+            row_stride > 0 && col_stride > 0,
+            "DownsampleEigenMatrix: row_stride and col_stride must be positive.");
+        if (row_stride == 1 && col_stride == 1) { return mat; }  // no downsampling
+
+        Eigen::MatrixX<T> downsampled(
+            mat.rows() / row_stride + (mat.rows() % row_stride != 0),
+            mat.cols() / col_stride + (mat.cols() % col_stride != 0));
+        for (long c = 0; c < downsampled.cols(); ++c) {
+            T* out = downsampled.col(c).data();
+            const T* in = mat.col(c * col_stride).data();
+            for (long r = 0; r < downsampled.rows(); ++r) { out[r] = in[r * row_stride]; }
+        }
+        return downsampled;
+    }
+
     template<typename T, int Rows1, int Cols1, int Rows2, int Cols2>
     bool
     SafeEigenMatrixEqual(
