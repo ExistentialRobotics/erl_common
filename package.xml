@@ -11,6 +11,9 @@
     <buildtool_depend>catkin</buildtool_depend>
 
     <depend>roscpp</depend>
+    <depend>std_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>tf2_ros</depend>
     <build_depend>ament_cmake</build_depend>
     <build_depend>Eigen3</build_depend>
     <build_depend>OpenCV</build_depend>
@@ -26,19 +29,19 @@
     <build_depend>Python3</build_depend>
     <build_depend>pybind11</build_depend>
 
-    <build_export_depend>Eigen3</build_export_depend>  <!-- header only -->
+    <build_export_depend>Eigen3</build_export_depend>    <!-- header only -->
     <build_export_depend>OpenCV</build_export_depend>
     <build_export_depend>yaml-cpp</build_export_depend>
-    <build_export_depend>nlohmann_json</build_export_depend>  <!-- header only -->
+    <build_export_depend>nlohmann_json</build_export_depend>    <!-- header only -->
     <build_export_depend>OpenMP</build_export_depend>
     <build_export_depend>MKL</build_export_depend>
     <build_export_depend>LAPACK</build_export_depend>
     <build_export_depend>Boost</build_export_depend>
     <build_export_depend>fmt</build_export_depend>
-    <build_export_depend>nanoflann</build_export_depend>  <!-- header only -->
+    <build_export_depend>nanoflann</build_export_depend>    <!-- header only -->
     <build_export_depend>plplot</build_export_depend>
     <build_export_depend>Python3</build_export_depend>
-    <build_export_depend>pybind11</build_export_depend>  <!-- header only -->
+    <build_export_depend>pybind11</build_export_depend>    <!-- header only -->
 
     <exec_depend>OpenCV</exec_depend>
     <exec_depend>yaml-cpp</exec_depend>

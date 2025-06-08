@@ -11,13 +11,14 @@ if (NOT COMMAND erl_project_setup)
 endif ()
 erl_project_setup(
         ${PROJECT_NAME}
-        CATKIN_COMPONENTS roscpp
+        CATKIN_COMPONENTS roscpp geometry_msgs std_msgs tf2_ros
+        CATKIN_DEPENDS roscpp geometry_msgs std_msgs tf2_ros
 )
 erl_setup_ros()
 erl_catkin_package(
         INCLUDE_DIRS include
         LIBRARIES ${PROJECT_NAME} py${PROJECT_NAME}
-        CATKIN_DEPENDS roscpp
+        CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPENDS}
         DEPENDS ${${PROJECT_NAME}_DEPENDS}  # non-catkin dependencies are collected via erl_find_package
         CFG_EXTRAS erl_common_tools.cmake)
 if (ERL_USE_TRACY)
@@ -46,7 +47,7 @@ endif ()
 ########################
 # define the libraries #
 ########################
-file(GLOB_RECURSE SRC_FILES src/*.cpp)
+file(GLOB SRC_FILES src/*.cpp)
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME}) # this allows namespace style, erl_common::erl_common
 target_include_directories(${PROJECT_NAME}
@@ -76,6 +77,16 @@ endif ()
 if (ROS1_ACTIVATED)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
+
+    # node: transform_to_tf_node
+    add_executable(transform_to_tf_node src/ros1/transform_to_tf_node.cpp)
+    target_include_directories(transform_to_tf_node PRIVATE ${catkin_INCLUDE_DIRS})
+    target_link_libraries(transform_to_tf_node PRIVATE ${PROJECT_NAME} ${catkin_LIBRARIES})
+
+    # node: clock_node
+    add_executable(clock_node src/ros1/clock_node.cpp)
+    target_include_directories(clock_node PRIVATE ${catkin_INCLUDE_DIRS})
+    target_link_libraries(clock_node PRIVATE ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif ()
 
 ###################
