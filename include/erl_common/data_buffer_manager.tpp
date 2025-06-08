@@ -1,5 +1,6 @@
 #pragma once
 
+#include "data_buffer_manager.hpp"
 #include "serialization.hpp"
 
 #include <unordered_set>
@@ -101,6 +102,72 @@ namespace erl::common {
     template<typename T, class Buffer>
     typename DataBufferManager<T, Buffer>::Iterator
     DataBufferManager<T, Buffer>::Iterator::operator++(int) {
+        Iterator tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    template<typename T, class Buffer>
+    DataBufferManager<T, Buffer>::ConstIterator::ConstIterator(const DataBufferManager *manager)
+        : m_manager_(manager) {
+        if (m_manager_ == nullptr) { return; }
+        if (m_manager_->m_entries_.empty()) {
+            m_manager_ = nullptr;
+            return;
+        }
+        m_available_indices_.insert(
+            m_manager_->m_available_indices_.begin(),
+            m_manager_->m_available_indices_.end());
+        m_index_ = 0;
+        while (m_index_ < m_manager_->m_entries_.size() && m_available_indices_.count(m_index_)) {
+            ++m_index_;
+        }
+        if (m_index_ >= m_manager_->m_entries_.size()) {
+            m_manager_ = nullptr;
+            return;
+        }
+    }
+
+    template<typename T, class Buffer>
+    bool
+    DataBufferManager<T, Buffer>::ConstIterator::operator==(const ConstIterator &other) const {
+        if (m_manager_ != other.m_manager_) { return false; }
+        if (m_manager_ == nullptr) { return true; }
+        return m_index_ == other.m_index_;
+    }
+
+    template<typename T, class Buffer>
+    bool
+    DataBufferManager<T, Buffer>::ConstIterator::operator!=(const ConstIterator &other) const {
+        return !(*this == other);
+    }
+
+    template<typename T, class Buffer>
+    const T &
+    DataBufferManager<T, Buffer>::ConstIterator::operator*() {
+        return m_manager_->m_entries_[m_index_];
+    }
+
+    template<typename T, class Buffer>
+    const T *
+    DataBufferManager<T, Buffer>::ConstIterator::operator->() {
+        return &operator*();
+    }
+
+    template<typename T, class Buffer>
+    typename DataBufferManager<T, Buffer>::ConstIterator &
+    DataBufferManager<T, Buffer>::ConstIterator::operator++() {
+        ++m_index_;
+        while (m_index_ < m_manager_->m_entries_.size() && m_available_indices_.count(m_index_)) {
+            ++m_index_;
+        }
+        if (m_index_ >= m_manager_->m_entries_.size()) { m_manager_ = nullptr; }
+        return *this;
+    }
+
+    template<typename T, class Buffer>
+    typename DataBufferManager<T, Buffer>::ConstIterator
+    DataBufferManager<T, Buffer>::ConstIterator::operator++(int) {
         Iterator tmp = *this;
         ++(*this);
         return tmp;
@@ -337,6 +404,18 @@ namespace erl::common {
     typename DataBufferManager<T, Buffer>::Iterator
     DataBufferManager<T, Buffer>::end() {
         return Iterator(nullptr);
+    }
+
+    template<typename T, class Buffer>
+    typename DataBufferManager<T, Buffer>::ConstIterator
+    DataBufferManager<T, Buffer>::begin() const {
+        return ConstIterator(this);
+    }
+
+    template<typename T, class Buffer>
+    typename DataBufferManager<T, Buffer>::ConstIterator
+    DataBufferManager<T, Buffer>::end() const {
+        return ConstIterator(nullptr);
     }
 
 }  // namespace erl::common

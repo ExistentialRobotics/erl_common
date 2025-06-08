@@ -71,6 +71,40 @@ namespace erl::common {
             operator++(int);
         };
 
+        class ConstIterator {
+            const DataBufferManager *m_manager_;
+            std::unordered_set<std::size_t> m_available_indices_;
+            std::size_t m_index_ = 0;
+
+        public:
+            explicit ConstIterator(const DataBufferManager *manager);
+
+            ConstIterator(const ConstIterator &other) = default;
+            ConstIterator &
+            operator=(const ConstIterator &other) = default;
+            ConstIterator(ConstIterator &&other) = default;
+            ConstIterator &
+            operator=(ConstIterator &&other) = default;
+
+            [[nodiscard]] bool
+            operator==(const ConstIterator &other) const;
+
+            [[nodiscard]] bool
+            operator!=(const ConstIterator &other) const;
+
+            const T &
+            operator*();
+
+            const T *
+            operator->();
+
+            ConstIterator &
+            operator++();
+
+            ConstIterator
+            operator++(int);
+        };
+
     private:
         DataBuffer m_entries_;
         std::vector<std::size_t> m_available_indices_;
@@ -142,6 +176,12 @@ namespace erl::common {
 
         Iterator
         end();
+
+        ConstIterator
+        begin() const;
+
+        ConstIterator
+        end() const;
     };
 }  // namespace erl::common
 
