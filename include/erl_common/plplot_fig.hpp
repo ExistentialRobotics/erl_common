@@ -831,6 +831,9 @@ namespace erl::common {
             SetColorLevels(const double* z, int n_rows, int n_cols, int n_levels);
 
             ShadesOpt&
+            SetColorLevels(double z_min, double z_max, int n_levels);
+
+            ShadesOpt&
             SetFillWidth(double fill_width_);
 
             ShadesOpt&

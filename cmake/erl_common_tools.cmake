@@ -775,10 +775,11 @@ macro(erl_setup_common_packages)
     # because some flags about Eigen3 are set.
     erl_config_lapack()
 
-    erl_config_boost()  # Boost libraries
-    erl_config_fmt()    # string formatting
-    erl_config_openmp() # OpenMP support
-    erl_config_eigen()  # Eigen3 library
+    erl_config_boost()     # Boost libraries
+    erl_config_fmt()       # string formatting
+    erl_config_openmp()    # OpenMP support
+    erl_config_eigen()     # Eigen3 library
+    erl_config_libtorch()  # PyTorch C++ library
 
     # file format libraries
     erl_config_json()

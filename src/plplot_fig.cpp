@@ -92,7 +92,8 @@ namespace erl::common {
         return opt;
     }
 
-    PlplotFig::AxisOpt::operator std::string() const {
+    PlplotFig::AxisOpt::
+    operator std::string() const {
         std::string result;
         if (draw_axis) { result += 'a'; }
         if (draw_bottom_left_edge) { result += 'b'; }
@@ -1086,6 +1087,23 @@ namespace erl::common {
             color_levels.push_back(
                 min_z +
                 (max_z - min_z) * static_cast<double>(i) / static_cast<double>(n_levels - 1));
+        }
+        return *this;
+    }
+
+    PlplotFig::ShadesOpt &
+    PlplotFig::ShadesOpt::SetColorLevels(
+        const double z_min,
+        const double z_max,
+        const int n_levels) {
+
+        color_levels.clear();
+        color_levels.reserve(n_levels);
+        color_levels.push_back(z_min);
+        for (int i = 1; i < n_levels; ++i) {
+            color_levels.push_back(
+                z_min +
+                (z_max - z_min) * static_cast<double>(i) / static_cast<double>(n_levels - 1));
         }
         return *this;
     }
