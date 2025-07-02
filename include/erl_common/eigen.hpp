@@ -113,6 +113,7 @@ namespace erl::common {
         static_assert(Rows1 == Eigen::Dynamic || Rows2 == Eigen::Dynamic || Rows1 == Rows2);
         static_assert(Cols1 == Eigen::Dynamic || Cols2 == Eigen::Dynamic || Cols1 == Cols2);
         if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) { return false; }
+        if (lhs.size() == 0) { return true; }
         // we use `std::memcmp` to compare the data of the two matrices.
         // it is safe because the data is contiguous and the size of the data is the same.
         return std::memcmp(lhs.data(), rhs.data(), sizeof(T) * lhs.size()) == 0;

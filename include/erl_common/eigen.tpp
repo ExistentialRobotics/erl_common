@@ -228,6 +228,15 @@ namespace erl::common {
         if (matrix_size == 0) {
             if constexpr (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic) {
                 // ERL_WARN("Reading empty matrix from stream.");
+                if (Rows != Eigen::Dynamic) {
+                    matrix.resize(Rows, 0);
+                } else {
+                    if (Cols != Eigen::Dynamic) {
+                        matrix.resize(0, Cols);
+                    } else {
+                        matrix.resize(0, 0);
+                    }
+                }
                 return true;
             } else if (matrix_size != Rows * Cols) {
                 ERL_WARN("Matrix size mismatch. Expected {}, got {}", Rows * Cols, matrix_size);
