@@ -87,18 +87,55 @@ TEST(YamlTest, FromYamlString) {
     ASSERT_EQ(setting.sub_setting.d, 1);
     std::cout << setting << std::endl;
 
-    ASSERT_TRUE(setting.FromYamlString(R"(
+    const std::string& yaml_str = R"(
 a: 10
 b: 1.0
 sub_setting:
     c: 2
-    d: 3)"));
+    d: 3)";
+
+    const YAML::Node node(yaml_str);
+    std::cout << node << std::endl;  //
+
+    ASSERT_TRUE(setting.FromYamlString(yaml_str));
 
     std::cout << setting << std::endl;
     ASSERT_EQ(setting.a, 10);
     ASSERT_EQ(setting.b, 1.0);
     ASSERT_EQ(setting.sub_setting.c, 2);
     ASSERT_EQ(setting.sub_setting.d, 3);
+
+    std::cout << "`YAML::Node another_node = node` is shallow copy." << std::endl;
+    YAML::Node node2 = setting.AsYamlNode();
+    YAML::Node node3 = node2["sub_setting"];
+    YAML::Node node4 = node3["c"];
+    node4 = 5;                        // modify the node
+    std::cout << node2 << std::endl;  // should print the modified value
+}
+
+TEST(YamlTest, FromCommandLine) {
+    erl::test::Setting setting;
+
+    std::cout << setting << std::endl;
+
+    {
+        const char* argv[] =
+            {"test", "--a=10", "--b=1.0", "--sub_setting.c=2", "--sub_setting.d=3"};
+        std::cout << "FromCommandLine with 5 arguments: \n";
+        for (auto arg: argv) { std::cout << arg << " "; }
+        std::cout << std::endl;
+        setting.FromCommandLine(5, argv);
+        std::cout << setting << std::endl;
+    }
+
+    {
+        const char* argv[] = {"test", "--sub_setting.d=5"};
+        std::cout << "FromCommandLine with 2 arguments: \n";
+        for (auto arg: argv) { std::cout << arg << " "; }
+        std::cout << std::endl;
+        setting.FromCommandLine(2, argv);
+        std::cout << setting << std::endl;
+    }
 }
 
 TEST(YamlTest, EigenConversion) {

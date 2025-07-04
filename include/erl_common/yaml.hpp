@@ -10,7 +10,6 @@
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
-#include <fstream>
 #include <memory>
 #include <optional>
 
@@ -53,81 +52,37 @@ namespace erl::common {
         }
 
         [[nodiscard]] bool
-        operator==(const YamlableBase& other) const {
-            const std::string yaml_str = AsYamlString();
-            const std::string other_yaml_str = other.AsYamlString();
-            // if the YAML string is the same, the object is the same in terms of saving and loading
-            return yaml_str == other_yaml_str;
-        }
+        operator==(const YamlableBase& other) const;
 
         [[nodiscard]] bool
-        operator!=(const YamlableBase& other) const {
-            return !(*this == other);
-        }
+        operator!=(const YamlableBase& other) const;
 
         [[nodiscard]] virtual bool
         FromYamlNode(const YAML::Node& node) = 0;
 
         [[nodiscard]] bool
-        FromYamlString(const std::string& yaml_string) {
-            const YAML::Node node = YAML::Load(yaml_string);
-            return FromYamlNode(node);
-        }
+        FromYamlString(const std::string& yaml_string);
 
         [[nodiscard]] virtual YAML::Node
         AsYamlNode() const = 0;
 
         [[nodiscard]] virtual std::string
-        AsYamlString() const {
-            YAML::Emitter emitter;
-            emitter.SetIndent(4);
-            emitter.SetSeqFormat(YAML::Flow);
-            emitter << AsYamlNode();
-            return emitter.c_str();
-        }
+        AsYamlString() const;
 
         [[nodiscard]] bool
-        FromYamlFile(const std::string& yaml_file) {
-            if (!std::filesystem::exists(yaml_file)) {
-                ERL_WARN("File does not exist: {}", yaml_file);
-                return false;
-            }
-            const auto node = YAML::LoadFile(yaml_file);
-            return FromYamlNode(node);
-        }
+        FromYamlFile(const std::string& yaml_file);
 
         void
-        AsYamlFile(const std::string& yaml_file) const {
-            std::ofstream ofs(yaml_file);
-            if (!ofs.good()) {
-                ERL_WARN("Failed to open file: {}", yaml_file);
-                return;
-            }
-            YAML::Emitter emitter(ofs);
-            emitter.SetIndent(4);
-            emitter.SetSeqFormat(YAML::Flow);
-            emitter << AsYamlNode();
-        }
+        AsYamlFile(const std::string& yaml_file) const;
 
         [[nodiscard]] bool
-        Write(std::ostream& s) const {
-            if (!s.good()) { return false; }
-            const std::string yaml_str = AsYamlString() + "\n";
-            const auto len = static_cast<std::streamsize>(yaml_str.size());
-            s.write(reinterpret_cast<const char*>(&len), sizeof(len));
-            s.write(yaml_str.data(), len);
-            return s.good();
-        }
+        Write(std::ostream& s) const;
 
         [[nodiscard]] bool
-        Read(std::istream& s) {
-            if (!s.good()) { return false; }
-            std::streamsize len;
-            s.read(reinterpret_cast<char*>(&len), sizeof(len));
-            std::string yaml_str(len, '\0');
-            s.read(yaml_str.data(), len);
-            return FromYamlString(yaml_str) && s.good();
-        }
+        Read(std::istream& s);
+
+        void
+        FromCommandLine(int argc, const char* argv[]);
     };
 
     template<typename T, typename Base = YamlableBase>
