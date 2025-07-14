@@ -7,6 +7,7 @@
     #include <plplot/plstream.h>
 
     #include <memory>
+    #include <optional>
 
 namespace erl::common {
     /**
