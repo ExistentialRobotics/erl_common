@@ -1,8 +1,10 @@
 macro(erl_config_fmt)
+    set(fmt_VERBOSE_ONCE FALSE CACHE BOOL "Print fmt configuration once" FORCE)
     erl_find_package(
             PACKAGE fmt
             REQUIRED
             COMMANDS ARCH_LINUX "try `sudo pacman -S fmt`"
+            COMMANDS UBUNTU_LINUX "try `sudo apt install libfmt-dev`"
     )
     set_target_properties(fmt::fmt PROPERTIES SYSTEM ON)
     if (TARGET fmt::fmt-header-only)
@@ -15,5 +17,6 @@ macro(erl_config_fmt)
         unset(_cfg)
         message(STATUS "fmt_INCLUDE_DIRS: ${fmt_INCLUDE_DIRS}")
         message(STATUS "fmt_LIBRARIES: ${fmt_LIBRARIES}")
+
     endif ()
 endmacro()

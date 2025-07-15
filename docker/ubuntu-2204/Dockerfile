@@ -27,10 +27,14 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     python3 \
     python3-pip \
     python3-dev \
+    python3-vedo \
+    python3-tqdm \
     zsh \
+    vim \
     git \
     build-essential \
     cmake \
+    ccache \
     intel-mkl-full \
     liblapack-dev \
     liblapacke-dev \

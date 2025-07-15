@@ -9,18 +9,23 @@ message(STATUS "Configuring ${PROJECT_NAME} ${PROJECT_VERSION}")
 if (NOT COMMAND erl_project_setup)
     include(cmake/erl_common_tools.cmake)
 endif ()
-erl_project_setup(
-        ${PROJECT_NAME}
-        CATKIN_COMPONENTS roscpp geometry_msgs std_msgs tf2_ros
-        CATKIN_DEPENDS roscpp geometry_msgs std_msgs tf2_ros
+erl_project_setup()
+erl_setup_ros(
+        CATKIN_COMPONENTS
+        roscpp geometry_msgs std_msgs tf2_ros
+
+        CATKIN_DEPENDS
+        roscpp geometry_msgs std_msgs tf2_ros
+
+        CATKIN_PACKAGE_LIBRARIES
+        ${PROJECT_NAME} py${PROJECT_NAME}
+
+        CFG_EXTRAS
+        erl_common_tools.cmake
+
+        ROS2_COMPONENTS
+        rclcpp
 )
-erl_setup_ros()
-erl_catkin_package(
-        INCLUDE_DIRS include
-        LIBRARIES ${PROJECT_NAME} py${PROJECT_NAME}
-        CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPENDS}
-        DEPENDS ${${PROJECT_NAME}_DEPENDS}  # non-catkin dependencies are collected via erl_find_package
-        CFG_EXTRAS erl_common_tools.cmake)
 if (ERL_USE_TRACY)
     set(BUILD_SHARED_LIBS ON)
     file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/_deps/imgui-src)  # delete folder
@@ -54,17 +59,18 @@ target_include_directories(${PROJECT_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${${PROJECT_NAME}_INCLUDE_DIR}>
         $<INSTALL_INTERFACE:${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}>)
-if (ERL_USE_INTEL_MKL)
-    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MKL_INCLUDE_DIRS})
-endif ()
-# https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
-target_link_libraries(${PROJECT_NAME}
+erl_target_dependencies(  # erl_target_dependencies handles ROS dependencies as well
+        ${PROJECT_NAME}
         PUBLIC fmt::fmt
         PUBLIC ${OpenCV_LIBRARIES}
         PUBLIC yaml-cpp nlohmann_json::nlohmann_json
         PUBLIC Boost::boost Boost::program_options Boost::graph
         PUBLIC pthread OpenMP::OpenMP_CXX
-        PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+        PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
+)
+if (ERL_USE_INTEL_MKL)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MKL_INCLUDE_DIRS})
+endif ()
 if (Pangolin_FOUND)
     target_link_libraries(${PROJECT_NAME} PUBLIC ${Pangolin_LIBRARIES})
     target_compile_definitions(${PROJECT_NAME} PUBLIC -DERL_USE_PANGOLIN)
@@ -74,20 +80,8 @@ if (plplot_FOUND)
     target_link_libraries(${PROJECT_NAME} PUBLIC PLPLOT::plplot PLPLOT::plplotcxx ${cairomm-1.0_LIBRARIES})
     target_compile_definitions(${PROJECT_NAME} PUBLIC "ERL_USE_PLPLOT")
 endif ()
-if (ROS1_ACTIVATED)
-    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
 
-    # node: transform_to_tf_node
-    add_executable(transform_to_tf_node src/ros1/transform_to_tf_node.cpp)
-    target_include_directories(transform_to_tf_node PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(transform_to_tf_node PRIVATE ${PROJECT_NAME} ${catkin_LIBRARIES})
-
-    # node: clock_node
-    add_executable(clock_node src/ros1/clock_node.cpp)
-    target_include_directories(clock_node PRIVATE ${catkin_INCLUDE_DIRS})
-    target_link_libraries(clock_node PRIVATE ${PROJECT_NAME} ${catkin_LIBRARIES})
-endif ()
+add_subdirectory(src/ros)
 
 ###################
 # Python bindings #
@@ -95,12 +89,9 @@ endif ()
 erl_add_pybind_module(
         PYBIND_MODULE_NAME py${PROJECT_NAME}
         PYBIND_SRC_DIR ${${PROJECT_NAME}_PYTHON_BINDING_DIR}
-        PYTHON_PKG_DIR ${${PROJECT_NAME}_PYTHON_DIR}/${PROJECT_NAME}
         LIBRARIES ${PROJECT_NAME}
 )
-erl_add_python_package(
-        PYTHON_PKG_DIR ${${PROJECT_NAME}_PYTHON_DIR}/${PROJECT_NAME}
-)
+erl_add_python_package()
 
 ####################################################################################################
 # INSTALL
@@ -119,4 +110,4 @@ erl_add_tests(
 ####################################################################################################
 # done
 ####################################################################################################
-erl_mark_project_found(${PROJECT_NAME})
+erl_mark_project_found()

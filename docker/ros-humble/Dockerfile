@@ -28,4 +28,12 @@ RUN dpkg -i /tmp/ros2-apt-source.deb
 
 RUN DEBIAN_FRONTEND=noninteractive apt update -y && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
-    ros-humble-desktop-full ros-dev-tools
+    ros-humble-desktop-full \
+    ros-dev-tools \
+    python3-colcon-common-extensions
+
+# clean
+RUN apt-get clean  && rm -rf /var/lib/apt/lists/*
+RUN if [ -n "$APT_MIRROR" ]; then \
+    mv /etc/apt/sources.list.backup /etc/apt/sources.list; \
+    fi

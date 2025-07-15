@@ -44,5 +44,5 @@ TEST(Logging, Macro) {
             ("assertion (1 == 2) at " + std::string(__FILE__) + ":40: message\n").c_str());
     }
     // should exit
-    ASSERT_DEATH({ ERL_FATAL("fatal message, 2 / 3 = {:.3f}", 2.0 / 3.0); }, ".*");
+    ASSERT_DEATH(({ ERL_FATAL("fatal message, 2 / 3 = {:.3f}", 2.0 / 3.0); }), ".*");
 }

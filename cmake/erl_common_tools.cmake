@@ -117,14 +117,17 @@ macro(erl_set_gtest_working_directory _gtest_name _gtest_working_directory)
 endmacro()
 
 # ##################################################################################################
-# erl_add_test
+# erl_add_tests
 # ##################################################################################################
 macro(erl_add_tests)
+    message(STATUS ">> ${PROJECT_NAME}: erl_add_tests")
+
     set(options)
     set(oneValueArgs)
     set(multiValueArgs LIBRARIES EXCLUDE_FROM_ALL IGNORE_FILES)
     cmake_parse_arguments(${PROJECT_NAME}_TEST
             "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    unset(_args)
 
     if (ERL_BUILD_TEST_${PROJECT_NAME})
         # add gtest
@@ -146,7 +149,34 @@ macro(erl_add_tests)
                             ${${name}_${name}_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
                     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
                 else ()
+                    message(STATUS "Adding gtest ${name}")
                     catkin_add_gtest(${name} ${file})
+                    target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
+                    target_link_libraries(${name}
+                            ${catkin_LIBRARIES} ${${PROJECT_NAME}_TEST_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
+                    message(STATUS "Adding gtest ${name}")
+                endif ()
+            endforeach ()
+        elseif (ROS2_ACTIVATED)
+            foreach (file IN LISTS GTEST_SOURCES)
+                get_filename_component(name ${file} NAME_WE)
+                if (${name} IN_LIST ${PROJECT_NAME}_TEST_EXCLUDE_FROM_ALL)
+                    message(STATUS "Excluding gtest ${name}")
+                    add_executable(${name} ${file})
+                    target_link_libraries(${name}
+                            ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main
+                            ${${name}_${name}_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
+                    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+                else ()
+                    message(STATUS "Adding gtest ${name}")
+                    list(APPEND _args ${name} ${file})
+                    if (DEFINED ${name}_GTEST_WORKING_DIRECTORY)
+                        list(APPEND _args "WORKING_DIRECTORY" ${${name}_GTEST_WORKING_DIRECTORY})
+                    else ()
+                        list(APPEND _args "WORKING_DIRECTORY" ${CMAKE_CURRENT_BINARY_DIR})
+                    endif ()
+                    ament_add_gtest(${_args})
+                    unset(_args)
                     target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
                     target_link_libraries(${name}
                             ${catkin_LIBRARIES} ${${PROJECT_NAME}_TEST_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
@@ -157,7 +187,6 @@ macro(erl_add_tests)
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
                 add_executable(${name} ${file})
-
                 target_link_libraries(${name}
                         ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main
                         ${${name}_${name}_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
@@ -431,6 +460,8 @@ endfunction()
 # erl_find_package
 # ##################################################################################################
 macro(erl_find_package)
+    message(STATUS ">> ${PROJECT_NAME}: erl_find_package")
+
     set(options NO_RECORD QUIET REQUIRED PKGCONFIG)
     set(oneValueArgs PACKAGE)
     set(multiValueArgs COMMANDS)
@@ -444,7 +475,6 @@ macro(erl_find_package)
             set(ERL_QUIET ON)
         endif ()
 
-        message(STATUS "==========================================================================")
         if (ERL_PACKAGE STREQUAL "Python3")
             message(STATUS "To specify python interpreter, run `cmake -DPython3_ROOT_DIR=/path/to/python3_bin_folder ..`")
             message(STATUS "With CLion, Python_EXECUTABLE is set to the selected python interpreter")
@@ -515,8 +545,6 @@ function(erl_find_path)
         set(ERL_OUTPUT "FILE_FOUND")
     endif ()
 
-    message(STATUS "==============================================================================")
-
     if (DEFINED ERL_PACKAGE)
         erl_platform_based_message(
                 MSG_TYPE STATUS
@@ -542,7 +570,7 @@ endfunction()
 # erl_detect_ros
 # ##################################################################################################
 macro(erl_detect_ros)
-    message(STATUS "==============================================================================")
+    message(STATUS ">> ${PROJECT_NAME}: erl_detect_ros")
 
     if (DEFINED ENV{ROS_VERSION})
         set(ROS_ACTIVATED ON)
@@ -582,6 +610,8 @@ macro(erl_set_project_paths)
             CACHE PATH "CMake directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_PYTHON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python
             CACHE PATH "Python directory of ${PROJECT_NAME}" FORCE)
+    set(${PROJECT_NAME}_PYTHON_PKG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python/${PROJECT_NAME}
+            CACHE PATH "Python package directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_PYTHON_BINDING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python/binding
             CACHE PATH "Python binding directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts
@@ -603,72 +633,118 @@ macro(erl_set_project_paths)
             CACHE PATH "Build directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_BUILD_PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR}/python
             CACHE PATH "Build python directory of ${PROJECT_NAME}" FORCE)
+    set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${CMAKE_CURRENT_BINARY_DIR}/python/${PROJECT_NAME}
+            CACHE PATH "Build python package directory of ${PROJECT_NAME}" FORCE)
     set(${PROJECT_NAME}_BUILD_TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/test
             CACHE PATH "Build test directory of ${PROJECT_NAME}" FORCE)
 
     # set project devel & install paths
     if (ROS1_ACTIVATED)
-        set(${PROJECT_NAME}_INSTALL_BINARY_DIR ${CATKIN_GLOBAL_BIN_DESTINATION} # `bin`
-                CACHE PATH "Binary directory of ${PROJECT_NAME}" FORCE)
-        set(${PROJECT_NAME}_INSTALL_ETC_DIR ${CATKIN_PACKAGE_ETC_DESTINATION}
-                CACHE PATH "Etc directory of ${PROJECT_NAME}" FORCE)
-        set(${PROJECT_NAME}_INSTALL_INCLUDE_DIR ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-                CACHE PATH "Include directory of ${PROJECT_NAME}" FORCE)
-        set(${PROJECT_NAME}_INSTALL_LIBRARY_DIR ${CATKIN_PACKAGE_LIB_DESTINATION}
-                CACHE PATH "Library directory of ${PROJECT_NAME}" FORCE)
-        set(${PROJECT_NAME}_INSTALL_PYTHON_DIR ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-                CACHE PATH "Python directory of ${PROJECT_NAME}" FORCE)
-        set(${PROJECT_NAME}_INSTALL_SHARE_DIR ${CATKIN_PACKAGE_SHARE_DESTINATION}
-                CACHE PATH "Share directory of ${PROJECT_NAME}" FORCE)
-        set(${PROJECT_NAME}_INSTALL_CMAKE_DIR ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake
-                CACHE PATH "CMake directory of ${PROJECT_NAME}" FORCE)
-
-        if (NOT DEFINED ERL_CATKIN_INSTALL_DIR)
-            set(ERL_CATKIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
-            get_filename_component(ERL_CATKIN_WORKSPACE_DIR ${ERL_CATKIN_INSTALL_DIR} DIRECTORY)
-            set(ERL_CATKIN_INSTALL_LIB_DIR ${ERL_CATKIN_INSTALL_DIR}/lib)
-            set(ERL_CATKIN_INSTALL_PYTHON_DIR
-                    ${ERL_CATKIN_INSTALL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
-
-            set(ERL_CATKIN_DEVEL_DIR ${ERL_CATKIN_WORKSPACE_DIR}/devel)
-            set(ERL_CATKIN_DEVEL_LIB_DIR ${ERL_CATKIN_DEVEL_DIR}/lib)
-            set(ERL_CATKIN_DEVEL_PYTHON_DIR
-                    ${ERL_CATKIN_DEVEL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
-        endif ()
+        erl_set_project_paths_ros1()
     elseif (ROS2_ACTIVATED)
-        message(FATAL_ERROR "ROS2 is not supported yet")
+        erl_set_project_paths_ros2()
     else ()
         include(GNUInstallDirs)
         include(CMakePackageConfigHelpers)
 
-        # /usr/local/bin
+        # <INSTALL_PREFIX>/bin
         set(${PROJECT_NAME}_INSTALL_BINARY_DIR ${CMAKE_INSTALL_BINDIR} # `bin`
                 CACHE PATH "Path to ${PROJECT_NAME} binary directory during installation" FORCE)
+        set(${PROJECT_NAME}_INSTALL_RUNTIME_DIR ${CMAKE_INSTALL_BINDIR} # usually the same as binary dir
+                CACHE PATH "Path to ${PROJECT_NAME} runtime directory during installation" FORCE)
 
-        # /usr/local/etc/PROJECT_NAME
+        # <INSTALL_PREFIX>/etc/PROJECT_NAME
         set(${PROJECT_NAME}_INSTALL_ETC_DIR ${CMAKE_INSTALL_SYSCONFDIR}/${PROJECT_NAME}
                 CACHE PATH "Path to ${PROJECT_NAME} etc directory during installation" FORCE)
 
-        # /usr/local/include/PROJECT_NAME
+        # <INSTALL_PREFIX>/include/PROJECT_NAME
         set(${PROJECT_NAME}_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR}
                 CACHE PATH "Path to ${PROJECT_NAME} include directory during installation" FORCE)
 
-        # /usr/local/lib/PROJECT_NAME
+        # <INSTALL_PREFIX>/lib/PROJECT_NAME
         set(${PROJECT_NAME}_INSTALL_LIBRARY_DIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
                 CACHE PATH "Path to ${PROJECT_NAME} library directory during installation" FORCE)
 
-        # /usr/local/lib/pythonX.Y/dist-packages/PROJECT_NAME
+        # <INSTALL_PREFIX>/lib/pythonX.Y/[dist|site]-packages/PROJECT_NAME
         set(${PROJECT_NAME}_INSTALL_PYTHON_DIR ${Python3_SITELIB}/${PROJECT_NAME}
                 CACHE PATH "Path to ${PROJECT_NAME} python directory during installation" FORCE)
 
-        # /usr/local/share/PROJECT_NAME
+        # <INSTALL_PREFIX>/share/PROJECT_NAME
         set(${PROJECT_NAME}_INSTALL_SHARE_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}
                 CACHE PATH "Path to ${PROJECT_NAME} share directory during installation" FORCE)
 
-        # /usr/local/share/PROJECT_NAME/cmake
+        # <INSTALL_PREFIX>/share/PROJECT_NAME/cmake
         set(${PROJECT_NAME}_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
                 CACHE PATH "Path to ${PROJECT_NAME} cmake directory during installation" FORCE)
     endif ()
+endmacro()
+
+macro(erl_set_project_paths_ros1)
+    set(${PROJECT_NAME}_INSTALL_BINARY_DIR ${CATKIN_GLOBAL_BIN_DESTINATION} # `bin`
+            CACHE PATH "Binary directory of ${PROJECT_NAME}" FORCE)
+    set(${PROJECT_NAME}_INSTALL_RUNTIME_DIR ${CATKIN_PACKAGE_BIN_DESTINATION}
+            CACHE PATH "Runtime directory of ${PROJECT_NAME}" FORCE)  # usually the same as binary dir
+    set(${PROJECT_NAME}_INSTALL_ETC_DIR ${CATKIN_PACKAGE_ETC_DESTINATION}
+            CACHE PATH "Etc directory of ${PROJECT_NAME}" FORCE)
+    set(${PROJECT_NAME}_INSTALL_INCLUDE_DIR ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+            CACHE PATH "Include directory of ${PROJECT_NAME}" FORCE)
+    set(${PROJECT_NAME}_INSTALL_LIBRARY_DIR ${CATKIN_PACKAGE_LIB_DESTINATION}
+            CACHE PATH "Library directory of ${PROJECT_NAME}" FORCE)
+    set(${PROJECT_NAME}_INSTALL_PYTHON_DIR ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+            CACHE PATH "Python directory of ${PROJECT_NAME}" FORCE)
+    set(${PROJECT_NAME}_INSTALL_SHARE_DIR ${CATKIN_PACKAGE_SHARE_DESTINATION}
+            CACHE PATH "Share directory of ${PROJECT_NAME}" FORCE)
+    set(${PROJECT_NAME}_INSTALL_CMAKE_DIR ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake
+            CACHE PATH "CMake directory of ${PROJECT_NAME}" FORCE)
+
+    if (NOT DEFINED ERL_CATKIN_INSTALL_DIR)
+        set(ERL_CATKIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
+        get_filename_component(ERL_CATKIN_WORKSPACE_DIR ${ERL_CATKIN_INSTALL_DIR} DIRECTORY)
+        set(ERL_CATKIN_INSTALL_LIB_DIR ${ERL_CATKIN_INSTALL_DIR}/lib)
+        set(ERL_CATKIN_INSTALL_PYTHON_DIR
+                ${ERL_CATKIN_INSTALL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
+
+        set(ERL_CATKIN_DEVEL_DIR ${ERL_CATKIN_WORKSPACE_DIR}/devel)
+        set(ERL_CATKIN_DEVEL_LIB_DIR ${ERL_CATKIN_DEVEL_DIR}/lib)
+        set(ERL_CATKIN_DEVEL_PYTHON_DIR
+                ${ERL_CATKIN_DEVEL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
+    endif ()
+endmacro()
+
+macro(erl_set_project_paths_ros2)
+
+    # <INSTALL_PREFIX>/lib/PROJECT_NAME
+    set(${PROJECT_NAME}_INSTALL_BINARY_DIR lib/${PROJECT_NAME} # ROS2 does not install to bin, instead to lib/PROJECT_NAME
+            CACHE PATH "Path to ${PROJECT_NAME} binary directory during installation" FORCE)
+
+    set(${PROJECT_NAME}_INSTALL_RUNTIME_DIR bin
+            CACHE PATH "Path to ${PROJECT_NAME} runtime directory during installation" FORCE)
+
+    # <INSTALL_PREFIX>/etc/PROJECT_NAME
+    set(${PROJECT_NAME}_INSTALL_ETC_DIR etc/${PROJECT_NAME}
+            CACHE PATH "Path to ${PROJECT_NAME} etc directory during installation" FORCE)
+
+    # <INSTALL_PREFIX>/include
+    set(${PROJECT_NAME}_INSTALL_INCLUDE_DIR include
+            CACHE PATH "Path to ${PROJECT_NAME} include directory during installation" FORCE)
+
+    # <INSTALL_PREFIX>/lib
+    set(${PROJECT_NAME}_INSTALL_LIBRARY_DIR lib
+            CACHE PATH "Path to ${PROJECT_NAME} library directory during installation" FORCE)
+
+    # <INSTALL_PREFIX>/lib/pythonX.Y/dist-packages/PROJECT_NAME
+    set(ROS2_PYTHON_SITE_PACKAGES_DIR lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages)
+    set(${PROJECT_NAME}_INSTALL_PYTHON_DIR ${ROS2_PYTHON_SITE_PACKAGES_DIR}/${PROJECT_NAME}
+            CACHE PATH "Path to ${PROJECT_NAME} python directory during installation" FORCE)
+
+    # <INSTALL_PREFIX>/share/PROJECT_NAME
+    set(${PROJECT_NAME}_INSTALL_SHARE_DIR share/${PROJECT_NAME}
+            CACHE PATH "Path to ${PROJECT_NAME} share directory during installation" FORCE)
+
+    # <INSTALL_PREFIX>/share/PROJECT_NAME/cmake
+    set(${PROJECT_NAME}_INSTALL_CMAKE_DIR share/${PROJECT_NAME}/cmake
+            CACHE PATH "Path to ${PROJECT_NAME} cmake directory during installation" FORCE)
+
 endmacro()
 
 # ##################################################################################################
@@ -790,6 +866,9 @@ macro(erl_setup_common_packages)
     erl_config_pangolin()
     erl_config_plplot()
 
+    # python
+    erl_setup_python()
+
     erl_config_tracy()   # profiling tool
 endmacro()
 
@@ -798,7 +877,15 @@ endmacro()
 # ######################################################################################################################
 macro(erl_setup_python)
     option(ERL_BUILD_PYTHON "Build Python binding" ON)
-    if (ERL_BUILD_PYTHON)
+    if (NOT DEFINED ERL_BUILD_PYTHON_${PROJECT_NAME})
+        set(ERL_BUILD_PYTHON_${PROJECT_NAME} ${ERL_BUILD_PYTHON})
+    endif ()
+
+    if (NOT ERL_BUILD_PYTHON)
+        set(ERL_BUILD_PYTHON_${PROJECT_NAME} OFF)
+    endif ()
+
+    if (ERL_BUILD_PYTHON_${PROJECT_NAME})
         erl_config_python3()
         erl_config_pybind11()
     endif ()
@@ -808,13 +895,22 @@ endmacro()
 # erl_setup_test
 # ##################################################################################################
 macro(erl_setup_test)
-    option(ERL_BUILD_TEST "Build executables for test" ON)
+    message(STATUS ">> ${PROJECT_NAME}: erl_setup_test")
+
+    if (NOT DEFINED BUILD_TESTING)
+        set(BUILD_TESTING ON)
+    endif ()
+    option(ERL_BUILD_TEST "Build executables for test" ${BUILD_TESTING})
 
     if (ERL_BUILD_TEST)
         add_definitions(-DERL_BUILD_TEST)
         enable_testing()
 
-        if (NOT ROS_ACTIVATED) # GTest is configured by ROS if ROS is activated
+        if (ROS1_ACTIVATED)
+            # GTest is configured by ROS if ROS is activated
+        elseif (ROS2_ACTIVATED)
+            find_package(ament_cmake_gtest REQUIRED)
+        else ()
             # we need to use GTest::GTest and GTest::Main in other subprojects
             erl_find_package(
                     PACKAGE GTest
@@ -822,6 +918,10 @@ macro(erl_setup_test)
                     COMMANDS UBUNTU_LINUX "try `sudo apt install libgtest-dev`"
                     COMMANDS ARCH_LINUX "try `sudo pacman -S gtest`")
             include(GoogleTest)
+        endif ()
+
+        if (NOT ROS_ACTIVATED)
+
         endif ()
     endif ()
 
@@ -834,145 +934,222 @@ endmacro()
 # erl_setup_ros
 # ##################################################################################################
 macro(erl_setup_ros)
+    message(STATUS ">> ${PROJECT_NAME}: erl_setup_ros")
+
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES)
+    set(multiValueArgs MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES CATKIN_COMPONENTS CATKIN_DEPENDS CATKIN_PACKAGE_LIBRARIES CFG_EXTRAS ROS2_COMPONENTS)
     cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (ROS1_ACTIVATED)
-        if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/package.xml)
-            message(FATAL_ERROR "No package.xml found in ${CMAKE_CURRENT_LIST_DIR}")
-        endif ()
-
-        erl_find_package(
-                PACKAGE catkin
-                NO_RECORD
-                REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_COMPONENTS}
-                COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-catkin python3-catkin-pkg python3-empy python3-nose python3-setuptools`"
-                COMMANDS ARCH_LINUX "try `paru -S python-catkin_tools ros-${ROS_DISTRO}-catkin`")
-
-        if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/setup.py)
-            catkin_python_setup()
-            set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP TRUE
-                    CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
-        else ()
-            set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP FALSE
-                    CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
-        endif ()
-
-        if (${PROJECT_NAME}_MSG_FILES)
-            add_message_files(
-                    DIRECTORY msg
-                    FILES ${${PROJECT_NAME}_MSG_FILES})
-        endif ()
-
-        if (${PROJECT_NAME}_SRV_FILES)
-            add_service_files(
-                    DIRECTORY srv
-                    FILES ${${PROJECT_NAME}_SRV_FILES})
-        endif ()
-
-        if (${PROJECT_NAME}_ACTION_FILES)
-            add_action_files(
-                    DIRECTORY action
-                    FILES ${${PROJECT_NAME}_ACTION_FILES})
-        endif ()
-
-        if (${PROJECT_NAME}_MSG_DEPENDENCIES)
-            generate_messages(DEPENDENCIES ${${PROJECT_NAME}_MSG_DEPENDENCIES})
-        endif ()
+        erl_setup_ros1()
     endif ()
 
     if (ROS2_ACTIVATED)
-        message(FATAL_ERROR "ROS2 is not supported yet")
+        erl_setup_ros2()
     endif ()
+
 endmacro()
 
 # ##################################################################################################
-# erl_catkin_package
+# erl_setup_ros1
 # ##################################################################################################
-macro(erl_catkin_package)
-    if (ROS1_ACTIVATED)
-        catkin_package(${ARGV})
+macro(erl_setup_ros1)
+    if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/package.xml)
+        message(FATAL_ERROR "No package.xml found in ${CMAKE_CURRENT_LIST_DIR}")
+    endif ()
 
-        # filter out Eigen3 installed at `/usr/include/eigen3` from catkin_INCLUDE_DIRS
-        # if `/usr/local/include/eigen3` is also in catkin_INCLUDE_DIRS
-        set(EIGEN3_AT_USR_INCLUDE_EIGEN3 FALSE)
-        set(EIGEN3_AT_USR_LOCAL_INCLUDE_EIGEN3 FALSE)
+    # configure package catkin
+    list(APPEND ${PROJECT_NAME}_CATKIN_COMPONENTS ${${PROJECT_NAME}_ERL_PACKAGES})
+    list(REMOVE_DUPLICATES ${PROJECT_NAME}_CATKIN_COMPONENTS)
+    list(APPEND ${PROJECT_NAME}_CATKIN_DEPENDS ${${PROJECT_NAME}_ERL_PACKAGES})
+    list(REMOVE_DUPLICATES ${PROJECT_NAME}_CATKIN_DEPENDS)
+    erl_find_package(
+            PACKAGE catkin
+            NO_RECORD
+            REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_COMPONENTS}
+            COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-catkin python3-catkin-pkg python3-empy python3-nose python3-setuptools`"
+            COMMANDS ARCH_LINUX "try `paru -S python-catkin_tools ros-${ROS_DISTRO}-catkin`")
 
-        foreach (inc ${catkin_INCLUDE_DIRS})
-            if (inc STREQUAL "/usr/include/eigen3")
-                set(EIGEN3_AT_USR_INCLUDE_EIGEN3 TRUE)
-            else ()
-                list(APPEND filtered_catkin_INCLUDE_DIRS ${inc})
-            endif ()
+    # configure catkin python if setup.py exists
+    if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/setup.py)
+        catkin_python_setup()
+        set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP TRUE
+                CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
+    else ()
+        set(${PROJECT_NAME}_CATKIN_PYTHON_SETUP FALSE
+                CACHE BOOL "TRUE if catkin_python_setup() was called" FORCE)
+    endif ()
 
-            if (inc STREQUAL "/usr/local/include/eigen3")
-                set(EIGEN3_AT_USR_LOCAL_INCLUDE_EIGEN3 TRUE)
-            endif ()
-        endforeach ()
+    # add msg srv action files if specified
+    if (${PROJECT_NAME}_MSG_FILES)
+        add_message_files(
+                DIRECTORY msg
+                FILES ${${PROJECT_NAME}_MSG_FILES})
+    endif ()
+    if (${PROJECT_NAME}_SRV_FILES)
+        add_service_files(
+                DIRECTORY srv
+                FILES ${${PROJECT_NAME}_SRV_FILES})
+    endif ()
+    if (${PROJECT_NAME}_ACTION_FILES)
+        add_action_files(
+                DIRECTORY action
+                FILES ${${PROJECT_NAME}_ACTION_FILES})
+    endif ()
+    if (${PROJECT_NAME}_MSG_DEPENDENCIES)
+        generate_messages(DEPENDENCIES ${${PROJECT_NAME}_MSG_DEPENDENCIES})
+    endif ()
 
-        if (NOT EIGEN3_AT_USR_LOCAL_INCLUDE_EIGEN3 AND EIGEN3_AT_USR_INCLUDE_EIGEN3)
-            list(APPEND filtered_catkin_INCLUDE_DIRS "/usr/include/eigen3")
+    catkin_package(
+        INCLUDE_DIRS include
+        LIBRARIES ${${PROJECT_NAME}_CATKIN_PACKAGE_LIBRARIES}
+        CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPENDS}
+        DEPENDS ${${PROJECT_NAME}_DEPENDS}  # non-catkin dependencies
+        CFG_EXTRAS ${${PROJECT_NAME}_CFG_EXTRAS}
+    )
+
+    # filter out Eigen3 installed at `/usr/include/eigen3` from catkin_INCLUDE_DIRS
+    # if `/usr/local/include/eigen3` is also in catkin_INCLUDE_DIRS
+    set(EIGEN3_AT_USR_INCLUDE_EIGEN3 FALSE)
+    set(EIGEN3_AT_USR_LOCAL_INCLUDE_EIGEN3 FALSE)
+    foreach (inc ${catkin_INCLUDE_DIRS})
+        if (inc STREQUAL "/usr/include/eigen3")
+            set(EIGEN3_AT_USR_INCLUDE_EIGEN3 TRUE)
+        else ()
+            list(APPEND filtered_catkin_INCLUDE_DIRS ${inc})
         endif ()
 
-        set(catkin_INCLUDE_DIRS ${filtered_catkin_INCLUDE_DIRS})
-        unset(filtered_catkin_INCLUDE_DIRS)
+        if (inc STREQUAL "/usr/local/include/eigen3")
+            set(EIGEN3_AT_USR_LOCAL_INCLUDE_EIGEN3 TRUE)
+        endif ()
+    endforeach ()
+    if (NOT EIGEN3_AT_USR_LOCAL_INCLUDE_EIGEN3 AND EIGEN3_AT_USR_INCLUDE_EIGEN3)
+        list(APPEND filtered_catkin_INCLUDE_DIRS "/usr/include/eigen3")
+    endif ()
+    set(catkin_INCLUDE_DIRS ${filtered_catkin_INCLUDE_DIRS})
+    unset(filtered_catkin_INCLUDE_DIRS)
 
-        # filter out MODULE_LIBRARY from catkin_LIBRARIES
-        foreach (lib ${catkin_LIBRARIES})
-            get_filename_component(lib_dir ${lib} DIRECTORY)
-            list(APPEND catkin_LIBRARY_DIRS ${lib_dir})
-
-            if (TARGET ${lib})
-                get_target_property(lib_type ${lib} TYPE)
-
-                if (NOT lib_type STREQUAL "MODULE_LIBRARY") # MODULE_LIBRARY, e.g. pybind11 lib, cannot be linked
-                    list(APPEND filtered_catkin_LIBRARIES ${lib})
-                endif ()
-            else ()
+    # filter out MODULE_LIBRARY from catkin_LIBRARIES
+    foreach (lib ${catkin_LIBRARIES})
+        if (TARGET ${lib})
+            get_target_property(lib_type ${lib} TYPE)
+            if (NOT lib_type STREQUAL "MODULE_LIBRARY") # MODULE_LIBRARY, e.g. pybind11 lib, cannot be linked
                 list(APPEND filtered_catkin_LIBRARIES ${lib})
             endif ()
-        endforeach ()
+        else ()
+            list(APPEND filtered_catkin_LIBRARIES ${lib})
+            get_filename_component(lib_dir ${lib} DIRECTORY)
+            list(APPEND catkin_LIBRARY_DIRS ${lib_dir})
+        endif ()
+    endforeach ()
+    set(catkin_LIBRARIES ${filtered_catkin_LIBRARIES})
+    unset(filtered_catkin_LIBRARIES)
 
-        set(catkin_LIBRARIES ${filtered_catkin_LIBRARIES})
-        unset(filtered_catkin_LIBRARIES)
+    list(REMOVE_DUPLICATES catkin_INCLUDE_DIRS)
+    list(REMOVE_DUPLICATES catkin_LIBRARY_DIRS)
+    list(REMOVE_DUPLICATES catkin_LIBRARIES)
 
-        list(REMOVE_DUPLICATES catkin_INCLUDE_DIRS)
-        list(REMOVE_DUPLICATES catkin_LIBRARY_DIRS)
-        list(REMOVE_DUPLICATES catkin_LIBRARIES)
+    set(CATKIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
+    get_filename_component(CATKIN_WORKSPACE_DIR ${CATKIN_INSTALL_DIR} DIRECTORY)
+    set(CATKIN_DEVEL_DIR ${CATKIN_WORKSPACE_DIR}/devel)
+    set(CATKIN_DEVEL_LIB_DIR ${CATKIN_DEVEL_DIR}/lib)
+    set(CATKIN_INSTALL_LIB_DIR ${CATKIN_INSTALL_DIR}/lib)
+    set(CATKIN_INSTALL_PYTHON_DIR ${CATKIN_INSTALL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
+
+    erl_set_project_paths_ros1()
+endmacro()
+
+# ##################################################################################################
+# erl_setup_ros2
+# ##################################################################################################
+macro(erl_setup_ros2)
+    if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/package.xml)
+        message(FATAL_ERROR "No package.xml found in ${CMAKE_CURRENT_LIST_DIR}")
     endif ()
 
-    erl_set_project_paths()
+    erl_find_package(
+        PACKAGE ament_cmake
+        NO_RECORD
+        REQUIRED
+        COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-ament-cmake`"
+    )
+
+    # configure ament python if setup.py exists
+    if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/setup.py)
+        erl_find_package(
+            PACKAGE ament_cmake_python
+            NO_RECORD
+            REQUIRED
+            COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-ament-cmake-python`"
+        )
+    endif ()
+
+    foreach (component IN LISTS ${PROJECT_NAME}_ROS2_COMPONENTS)
+        erl_find_package(
+            PACKAGE ${component}
+            REQUIRED
+            COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-${component}`"
+        )
+    endforeach ()
+
+endmacro()
+
+# ##################################################################################################
+# erl_target_dependencies
+# ##################################################################################################
+function(erl_target_dependencies target)
+
+    if (NOT TARGET ${target})
+        message(FATAL_ERROR "Target ${target} does not exist when calling erl_target_dependencies")
+    endif ()
+
+    if (${ARGC} GREATER 1)
+        message(STATUS "Linking target ${target} with dependencies: ${ARGN}")
+        target_link_libraries(${target} PUBLIC ${ARGN})
+    endif()
 
     if (ROS1_ACTIVATED)
-        set(CATKIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
-        get_filename_component(CATKIN_WORKSPACE_DIR ${CATKIN_INSTALL_DIR} DIRECTORY)
-        set(CATKIN_DEVEL_DIR ${CATKIN_WORKSPACE_DIR}/devel)
-        set(CATKIN_DEVEL_LIB_DIR ${CATKIN_DEVEL_DIR}/lib)
-        set(CATKIN_INSTALL_LIB_DIR ${CATKIN_INSTALL_DIR}/lib)
-        set(CATKIN_INSTALL_PYTHON_DIR ${CATKIN_INSTALL_DIR}/${CATKIN_GLOBAL_PYTHON_DESTINATION})
-    endif ()
-endmacro()
+        message(STATUS "catkin_INCLUDE_DIRS for target ${target}: ${catkin_INCLUDE_DIRS}")
+        message(STATUS "catkin_LIBRARIES for target ${target}: ${catkin_LIBRARIES}")
+        target_include_directories(${target} SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
+        target_link_libraries(${target} PUBLIC ${catkin_LIBRARIES})
+    elseif (ROS2_ACTIVATED)
+        foreach (component IN LISTS ${PROJECT_NAME}_ROS2_COMPONENTS)
+            if (TARGET ${component}::${component})
+                message(STATUS "Linking target ${target} with ROS2 component ${component}")
+                target_link_libraries(${target} PUBLIC ${component}::${component})
+            elseif (TARGET ${component})
+                message(STATUS "Linking target ${target} with ROS2 component target ${component}")
+                target_link_libraries(${target} PUBLIC ${component})
+            else ()
+                message(WARNING "ROS2 component ${component} does not exist as target or imported target, skipping linking it to target ${target}")
+            endif ()
+        endforeach ()
+    endif()
+
+endfunction()
 
 # ##################################################################################################
 # erl_project_setup
 # ##################################################################################################
-macro(erl_project_setup _name)
+macro(erl_project_setup)
+    message(STATUS ">> ${PROJECT_NAME}: erl_project_setup")
+
     set(options ENABLE_CUDA)
     set(oneValueArgs)
-    set(multiValueArgs ERL_PACKAGES CATKIN_COMPONENTS CATKIN_DEPENDS)
-    cmake_parse_arguments(${_name} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    set(multiValueArgs ERL_PACKAGES)
+    cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (${_name}_UNPARSED_ARGUMENTS)
+    if (${PROJECT_NAME}_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "Some arguments are not recognized by erl_project_setup")
     endif ()
 
-    if (${_name}_ENABLE_CUDA)
+    if (${PROJECT_NAME}_ENABLE_CUDA)
         erl_enable_cuda()
     endif ()
 
-    foreach (erl_package ${${_name}_ERL_PACKAGES})
+    foreach (erl_package ${${PROJECT_NAME}_ERL_PACKAGES})
         if (NOT TARGET ${erl_package})
             erl_find_package(
                     PACKAGE ${erl_package}
@@ -992,22 +1169,11 @@ macro(erl_project_setup _name)
         endif ()
     endif ()
 
-    erl_set_project_paths()
     erl_setup_compiler()
     erl_detect_ros()
-
-    if (ROS1_ACTIVATED)
-        list(APPEND ${_name}_CATKIN_COMPONENTS ${${PROJECT_NAME}_ERL_PACKAGES})
-        list(REMOVE_DUPLICATES ${_name}_CATKIN_COMPONENTS)
-        list(APPEND ${_name}_CATKIN_DEPENDS ${${PROJECT_NAME}_ERL_PACKAGES})
-        list(REMOVE_DUPLICATES ${_name}_CATKIN_DEPENDS)
-    endif ()
-
     erl_setup_common_packages()
 
     if (NOT ERL_PROJECT_SETUP_DONE OR ROS_ACTIVATED)
-        erl_setup_python()
-
         if (NOT ROS_ACTIVATED) # if ROS is activated, there is no PARENT_SCOPE when erl_project_setup is called
             if (PROJECT_IS_TOP_LEVEL)
                 set(ERL_PROJECT_SETUP_DONE TRUE)
@@ -1017,189 +1183,177 @@ macro(erl_project_setup _name)
         endif ()
     endif ()
 
+    erl_set_project_paths()
     erl_setup_test()
 endmacro()
 
-function(erl_add_pybind_module)
+macro(erl_add_pybind_module)
+    message(STATUS ">> ${PROJECT_NAME}: erl_add_pybind_module")
+
     # PYBIND_MODULE_NAME: module name
     # PYBIND_SRC_DIR: source directory of the pybind module
-    # PYTHON_PKG_DIR: source directory of the python package, where the module will be copied to when ROS is activated
     # INCLUDE_DIRS: directories to include
     # LIBRARIES: libraries to link
 
     set(options)
-    set(oneValueArgs PYBIND_MODULE_NAME PYBIND_SRC_DIR PYTHON_PKG_DIR)
+    set(oneValueArgs PYBIND_MODULE_NAME PYBIND_SRC_DIR)
     set(multiValueArgs INCLUDE_DIRS LIBRARIES)
     cmake_parse_arguments("arg" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT DEFINED ERL_BUILD_PYTHON_${PROJECT_NAME})
-        set(ERL_BUILD_PYTHON_${PROJECT_NAME} ${ERL_BUILD_PYTHON})
+    if (ERL_BUILD_PYTHON_${PROJECT_NAME})
+        message(STATUS "Adding Python binding module ${arg_PYBIND_MODULE_NAME} for ${PROJECT_NAME}")
+
+        file(GLOB_RECURSE SRC_FILES "${arg_PYBIND_SRC_DIR}/*.cpp")
+        if (NOT SRC_FILES)
+            message(FATAL_ERROR "No cpp file found in ${arg_PYBIND_SRC_DIR}")
+        endif ()
+
+        if (NOT DEFINED arg_PYBIND_MODULE_NAME)
+            message(FATAL_ERROR "PYBIND_MODULE_NAME not set")
+        endif ()
+
+        # pybind runtime lib
+        get_target_property(lib_type pybind11::module TYPE)
+        if (NOT lib_type STREQUAL "INTERFACE_LIBRARY") # check if it is an interface library
+            set_target_properties(pybind11::module PROPERTIES SYSTEM ON)
+        endif ()
+        pybind11_add_module(${arg_PYBIND_MODULE_NAME} ${SRC_FILES})
+
+        # ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+        # Use separate rpaths during build and install phases
+        # set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+        # Don't use the install-rpath during the build phase
+        # set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+        # set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+        # Automatically add all linked folders that are NOT in the build directory to the rpath
+        # (per library?)
+        # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+        if (APPLE)
+            set(CMAKE_MACOSX_RPATH ON)
+            set(_rpath_portable_origin "@loader_path")
+        else ()
+            set(_rpath_portable_origin $ORIGIN)
+        endif ()
+
+        set(_rpath "${_rpath_portable_origin}:${_rpath_portable_origin}/lib/${PROJECT_NAME}")
+
+        # how to check rpath of a library file:
+        # objdump -x <library_name>.so | grep 'R.*PATH'
+        # output: RUNPATH     $ORIGIN:$ORIGIN/lib/<project_name>
+        # how to check shared library dependencies of a library file:
+        # ldd <library_name>.so
+        set_target_properties(${arg_PYBIND_MODULE_NAME} PROPERTIES
+                SKIP_BUILD_RPATH FALSE # Use separate rpaths during build and install phases
+                BUILD_WITH_INSTALL_RPATH FALSE # Don't use the install-rpath during the build phase
+                INSTALL_RPATH "${_rpath}" # search in the same directory, or in lib/<project_name>
+                INSTALL_RPATH_USE_LINK_PATH TRUE)
+        target_compile_definitions(${arg_PYBIND_MODULE_NAME}
+                PRIVATE PYBIND_MODULE_NAME=${arg_PYBIND_MODULE_NAME})
+        target_include_directories(${arg_PYBIND_MODULE_NAME} SYSTEM PRIVATE ${Python3_INCLUDE_DIRS})
+        if (DEFINED arg_INCLUDE_DIRS)
+            target_include_directories(${arg_PYBIND_MODULE_NAME} PRIVATE ${arg_INCLUDE_DIRS})
+        endif ()
+        if (DEFINED arg_LIBRARIES)
+            target_link_libraries(${arg_PYBIND_MODULE_NAME} PRIVATE ${arg_LIBRARIES})
+        endif ()
+
+        # put the library in the source python package directory, such that setup.py can find it
+        # set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
+        # LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_PYTHON_DIR}/${PROJECT_NAME})
+        if (ROS1_ACTIVATED)
+            # copy file to a regular library name so that catkin does not throw an error, but this file may not
+            # work with Python3 because the filename is lib<name>.so, which does not match the module name.
+            set(LIB_NAME lib${arg_PYBIND_MODULE_NAME}.so)
+            set(DEVEL_LIB_PATH ${ERL_CATKIN_DEVEL_LIB_DIR}/${LIB_NAME})
+            set(INSTALL_LIB_PATH ${ERL_CATKIN_INSTALL_LIB_DIR}/${LIB_NAME})
+
+            add_custom_command(TARGET ${arg_PYBIND_MODULE_NAME}
+                    POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${DEVEL_LIB_PATH}
+                    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${INSTALL_LIB_PATH}
+                    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${${PROJECT_NAME}_PYTHON_DIR}/${PROJECT_NAME}) # copy to source directory for devel
+        endif ()
     endif ()
 
-    if (NOT ERL_BUILD_PYTHON)
-        set(ERL_BUILD_PYTHON_${PROJECT_NAME} OFF)
-    endif ()
-
-    if (NOT ERL_BUILD_PYTHON_${PROJECT_NAME})
-        return()
-    endif ()
-
-    message(STATUS "Adding Python binding module ${arg_PYBIND_MODULE_NAME} for ${PROJECT_NAME}")
-    erl_setup_python()
-
-    file(GLOB_RECURSE SRC_FILES "${arg_PYBIND_SRC_DIR}/*.cpp")
-    if (NOT SRC_FILES)
-        message(FATAL_ERROR "No cpp file found in ${arg_PYBIND_SRC_DIR}")
-    endif ()
-
-    if (NOT DEFINED arg_PYBIND_MODULE_NAME)
-        message(FATAL_ERROR "PYBIND_MODULE_NAME not set")
-    endif ()
-
-    # pybind runtime lib
-    get_target_property(lib_type pybind11::module TYPE)
-    if (NOT lib_type STREQUAL "INTERFACE_LIBRARY") # check if it is an interface library
-        set_target_properties(pybind11::module PROPERTIES SYSTEM ON)
-    endif ()
-    pybind11_add_module(${arg_PYBIND_MODULE_NAME} ${SRC_FILES})
-
-    # ref: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
-    # Use separate rpaths during build and install phases
-    # set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-    # Don't use the install-rpath during the build phase
-    # set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-    # set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-    # Automatically add all linked folders that are NOT in the build directory to the rpath
-    # (per library?)
-    # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-    if (APPLE)
-        set(CMAKE_MACOSX_RPATH ON)
-        set(_rpath_portable_origin "@loader_path")
-    else ()
-        set(_rpath_portable_origin $ORIGIN)
-    endif ()
-
-    set(_rpath "${_rpath_portable_origin}:${_rpath_portable_origin}/lib/${PROJECT_NAME}")
-
-    # how to check rpath of a library file:
-    # objdump -x <library_name>.so | grep 'R.*PATH'
-    # output: RUNPATH     $ORIGIN:$ORIGIN/lib/<project_name>
-    # how to check shared library dependencies of a library file:
-    # ldd <library_name>.so
-    set_target_properties(${arg_PYBIND_MODULE_NAME} PROPERTIES
-            SKIP_BUILD_RPATH FALSE # Use separate rpaths during build and install phases
-            BUILD_WITH_INSTALL_RPATH FALSE # Don't use the install-rpath during the build phase
-            INSTALL_RPATH "${_rpath}" # search in the same directory, or in lib/<project_name>
-            INSTALL_RPATH_USE_LINK_PATH TRUE)
-    target_compile_definitions(${arg_PYBIND_MODULE_NAME}
-            PRIVATE PYBIND_MODULE_NAME=${arg_PYBIND_MODULE_NAME})
-    target_include_directories(${arg_PYBIND_MODULE_NAME} SYSTEM PRIVATE ${Python3_INCLUDE_DIRS})
-    if (DEFINED arg_INCLUDE_DIRS)
-        target_include_directories(${arg_PYBIND_MODULE_NAME} PRIVATE ${arg_INCLUDE_DIRS})
-    endif ()
-    if (DEFINED arg_LIBRARIES)
-        target_link_libraries(${arg_PYBIND_MODULE_NAME} PRIVATE ${arg_LIBRARIES})
-    endif ()
-
-    # put the library in the source python package directory, such that setup.py can find it
-    # set_target_properties(${${PROJECT_NAME}_PYBIND_MODULE_NAME} PROPERTIES
-    # LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_PYTHON_PKG_DIR})
-    if (ROS1_ACTIVATED)
-        # copy file to a regular library name so that catkin does not throw an error, but this file may not
-        # work with Python3 because the filename is lib<name>.so, which does not match the module name.
-        set(LIB_NAME lib${arg_PYBIND_MODULE_NAME}.so)
-        set(DEVEL_LIB_PATH ${ERL_CATKIN_DEVEL_LIB_DIR}/${LIB_NAME})
-        set(INSTALL_LIB_PATH ${ERL_CATKIN_INSTALL_LIB_DIR}/${LIB_NAME})
-
-        add_custom_command(TARGET ${arg_PYBIND_MODULE_NAME}
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${DEVEL_LIB_PATH}
-                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${INSTALL_LIB_PATH}
-                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${arg_PYBIND_MODULE_NAME}> ${arg_PYTHON_PKG_DIR}) # copy to source directory for devel
-    endif ()
-endfunction()
+    unset(arg_PYBIND_MODULE_NAME)
+    unset(arg_PYBIND_SRC_DIR)
+    unset(arg_INCLUDE_DIRS)
+    unset(arg_LIBRARIES)
+endmacro()
 
 # ##################################################################################################
 # erl_add_python_package
 # ##################################################################################################
-function(erl_add_python_package)
-    set(options)
-    set(oneValueArgs PYTHON_PKG_DIR)
-    set(multiValueArgs DEPENDS_PYTHON_PKGS)
-    cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+macro(erl_add_python_package)
+    message(STATUS ">> ${PROJECT_NAME}: erl_add_python_package")
 
-    if (NOT DEFINED ERL_BUILD_PYTHON_${PROJECT_NAME})
-        set(ERL_BUILD_PYTHON_${PROJECT_NAME} ${ERL_BUILD_PYTHON})
-    endif ()
+    if (ERL_BUILD_PYTHON_${PROJECT_NAME})
+        message(STATUS "Adding Python package for ${PROJECT_NAME}")
 
-    if (NOT ERL_BUILD_PYTHON)
-        set(ERL_BUILD_PYTHON_${PROJECT_NAME} OFF)
-    endif ()
+        # ${PROJECT_NAME}_PYTHON_DIR: <project_dir>/python
+        # ${PROJECT_NAME}_PYTHON_PKG_DIR: <project_dir>/python/<py_package_name>
+        # ${PROJECT_NAME}_PYTHON_BINDING_DIR: <project_dir>/python/binding
+        # ${PROJECT_NAME}_BUILD_DIR: <project_build_dir>
+        # ${PROJECT_NAME}_BUILD_PYTHON_DIR: <project_build_dir>/python
+        # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
 
-    if (NOT ERL_BUILD_PYTHON_${PROJECT_NAME})
-        return()
-    endif ()
-
-    message(STATUS "Adding Python package for ${PROJECT_NAME}")
-    erl_setup_python()
-
-    # ${PROJECT_NAME}_PYTHON_DIR: <project_dir>/python
-    # ${PROJECT_NAME}_PYTHON_PKG_DIR: <project_dir>/python/<py_package_name>
-    # ${PROJECT_NAME}_PYTHON_BINDING_DIR: <project_dir>/python/binding
-    # ${PROJECT_NAME}_BUILD_DIR: <project_build_dir>
-    # ${PROJECT_NAME}_BUILD_PYTHON_DIR: <project_build_dir>/python
-    # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
-
-    # get package name
-    get_filename_component(${PROJECT_NAME}_PY_PACKAGE_NAME ${${PROJECT_NAME}_PYTHON_PKG_DIR} NAME)
-
-    # ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR: <project_build_dir>/python/<py_package_name>
-    set(${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR ${${PROJECT_NAME}_BUILD_PYTHON_DIR}/${${PROJECT_NAME}_PY_PACKAGE_NAME})
-
-    if (EXISTS ${${PROJECT_NAME}_ROOT_DIR}/setup.py)
-        option(ERL_PYTHON_INSTALL_USER "Install Python package to user directory" OFF)
-        set(erl_pip_install_args "--verbose")
-
-        if (ERL_PYTHON_INSTALL_USER)
-            set(erl_pip_install_args "${erl_pip_install_args} --user")
+        # get package name
+        get_filename_component(${PROJECT_NAME}_PY_PACKAGE_NAME ${${PROJECT_NAME}_PYTHON_PKG_DIR} NAME)
+        if (NOT ${${PROJECT_NAME}_PY_PACKAGE_NAME} STREQUAL ${PROJECT_NAME})
+            message(FATAL_ERROR "Python package name ${${PROJECT_NAME}_PY_PACKAGE_NAME} does
+                not match project name ${PROJECT_NAME}. Please rename the package directory
+                to ${PROJECT_NAME}.")
         endif ()
 
-        add_custom_target(${PROJECT_NAME}_py_wheel
-                COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel
-                WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
-                COMMENT "Building Python wheel for ${PROJECT_NAME}")
-        add_custom_target(${PROJECT_NAME}_py_develop
-                COMMAND ${Python3_EXECUTABLE} -m pip install -e . ${erl_pip_install_args}
-                WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
-                DEPENDS ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
-                COMMENT "Installing Python package ${PROJECT_NAME} in develop mode")
-        add_custom_target(${PROJECT_NAME}_py_install
-                COMMAND ${Python3_EXECUTABLE} -m pip install . ${erl_pip_install_args}
-                WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
-                COMMENT "Installing Python package ${PROJECT_NAME} in install mode")
-        get_filename_component(stubgen_path ${Python3_EXECUTABLE} DIRECTORY)
-        set(stubgen_path ${stubgen_path}/stubgen)
+        message(STATUS "BUILD_PYTHON_PKG_DIR: ${${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR}")
 
-        if (EXISTS ${stubgen_path})
-            add_custom_target(${PROJECT_NAME}_py_stub
-                    COMMAND ${stubgen_path} -o ${CMAKE_CURRENT_BINARY_DIR}/python/stubs -p ${${PROJECT_NAME}_PY_PACKAGE_NAME}.${${PROJECT_NAME}_PYBIND_MODULE_NAME} --verbose
-                    DEPENDS ${PROJECT_NAME}_py_install
+        if (EXISTS ${${PROJECT_NAME}_ROOT_DIR}/setup.py)
+            option(ERL_PYTHON_INSTALL_USER "Install Python package to user directory" OFF)
+            set(erl_pip_install_args "--verbose")
+
+            if (ERL_PYTHON_INSTALL_USER)
+                set(erl_pip_install_args "${erl_pip_install_args} --user")
+            endif ()
+
+            add_custom_target(${PROJECT_NAME}_py_wheel
+                    COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel
                     WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
-                    COMMENT "Generating stub files for Python package ${PROJECT_NAME}")
-        endif ()
+                    COMMENT "Building Python wheel for ${PROJECT_NAME}")
+            add_custom_target(${PROJECT_NAME}_py_develop
+                    COMMAND ${Python3_EXECUTABLE} -m pip install -e . ${erl_pip_install_args}
+                    WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
+                    DEPENDS ${${PROJECT_NAME}_PYBIND_MODULE_NAME}
+                    COMMENT "Installing Python package ${PROJECT_NAME} in develop mode")
+            add_custom_target(${PROJECT_NAME}_py_install
+                    COMMAND ${Python3_EXECUTABLE} -m pip install . ${erl_pip_install_args}
+                    WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
+                    COMMENT "Installing Python package ${PROJECT_NAME} in install mode")
+            get_filename_component(stubgen_path ${Python3_EXECUTABLE} DIRECTORY)
+            set(stubgen_path ${stubgen_path}/stubgen)
 
-        unset(erl_pip_install_args)
-    else ()
-        message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR}, rules for Python package ${PROJECT_NAME} will not be generated.")
+            if (EXISTS ${stubgen_path})
+                add_custom_target(${PROJECT_NAME}_py_stub
+                        COMMAND ${stubgen_path} -o ${CMAKE_CURRENT_BINARY_DIR}/python/stubs -p ${PROJECT_NAME}.${${PROJECT_NAME}_PYBIND_MODULE_NAME} --verbose
+                        DEPENDS ${PROJECT_NAME}_py_install
+                        WORKING_DIRECTORY ${${PROJECT_NAME}_ROOT_DIR}
+                        COMMENT "Generating stub files for Python package ${PROJECT_NAME}")
+            endif ()
+
+            unset(erl_pip_install_args)
+        else ()
+            message(WARNING "setup.py not found in ${${PROJECT_NAME}_ROOT_DIR}, rules for Python package ${PROJECT_NAME} is not generated.")
+        endif ()
     endif ()
-endfunction()
+endmacro()
 
 # ##################################################################################################
 # erl_install
 # ##################################################################################################
 macro(erl_install)
+    message(STATUS ">> ${PROJECT_NAME}: erl_install")
+
     set(options)
     set(oneValueArgs)
     set(multiValueArgs EXECUTABLES LIBRARIES PYBIND_MODULES CATKIN_PYTHON_PROGRAMS OTHER_FILES)
@@ -1234,7 +1388,7 @@ macro(erl_install)
                 EXPORT ${PROJECT_NAME}_Targets
                 ARCHIVE DESTINATION ${${PROJECT_NAME}_INSTALL_LIBRARY_DIR}
                 LIBRARY DESTINATION ${${PROJECT_NAME}_INSTALL_LIBRARY_DIR}
-                RUNTIME DESTINATION ${${PROJECT_NAME}_INSTALL_BINARY_DIR})
+                RUNTIME DESTINATION ${${PROJECT_NAME}_INSTALL_RUNTIME_DIR})
     endif ()
 
     # Install the header files
@@ -1286,9 +1440,39 @@ macro(erl_install)
                     DESTINATION ${CATKIN_GLOBAL_PYTHON_DESTINATION})
         endif ()
 
-        # TODO: install other files, e.g. launch files, config files, etc.
+        if (EXISTS ${${PROJECT_NAME}_LAUNCH_DIR})
+            install(DIRECTORY ${${PROJECT_NAME}_LAUNCH_DIR}
+                    DESTINATION ${${PROJECT_NAME}_INSTALL_SHARE_DIR}/launch)
+        endif ()
+
+        if (EXISTS ${${PROJECT_NAME}_CONFIG_DIR})
+            install(DIRECTORY ${${PROJECT_NAME}_CONFIG_DIR}
+                    DESTINATION ${${PROJECT_NAME}_INSTALL_SHARE_DIR}/config)
+        endif ()
     elseif (ROS2_ACTIVATED)
-        message(FATAL_ERROR "Not implemented yet")
+        # call ament_python_install_package if erl_add_python_package is called
+        if (DEFINED ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR)
+            message(STATUS "Installing Python package ${${PROJECT_NAME}_PYTHON_PKG_DIR}")
+            get_filename_component(py_pkg_name ${${PROJECT_NAME}_PYTHON_PKG_DIR} NAME)
+
+            ament_python_install_package(
+                ${PROJECT_NAME}
+                PACKAGE_DIR ${${PROJECT_NAME}_PYTHON_PKG_DIR}
+                DESTINATION ${ROS2_PYTHON_SITE_PACKAGES_DIR}
+            )
+            # Install the pybind module
+            if (${PROJECT_NAME}_INSTALL_PYBIND_MODULES)
+                foreach (module ${${PROJECT_NAME}_INSTALL_PYBIND_MODULES})
+                    message(STATUS "Generate install rule for pybind module ${module}")
+                endforeach ()
+
+                install(TARGETS ${${PROJECT_NAME}_INSTALL_PYBIND_MODULES}
+                        ARCHIVE DESTINATION ${${PROJECT_NAME}_INSTALL_PYTHON_DIR}
+                        LIBRARY DESTINATION ${${PROJECT_NAME}_INSTALL_PYTHON_DIR}
+                        RUNTIME DESTINATION ${${PROJECT_NAME}_INSTALL_PYTHON_DIR})
+            endif ()
+            unset(py_pkg_name)
+        endif ()
     else ()
         # Install the pybind module if pip install is used
         if (${PROJECT_NAME}_INSTALL_PYBIND_MODULES AND DEFINED PIP_LIB_DIR)
@@ -1339,9 +1523,20 @@ endmacro()
 # ##################################################################################################
 # erl_mark_project_found
 # ##################################################################################################
-macro(erl_mark_project_found _name)
-    set(${_name}_FOUND
+macro(erl_mark_project_found)
+    set(${PROJECT_NAME}_FOUND
             TRUE
-            CACHE BOOL "TRUE if ${_name} and all required components found on the system" FORCE)
-    message(STATUS "${_name} is found")
+            CACHE BOOL "TRUE if ${PROJECT_NAME} and all required components found on the system" FORCE)
+    message(STATUS "${PROJECT_NAME} is found")
+
+    if (ROS2_ACTIVATED)
+        # in ROS1, CFG_EXTRAS is passed to catkin_package(), and files are assumed in the cmake dir
+        # in ROS2, CONFIG_EXTRAS will be used by ament_package(), and files are assumed in the project root dir
+        if (DEFINED ${PROJECT_NAME}_CFG_EXTRAS)
+            foreach(file IN LISTS ${${PROJECT_NAME}_CFG_EXTRAS})
+                list(APPEND ${PROJECT_NAME}_CONFIG_EXTRAS ${CMAKE_CURRENT_LIST_DIR}/cmake/${file})
+            endforeach()
+        endif ()
+        ament_package()
+    endif()
 endmacro()

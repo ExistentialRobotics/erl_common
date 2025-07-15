@@ -5,6 +5,7 @@
 #include "logging.hpp"
 #include "tracy.hpp"
 
+#include <gtest/gtest-death-test.h>
 #include <gtest/gtest.h>
 
 #include <chrono>

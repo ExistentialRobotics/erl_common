@@ -212,7 +212,7 @@ namespace erl::common {
 #define LOGGING_LABELS           fmt::format("{}:{}", __FILE__, __LINE__)
 #define LOGGING_LABELED_MSG(msg) fmt::format("{}:{}: {}", __FILE__, __LINE__, msg)
 
-#if defined(ERL_ROS_VERSION_1) || defined(ERL_ROS_VERSION_2)
+#if defined(ERL_ROS_VERSION_1)
     #include <ros/assert.h>
     #include <ros/console.h>
     #define ERL_FATAL(...)                ROS_FATAL(fmt::format(__VA_ARGS__).c_str())
@@ -227,6 +227,25 @@ namespace erl::common {
         #define ERL_ASSERTM(expr, ...) \
             do { ROS_ASSERT_MSG(expr, fmt::format(__VA_ARGS__).c_str()); } while (false)
     #endif
+#elif defined(ERL_ROS_VERSION_2)
+    #include <rclcpp/rclcpp.hpp>
+    #define ERL_FATAL(...) \
+        RCLCPP_FATAL(rclcpp::get_logger("rclcpp"), fmt::format(__VA_ARGS__).c_str())
+    #define ERL_ERROR(...) \
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), fmt::format(__VA_ARGS__).c_str())
+    #define ERL_WARN(...) \
+        RCLCPP_WARN(rclcpp::get_logger("rclcpp"), fmt::format(__VA_ARGS__).c_str())
+    #define ERL_WARN_ONCE(...) \
+        RCLCPP_WARN_ONCE(rclcpp::get_logger("rclcpp"), fmt::format(__VA_ARGS__).c_str())
+    #define ERL_WARN_COND(condition, ...)                                                    \
+        do {                                                                                 \
+            if (condition)                                                                   \
+                RCLCPP_WARN(rclcpp::get_logger("rclcpp"), fmt::format(__VA_ARGS__).c_str()); \
+        } while (false)
+    #define ERL_INFO(...) \
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), fmt::format(__VA_ARGS__).c_str())
+    #define ERL_DEBUG(...) \
+        RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), fmt::format(__VA_ARGS__).c_str())
 #else
 
     #define ERL_FATAL(...)                 \
@@ -272,15 +291,6 @@ namespace erl::common {
             erl::common::Logging::Info("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
         } while (false)
 
-    #define ERL_INFO_ONCE(...)          \
-        do {                            \
-            static bool infoed = false; \
-            if (!infoed) {              \
-                infoed = true;          \
-                ERL_INFO(__VA_ARGS__);  \
-            }                           \
-        } while (false)
-
     #ifndef NDEBUG
         #define ERL_DEBUG(...)                 \
             do {                               \
@@ -296,6 +306,15 @@ namespace erl::common {
         #define ERL_DEBUG_ASSERT(expr, ...) (void) 0
     #endif
 #endif
+
+#define ERL_INFO_ONCE(...)          \
+    do {                            \
+        static bool infoed = false; \
+        if (!infoed) {              \
+            infoed = true;          \
+            ERL_INFO(__VA_ARGS__);  \
+        }                           \
+    } while (false)
 
 #define ERL_WARN_ONCE_COND(condition, ...) \
     do {                                   \
