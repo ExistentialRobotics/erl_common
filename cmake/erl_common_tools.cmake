@@ -941,6 +941,10 @@ macro(erl_setup_ros)
     set(multiValueArgs MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES CATKIN_COMPONENTS CATKIN_DEPENDS CATKIN_PACKAGE_LIBRARIES CFG_EXTRAS ROS2_COMPONENTS)
     cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    if (DEFINED ${PROJECT_NAME}_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unparsed arguments: ${${PROJECT_NAME}_UNPARSED_ARGUMENTS}")
+    endif ()
+
     if (ROS1_ACTIVATED)
         erl_setup_ros1()
     endif ()
@@ -1099,15 +1103,31 @@ endmacro()
 # erl_target_dependencies
 # ##################################################################################################
 function(erl_target_dependencies target)
+    message(STATUS ">> ${PROJECT_NAME}: erl_target_dependencies")
 
     if (NOT TARGET ${target})
         message(FATAL_ERROR "Target ${target} does not exist when calling erl_target_dependencies")
     endif ()
 
+    set(deps)
+    foreach(package IN LISTS ${PROJECT_NAME}_ERL_PACKAGES)
+        if (TARGET ${package}::${package})
+            list(APPEND deps ${package}::${package})
+        elseif(TARGET ${package})
+            list(APPEND deps ${package})
+        else ()
+            message(FATAL_ERROR "ERL package ${package} does not exist as target")
+        endif ()
+    endforeach()
+
     if (${ARGC} GREATER 1)
-        message(STATUS "Linking target ${target} with dependencies: ${ARGN}")
-        target_link_libraries(${target} PUBLIC ${ARGN})
+        list(APPEND deps ${ARGN})
+        list(REMOVE_DUPLICATES deps)
     endif()
+    if (deps)
+        message(STATUS "Linking target ${target} with dependencies: ${deps}")
+        target_link_libraries(${target} PUBLIC ${deps})
+    endif ()
 
     if (ROS1_ACTIVATED)
         message(STATUS "catkin_INCLUDE_DIRS for target ${target}: ${catkin_INCLUDE_DIRS}")
@@ -1403,12 +1423,15 @@ macro(erl_install)
                 DESTINATION ${${PROJECT_NAME}_INSTALL_SHARE_DIR})
     endif ()
 
-    # Install cmake files, only for erl_common
-    if (PROJECT_NAME STREQUAL "erl_common")
-        file(GLOB_RECURSE CMAKE_FILES ${ERL_CMAKE_DIR}/*.cmake)
-        install(FILES ${CMAKE_FILES}
-                DESTINATION ${${PROJECT_NAME}_INSTALL_CMAKE_DIR})
-    endif ()
+    # Install cmake files
+    set(cmake_dir ${CMAKE_CURRENT_LIST_DIR}/cmake)
+    file(GLOB_RECURSE CMAKE_FILES RELATIVE ${cmake_dir} ${cmake_dir}/*.cmake)
+    message(STATUS "Installing cmake files: ${CMAKE_FILES}")
+    foreach(file IN LISTS CMAKE_FILES)
+        get_filename_component(file_dir ${file} DIRECTORY)
+        install(FILES ${cmake_dir}/${file}
+                DESTINATION ${${PROJECT_NAME}_INSTALL_CMAKE_DIR}/${file_dir}) # preserve directory structure
+    endforeach()
 
     # ROS Support
     if (ROS1_ACTIVATED)
@@ -1450,6 +1473,22 @@ macro(erl_install)
                     DESTINATION ${${PROJECT_NAME}_INSTALL_SHARE_DIR}/config)
         endif ()
     elseif (ROS2_ACTIVATED)
+        set(deps ${${PROJECT_NAME}_ROS2_COMPONENTS} ${${PROJECT_NAME}_ERL_PACKAGES})
+        if (deps)
+            message(STATUS "Exporting ament dependencies for ${PROJECT_NAME}: ${deps}")
+            ament_export_dependencies(${deps})
+        endif ()
+        unset(deps)
+        message(STATUS "Exporting ament include directories for ${PROJECT_NAME}: ${${PROJECT_NAME}_INCLUDE_DIR}")
+        ament_export_include_directories(include/${PROJECT_NAME})
+        if (${PROJECT_NAME}_INSTALL_LIBRARIES)
+            message(STATUS "Exporting ament libraries for ${PROJECT_NAME}: ${${PROJECT_NAME}_INSTALL_LIBRARIES}")
+            ament_export_libraries(${${PROJECT_NAME}_INSTALL_LIBRARIES})
+            message(STATUS "Exporting ament targets for ${PROJECT_NAME}: ${${PROJECT_NAME}_INSTALL_LIBRARIES}")
+            ament_export_targets(
+                ${PROJECT_NAME}_Targets
+                HAS_LIBRARY_TARGET)
+        endif ()
         # call ament_python_install_package if erl_add_python_package is called
         if (DEFINED ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR)
             message(STATUS "Installing Python package ${${PROJECT_NAME}_PYTHON_PKG_DIR}")
@@ -1533,9 +1572,10 @@ macro(erl_mark_project_found)
         # in ROS1, CFG_EXTRAS is passed to catkin_package(), and files are assumed in the cmake dir
         # in ROS2, CONFIG_EXTRAS will be used by ament_package(), and files are assumed in the project root dir
         if (DEFINED ${PROJECT_NAME}_CFG_EXTRAS)
-            foreach(file IN LISTS ${${PROJECT_NAME}_CFG_EXTRAS})
+            foreach(file IN LISTS ${PROJECT_NAME}_CFG_EXTRAS)
                 list(APPEND ${PROJECT_NAME}_CONFIG_EXTRAS ${CMAKE_CURRENT_LIST_DIR}/cmake/${file})
             endforeach()
+            message(STATUS "CONFIG_EXTRAS for ${PROJECT_NAME}: ${${PROJECT_NAME}_CONFIG_EXTRAS}")
         endif ()
         ament_package()
     endif()
