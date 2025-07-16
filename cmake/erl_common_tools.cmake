@@ -99,10 +99,8 @@ endmacro()
 # ##################################################################################################
 # erl_set_gtest_extra_libraries
 # ##################################################################################################
-macro(erl_set_gtest_extra_libraries)
-    set(_gtest_name ${ARGV0})
+macro(erl_set_gtest_extra_libraries _gtest_name)
     set(_gtest_libraries ${ARGN})
-    list(POP_FRONT _gtest_libraries)  # get the remaining arguments
     set(${_gtest_name}_EXTRA_LIBRARIES ${_gtest_libraries}
             CACHE STRING "GTest extra libraries for ${_gtest_libraries}" FORCE)
     message(STATUS "Extra libraries for GTest ${_gtest_name}: ${${_gtest_name}_EXTRA_LIBRARIES}")
@@ -117,6 +115,20 @@ macro(erl_set_gtest_working_directory _gtest_name _gtest_working_directory)
 endmacro()
 
 # ##################################################################################################
+# erl_collect_targets
+# ##################################################################################################
+macro(erl_collect_targets type)
+    list(APPEND ${PROJECT_NAME}_COLLECTED_${type} ${ARGN})
+endmacro()
+
+# ##################################################################################################
+# erl_ignore_gtest
+# ##################################################################################################
+macro(erl_ignore_gtest)
+    list(APPEND ${PROJECT_NAME}_GTEST_IGNORE_FILES ${ARGN})
+endmacro()
+
+# ##################################################################################################
 # erl_add_tests
 # ##################################################################################################
 macro(erl_add_tests)
@@ -124,7 +136,7 @@ macro(erl_add_tests)
 
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs LIBRARIES EXCLUDE_FROM_ALL IGNORE_FILES)
+    set(multiValueArgs LIBRARIES EXCLUDE_FROM_ALL)
     cmake_parse_arguments(${PROJECT_NAME}_TEST
             "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
     unset(_args)
@@ -133,27 +145,29 @@ macro(erl_add_tests)
         # add gtest
         file(GLOB GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/*.cpp)  # lexicographically sorted
         # remove files in the ignore list
-        foreach (file IN LISTS ${PROJECT_NAME}_TEST_IGNORE_FILES)
+        foreach (file IN LISTS ${PROJECT_NAME}_GTEST_IGNORE_FILES)
             list(REMOVE_ITEM GTEST_SOURCES ${${PROJECT_NAME}_TEST_DIR}/gtest/${file})
         endforeach ()
         list(REVERSE GTEST_SOURCES)
 
         if (ROS1_ACTIVATED AND CATKIN_ENABLE_TESTING)
+            file(GLOB ROS1_TEST_SOURCES test/ros1/*.cpp)
+            list(APPEND GTEST_SOURCES ${ROS1_TEST_SOURCES})
             foreach (file IN LISTS GTEST_SOURCES)
                 get_filename_component(name ${file} NAME_WE)
                 if (${name} IN_LIST ${PROJECT_NAME}_TEST_EXCLUDE_FROM_ALL)
                     message(STATUS "Excluding gtest ${name}")
                     add_executable(${name} ${file})
-                    target_link_libraries(${name}
-                            ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main
-                            ${${name}_${name}_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
+                    target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
+                    target_link_libraries(${name} PRIVATE
+                            ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main ${${name}_EXTRA_LIBRARIES} ${catkin_LIBRARIES})
                     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
                 else ()
                     message(STATUS "Adding gtest ${name}")
                     catkin_add_gtest(${name} ${file})
                     target_include_directories(${name} PRIVATE ${catkin_INCLUDE_DIRS})
                     target_link_libraries(${name}
-                            ${catkin_LIBRARIES} ${${PROJECT_NAME}_TEST_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
+                            ${${PROJECT_NAME}_TEST_LIBRARIES} ${${name}_EXTRA_LIBRARIES} ${catkin_LIBRARIES})
                     message(STATUS "Adding gtest ${name}")
                 endif ()
             endforeach ()
@@ -163,9 +177,8 @@ macro(erl_add_tests)
                 if (${name} IN_LIST ${PROJECT_NAME}_TEST_EXCLUDE_FROM_ALL)
                     message(STATUS "Excluding gtest ${name}")
                     add_executable(${name} ${file})
-                    target_link_libraries(${name}
-                            ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main
-                            ${${name}_${name}_LIBRARIES} ${${name}_EXTRA_LIBRARIES})
+                    target_link_libraries(${name} PRIVATE
+                            ${${PROJECT_NAME}_TEST_LIBRARIES} GTest::Main ${${name}_EXTRA_LIBRARIES})
                     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
                 else ()
                     message(STATUS "Adding gtest ${name}")
@@ -794,7 +807,7 @@ macro(erl_setup_compiler)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -H")
     endif ()
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp -Wall -Wextra -Wno-unknown-pragmas")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--disable-new-dtags") # pass arguments to the linker
     # disable new DTAGS (DT_RUNPATH) since it is not supported in Ubuntu
     # old DTAGS (DT_RPATH) is used to specify paths for libraries that are
@@ -909,7 +922,13 @@ macro(erl_setup_test)
         if (ROS1_ACTIVATED)
             # GTest is configured by ROS if ROS is activated
         elseif (ROS2_ACTIVATED)
+            erl_find_package(
+                    PACKAGE GTest
+                    REQUIRED
+                    COMMANDS UBUNTU_LINUX "try `sudo apt install libgtest-dev`"
+                    COMMANDS ARCH_LINUX "try `sudo pacman -S gtest`")
             find_package(ament_cmake_gtest REQUIRED)
+            include(GoogleTest)
         else ()
             # we need to use GTest::GTest and GTest::Main in other subprojects
             erl_find_package(
@@ -938,7 +957,7 @@ macro(erl_setup_ros)
 
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES CATKIN_COMPONENTS CATKIN_DEPENDS CATKIN_PACKAGE_LIBRARIES CFG_EXTRAS ROS2_COMPONENTS)
+    set(multiValueArgs MSG_DEPENDENCIES MSG_FILES SRV_FILES ACTION_FILES CATKIN_COMPONENTS CATKIN_DEPENDS LIBRARIES CFG_EXTRAS ROS2_COMPONENTS)
     cmake_parse_arguments(${PROJECT_NAME} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (DEFINED ${PROJECT_NAME}_UNPARSED_ARGUMENTS)
@@ -1007,10 +1026,10 @@ macro(erl_setup_ros1)
 
     catkin_package(
         INCLUDE_DIRS include
-        LIBRARIES ${${PROJECT_NAME}_CATKIN_PACKAGE_LIBRARIES}
+        # LIBRARIES ${${PROJECT_NAME}_LIBRARIES}  <-- implicitly included by catkin
         CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPENDS}
         DEPENDS ${${PROJECT_NAME}_DEPENDS}  # non-catkin dependencies
-        CFG_EXTRAS ${${PROJECT_NAME}_CFG_EXTRAS}
+        # CFG_EXTRAS ${${PROJECT_NAME}_CFG_EXTRAS} <-- implicitly included by catkin
     )
 
     # filter out Eigen3 installed at `/usr/include/eigen3` from catkin_INCLUDE_DIRS
@@ -1116,15 +1135,16 @@ function(erl_target_dependencies target)
         elseif(TARGET ${package})
             list(APPEND deps ${package})
         else ()
-            message(FATAL_ERROR "ERL package ${package} does not exist as target")
+            # this happens with ROS1, but it is resolved by catkin. Just print a warning.
+            message(STATUS "ERL package ${package} does not exist as target")
         endif ()
     endforeach()
 
     if (${ARGC} GREATER 1)
         list(APPEND deps ${ARGN})
-        list(REMOVE_DUPLICATES deps)
     endif()
     if (deps)
+        list(REMOVE_DUPLICATES deps)
         message(STATUS "Linking target ${target} with dependencies: ${deps}")
         target_link_libraries(${target} PUBLIC ${deps})
     endif ()
@@ -1147,7 +1167,6 @@ function(erl_target_dependencies target)
             endif ()
         endforeach ()
     endif()
-
 endfunction()
 
 # ##################################################################################################
@@ -1541,7 +1560,7 @@ macro(erl_install)
                 INSTALL_DESTINATION ${${PROJECT_NAME}_INSTALL_CMAKE_DIR})
 
         # Select targets and files to install
-        # Generate and Install Targets.cmake file that defines the targets offered by this project
+        # Generate and install Targets.cmake file that defines the targets offered by this project
         # ${PROJECT_NAME} target will be located in the ${PROJECT_NAME} namespace.
         # Other CMake targets can refer to it using ${PROJECT_NAME}::${PROJECT_NAME}
         install(EXPORT ${PROJECT_NAME}_Targets

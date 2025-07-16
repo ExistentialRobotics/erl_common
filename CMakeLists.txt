@@ -17,8 +17,8 @@ erl_setup_ros(
         CATKIN_DEPENDS
         roscpp geometry_msgs std_msgs tf2_ros
 
-        CATKIN_PACKAGE_LIBRARIES
-        ${PROJECT_NAME} py${PROJECT_NAME}
+        LIBRARIES
+        ${PROJECT_NAME}
 
         CFG_EXTRAS
         erl_common_tools.cmake
@@ -59,15 +59,14 @@ target_include_directories(${PROJECT_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${${PROJECT_NAME}_INCLUDE_DIR}>
         $<INSTALL_INTERFACE:${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}>)
-erl_target_dependencies(  # erl_target_dependencies handles ROS dependencies as well
+erl_target_dependencies(
         ${PROJECT_NAME}
         PUBLIC fmt::fmt
         PUBLIC ${OpenCV_LIBRARIES}
         PUBLIC yaml-cpp nlohmann_json::nlohmann_json
         PUBLIC Boost::boost Boost::program_options Boost::graph
         PUBLIC pthread OpenMP::OpenMP_CXX
-        PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
-)
+        PUBLIC Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 if (ERL_USE_INTEL_MKL)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MKL_INCLUDE_DIRS})
 endif ()

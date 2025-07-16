@@ -12,4 +12,4 @@ add_library(@PROJECT_NAME@::@PROJECT_NAME@ ALIAS @PROJECT_NAME@)
 check_required_components("@PROJECT_NAME@")
 
 # export variables
-erl_mark_project_found(@PROJECT_NAME@)
+erl_mark_project_found()
