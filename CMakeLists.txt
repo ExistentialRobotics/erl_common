@@ -12,10 +12,10 @@ endif ()
 erl_project_setup()
 erl_setup_ros(
         CATKIN_COMPONENTS
-        roscpp geometry_msgs std_msgs tf2_ros
+        roscpp rosgraph_msgs geometry_msgs std_msgs tf2_ros
 
         CATKIN_DEPENDS
-        roscpp geometry_msgs std_msgs tf2_ros
+        roscpp rosgraph_msgs geometry_msgs std_msgs tf2_ros
 
         LIBRARIES
         ${PROJECT_NAME}
@@ -24,8 +24,9 @@ erl_setup_ros(
         erl_common_tools.cmake
 
         ROS2_COMPONENTS
-        rclcpp
+        rclcpp rosgraph_msgs
 )
+
 if (ERL_USE_TRACY)
     set(BUILD_SHARED_LIBS ON)
     file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/_deps/imgui-src)  # delete folder
@@ -55,6 +56,7 @@ endif ()
 file(GLOB SRC_FILES src/*.cpp)
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME}) # this allows namespace style, erl_common::erl_common
+erl_collect_targets(LIBRARIES ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${${PROJECT_NAME}_INCLUDE_DIR}>
@@ -80,7 +82,7 @@ if (plplot_FOUND)
     target_compile_definitions(${PROJECT_NAME} PUBLIC "ERL_USE_PLPLOT")
 endif ()
 
-add_subdirectory(src/ros)
+include(src/ros/ros.cmake)
 
 ###################
 # Python bindings #
@@ -96,7 +98,8 @@ erl_add_python_package()
 # INSTALL
 ####################################################################################################
 erl_install(
-        LIBRARIES ${PROJECT_NAME}
+        EXECUTABLES ${${PROJECT_NAME}_COLLECTED_EXECUTABLES}
+        LIBRARIES ${${PROJECT_NAME}_COLLECTED_LIBRARIES}
         PYBIND_MODULES py${PROJECT_NAME})
 
 ####################################################################################################

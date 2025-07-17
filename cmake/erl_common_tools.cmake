@@ -503,7 +503,7 @@ macro(erl_find_package)
                 MESSAGES ${ERL_COMMANDS})
     endif ()
 
-    unset(_args)
+    set(_args)
     if (ERL_REQUIRED)
         list(APPEND _args REQUIRED)
     endif ()
@@ -518,6 +518,7 @@ macro(erl_find_package)
     else ()
         find_package(${ERL_PACKAGE} ${_args})
     endif ()
+    unset(_args)
 
     if (${ERL_PACKAGE}_FOUND AND NOT ERL_QUIET)
         foreach (item IN ITEMS FOUND INCLUDE_DIR INCLUDE_DIRS LIBRARY LIBRARIES LIBS DEFINITIONS)
@@ -603,6 +604,8 @@ macro(erl_detect_ros)
         message(STATUS "ROS_VERSION: ${ROS_VERSION}")
         add_definitions(-DERL_ROS_VERSION_2)
         set(ROS2_ACTIVATED ON)
+    else ()
+        message(STATUS "No ROS detected")
     endif ()
 endmacro()
 
@@ -1005,22 +1008,26 @@ macro(erl_setup_ros1)
     endif ()
 
     # add msg srv action files if specified
+    set(should_generate_messages FALSE)
     if (${PROJECT_NAME}_MSG_FILES)
         add_message_files(
                 DIRECTORY msg
                 FILES ${${PROJECT_NAME}_MSG_FILES})
+        set(should_generate_messages TRUE)
     endif ()
     if (${PROJECT_NAME}_SRV_FILES)
         add_service_files(
                 DIRECTORY srv
                 FILES ${${PROJECT_NAME}_SRV_FILES})
+        set(should_generate_messages TRUE)
     endif ()
     if (${PROJECT_NAME}_ACTION_FILES)
         add_action_files(
                 DIRECTORY action
                 FILES ${${PROJECT_NAME}_ACTION_FILES})
+        set(should_generate_messages TRUE)
     endif ()
-    if (${PROJECT_NAME}_MSG_DEPENDENCIES)
+    if (should_generate_messages)
         generate_messages(DEPENDENCIES ${${PROJECT_NAME}_MSG_DEPENDENCIES})
     endif ()
 
@@ -1098,6 +1105,62 @@ macro(erl_setup_ros2)
         COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-ament-cmake`"
     )
 
+    # add msg srv action files if specified
+    set(interface_files)
+    if (${PROJECT_NAME}_MSG_FILES)
+        foreach (file IN LISTS ${PROJECT_NAME}_MSG_FILES)
+            set(file "msg/${file}")
+            if (NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${file}")
+                message(FATAL_ERROR "Message file ${file} does not exist")
+            endif ()
+            list(APPEND interface_files "${file}")
+        endforeach ()
+    endif ()
+
+    if (${PROJECT_NAME}_SRV_FILES)
+        foreach (file IN LISTS ${PROJECT_NAME}_SRV_FILES)
+            set(file "srv/${file}")
+            if (NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${file}")
+                message(FATAL_ERROR "Service file ${file} does not exist")
+            endif ()
+            list(APPEND interface_files "${file}")
+        endforeach ()
+    endif ()
+
+    if (${PROJECT_NAME}_ACTION_FILES)
+        foreach (file IN LISTS ${PROJECT_NAME}_ACTION_FILES)
+            set(file "action/${file}")
+            if (NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${file}")
+                message(FATAL_ERROR "Action file ${file} does not exist")
+            endif ()
+            list(APPEND interface_files "${file}")
+        endforeach ()
+    endif ()
+
+    if (interface_files)
+        message(STATUS "Generating ROS2 interfaces with files: ${interface_files}")
+        erl_find_package(
+            PACKAGE rosidl_default_generators
+            NO_RECORD
+            REQUIRED
+            COMMANDS UBUNTU_LINUX "try `sudo apt install ros-${ROS_DISTRO}-rosidl-default-generators`"
+        )
+        if (NOT DEFINED CMAKE_C_COMPILER)
+            message(FATAL_ERROR "Please add C to the project languages when using ROS2 interfaces")
+        endif ()
+        rosidl_generate_interfaces(${PROJECT_NAME}_ros_interfaces
+            ${interface_files}
+            DEPENDENCIES ${${PROJECT_NAME}_MSG_DEPENDENCIES}
+        )
+        rosidl_get_typesupport_target(${PROJECT_NAME}_ros_interfaces_LIBRARIES
+            ${PROJECT_NAME}_ros_interfaces "rosidl_typesupport_cpp"
+        )
+        erl_collect_targets(LIBRARIES ${${PROJECT_NAME}_ros_interfaces_LIBRARIES})
+        message(STATUS "Generated ROS2 interface libraries: ${${PROJECT_NAME}_ros_interfaces_LIBRARIES}.
+            Please link them to your targets with \$\{${PROJECT_NAME}_ros_interfaces_LIBRARIES\}")
+        unset(interface_files)
+    endif ()
+
     # configure ament python if setup.py exists
     if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/setup.py)
         erl_find_package(
@@ -1116,6 +1179,13 @@ macro(erl_setup_ros2)
         )
     endforeach ()
 
+    if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/plugin_description.xml)
+        if (NOT COMMAND pluginlib_export_plugin_description_file)
+            message(FATAL_ERROR "pluginlib_export_plugin_description_file() does not exist, please add `pluginlib` to ROS2_COMPONENTS when calling erl_setup_ros()")
+        endif ()
+        pluginlib_export_plugin_description_file(${PROJECT_NAME} plugin_description.xml)
+    endif ()
+
 endmacro()
 
 # ##################################################################################################
@@ -1131,9 +1201,9 @@ function(erl_target_dependencies target)
     set(deps)
     foreach(package IN LISTS ${PROJECT_NAME}_ERL_PACKAGES)
         if (TARGET ${package}::${package})
-            list(APPEND deps ${package}::${package})
+            list(APPEND deps "PUBLIC;${package}::${package}")
         elseif(TARGET ${package})
-            list(APPEND deps ${package})
+            list(APPEND deps "PUBLIC;${package}")
         else ()
             # this happens with ROS1, but it is resolved by catkin. Just print a warning.
             message(STATUS "ERL package ${package} does not exist as target")
@@ -1144,9 +1214,8 @@ function(erl_target_dependencies target)
         list(APPEND deps ${ARGN})
     endif()
     if (deps)
-        list(REMOVE_DUPLICATES deps)
         message(STATUS "Linking target ${target} with dependencies: ${deps}")
-        target_link_libraries(${target} PUBLIC ${deps})
+        target_link_libraries(${target} ${deps})
     endif ()
 
     if (ROS1_ACTIVATED)
@@ -1155,17 +1224,10 @@ function(erl_target_dependencies target)
         target_include_directories(${target} SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
         target_link_libraries(${target} PUBLIC ${catkin_LIBRARIES})
     elseif (ROS2_ACTIVATED)
-        foreach (component IN LISTS ${PROJECT_NAME}_ROS2_COMPONENTS)
-            if (TARGET ${component}::${component})
-                message(STATUS "Linking target ${target} with ROS2 component ${component}")
-                target_link_libraries(${target} PUBLIC ${component}::${component})
-            elseif (TARGET ${component})
-                message(STATUS "Linking target ${target} with ROS2 component target ${component}")
-                target_link_libraries(${target} PUBLIC ${component})
-            else ()
-                message(WARNING "ROS2 component ${component} does not exist as target or imported target, skipping linking it to target ${target}")
-            endif ()
-        endforeach ()
+        if (${PROJECT_NAME}_ROS2_COMPONENTS)
+            message(STATUS "Linking ROS2 components for target ${target}: ${${PROJECT_NAME}_ROS2_COMPONENTS}")
+            ament_target_dependencies(${target} PUBLIC ${${PROJECT_NAME}_ROS2_COMPONENTS})
+        endif ()
     endif()
 endfunction()
 
@@ -1445,7 +1507,7 @@ macro(erl_install)
     # Install cmake files
     set(cmake_dir ${CMAKE_CURRENT_LIST_DIR}/cmake)
     file(GLOB_RECURSE CMAKE_FILES RELATIVE ${cmake_dir} ${cmake_dir}/*.cmake)
-    message(STATUS "Installing cmake files: ${CMAKE_FILES}")
+    message(STATUS "Generate install rules cmake files: ${CMAKE_FILES}")
     foreach(file IN LISTS CMAKE_FILES)
         get_filename_component(file_dir ${file} DIRECTORY)
         install(FILES ${cmake_dir}/${file}
@@ -1493,28 +1555,35 @@ macro(erl_install)
         endif ()
     elseif (ROS2_ACTIVATED)
         set(deps ${${PROJECT_NAME}_ROS2_COMPONENTS} ${${PROJECT_NAME}_ERL_PACKAGES})
+        if (TARGET ${PROJECT_NAME}_ros_interfaces_LIBRARIES)
+            list(APPEND deps rosidl_default_runtime)
+        endif ()
         if (deps)
             message(STATUS "Exporting ament dependencies for ${PROJECT_NAME}: ${deps}")
             ament_export_dependencies(${deps})
         endif ()
         unset(deps)
         message(STATUS "Exporting ament include directories for ${PROJECT_NAME}: ${${PROJECT_NAME}_INCLUDE_DIR}")
+        # Export old-style CMake variables
         ament_export_include_directories(include/${PROJECT_NAME})
         if (${PROJECT_NAME}_INSTALL_LIBRARIES)
-            message(STATUS "Exporting ament libraries for ${PROJECT_NAME}: ${${PROJECT_NAME}_INSTALL_LIBRARIES}")
-            ament_export_libraries(${${PROJECT_NAME}_INSTALL_LIBRARIES})
             message(STATUS "Exporting ament targets for ${PROJECT_NAME}: ${${PROJECT_NAME}_INSTALL_LIBRARIES}")
-            ament_export_targets(
-                ${PROJECT_NAME}_Targets
-                HAS_LIBRARY_TARGET)
+            # Export old-style CMake variables
+            ament_export_libraries(${${PROJECT_NAME}_INSTALL_LIBRARIES})
+            # Export modern CMake targets
+            ament_export_targets(${PROJECT_NAME}_Targets HAS_LIBRARY_TARGET)
         endif ()
         # call ament_python_install_package if erl_add_python_package is called
         if (DEFINED ${PROJECT_NAME}_BUILD_PYTHON_PKG_DIR)
             message(STATUS "Installing Python package ${${PROJECT_NAME}_PYTHON_PKG_DIR}")
             get_filename_component(py_pkg_name ${${PROJECT_NAME}_PYTHON_PKG_DIR} NAME)
-
+            # ament_python_install_package is also called by
+            # rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake,
+            # which uses ${PROJECT_NAME} as the package name.
+            # ament_cmake_python_copy_${PROJECT_NAME} and ament_cmake_python_build_${PROJECT_NAME}_egg
+            # are created, which cannot be created twice.
             ament_python_install_package(
-                ${PROJECT_NAME}
+                ${PROJECT_NAME}_py
                 PACKAGE_DIR ${${PROJECT_NAME}_PYTHON_PKG_DIR}
                 DESTINATION ${ROS2_PYTHON_SITE_PACKAGES_DIR}
             )

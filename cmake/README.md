@@ -154,7 +154,8 @@ This is a macro that generates install rules for executables, libraries, and Pyt
 
 ```cmake
 erl_install(
-        LIBRARIES ${PROJECT_NAME}
+        EXECUTABLES ${${PROJECT_NAME}_COLLECTED_EXECUTABLES}
+        LIBRARIES ${${PROJECT_NAME}_COLLECTED_LIBRARIES}
         PYBIND_MODULES py${PROJECT_NAME})
 ```
 

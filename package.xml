@@ -18,6 +18,7 @@
     <depend condition="$ROS_VERSION == 1">std_msgs</depend>
     <depend condition="$ROS_VERSION == 1">geometry_msgs</depend>
     <depend condition="$ROS_VERSION == 1">tf2_ros</depend>
+    <depend>rosgraph_msgs</depend>
 
     <build_depend>Eigen3</build_depend>
     <build_depend>OpenCV</build_depend>
