@@ -1,3 +1,7 @@
+if (NOT COMMAND erl_project_setup)
+    find_package(erl_cmake_tools REQUIRED)
+endif ()
+
 # must be before erl_config_eigen because some flags about Eigen3 are set.
 erl_config_lapack()
 
