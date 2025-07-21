@@ -45,7 +45,6 @@ endif ()
 if (plplot_FOUND)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${cairomm-1.0_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} PUBLIC PLPLOT::plplot PLPLOT::plplotcxx ${cairomm-1.0_LIBRARIES})
-    target_compile_definitions(${PROJECT_NAME} PUBLIC "ERL_USE_PLPLOT")
 endif ()
 
 # ######################################################################################################################

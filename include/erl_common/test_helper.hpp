@@ -4,6 +4,7 @@
 #include "eigen.hpp"
 #include "logging.hpp"
 #include "tracy.hpp"
+#include "yaml.hpp"  // included before GTest headers to define operator<< for YamlableBase
 
 #include <gtest/gtest-death-test.h>
 #include <gtest/gtest.h>
