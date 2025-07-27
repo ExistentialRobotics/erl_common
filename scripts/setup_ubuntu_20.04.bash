@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
 sudo apt install -y \
+    sudo \
     apt-utils \
     software-properties-common \
     lsb-release \
@@ -34,6 +35,7 @@ sudo apt install -y \
     libcairomm-1.0-dev \
     libyaml-cpp-dev \
     pybind11-dev \
+    python3-vcstool \
     libgtest-dev
 
 # patch

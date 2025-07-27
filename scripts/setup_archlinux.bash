@@ -1,11 +1,22 @@
 sudo pacman -S lapacke \
-    intel-oneapi-basekit \
+    base-devel \
+    gcc \
+    cmake \
+    openmp \
     boost \
+    eigen \
     nlohmann-json \
     opencv \
-    qt6-base \
     yaml-cpp \
+    intel-oneapi-basekit \
+    lapack \
+    lapacke \
+    fmt \
+    abseil-cpp \
+    python \
+    pybind11 \
     gtest
 
 paru -S eigen-git \
-    nanoflann
+    nanoflann \
+    plplot
