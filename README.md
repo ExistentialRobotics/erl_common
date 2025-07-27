@@ -1,5 +1,4 @@
-erl_common
-==========
+# erl_common
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ROS1](https://img.shields.io/badge/ROS1-noetic-blue)](http://wiki.ros.org/)
@@ -42,7 +41,17 @@ and some utility functions and data structures like
 - grid map and visualization
 - general serialization and deserialization interface
 
-# Install Dependencies
+## Getting Started
+
+### Create Workspace
+
+```bash
+cd <your_workspace>
+mkdir -p src
+vcs import --input https://raw.githubusercontent.com/ExistentialRobotics/erl_common/refs/head/main/erl_common.repos src
+```
+
+### Install Dependencies
 
 - CMake >= 3.24
 - OpenMP
@@ -77,17 +86,9 @@ to build a docker image with all dependencies installed on Ubuntu 20.04.
 
 This library also depends on [erl_cmake_tools](https://github.com/ExistentialRobotics/erl_cmake_tools).
 
-# Getting Started
+### Build from Source
 
-## Create Workspace
-
-```bash
-cd <your_workspace>
-mkdir -p src
-vcs import --input https://raw.githubusercontent.com/ExistentialRobotics/erl_common/main/erl_common.repos src
-```
-
-## Use as a standard CMake package
+#### As a standard CMake package
 
 ```bash
 cd <your_workspace>
@@ -103,15 +104,31 @@ add_subdirectory(src/erl_cmake_tools)
 add_subdirectory(src/erl_common)
 ```
 
-## Use as a ROS package
+Then run the following commands:
 
 ```bash
-cd <your_workspace>/src
-catkin build erl_common # for ROS1
-colcon build --packages-select erl_common # for ROS2
+mkdir -p build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j`nproc`
 ```
 
-## Install as a Python package
+#### As a ROS package
+
+```bash
+cd <your_workspace>
+source /opt/ros/<distro>/setup.bash
+# for ROS1
+catkin build erl_common
+source devel/setup.bash
+# for ROS2
+colcon build --packages-up-to erl_common
+source install/setup.bash
+```
+
+See also 🚪[erl_common_ros](https://github.com/ExistentialRobotics/erl_common_ros) for additional ROS tools.
+
+#### As a Python package
 
 - Make sure you have installed all dependencies.
 - Make sure you have the correct Python environment activated, `pipenv` is recommended.
