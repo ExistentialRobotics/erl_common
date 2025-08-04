@@ -75,25 +75,56 @@ namespace erl::common {
         }
         ifs.close();
 
-        ERL_ASSERTM(
-            Rows == Eigen::Dynamic || rows == Rows,
-            "Number of rows in file does not match template parameter. Expected {}, got {}",
-            Rows,
-            rows);
+        if (rows == 0 || cols == 0) {
+            ERL_WARN("Reading empty matrix from file {}.", file_path);
+            return {};
+        }
 
-        if (RowMajor == Eigen::RowMajor) {
-            Eigen::MatrixX<T> matrix(rows, cols);
+        // the loaded data is in row-major order
+        const bool order_compatible = (RowMajor == Eigen::RowMajor && !transpose) ||
+                                      (RowMajor == Eigen::ColMajor && transpose);
+
+        // check if the number of rows and columns matches the template parameters
+        if (transpose) {
+            // the returned matrix shape should be (cols, rows)
+            ERL_ASSERTM(
+                Rows == Eigen::Dynamic || cols == Rows,
+                "Number of rows in file does not match template parameter. Expected {}, got {}",
+                Rows,
+                cols);
+            ERL_ASSERTM(
+                Cols == Eigen::Dynamic || rows == Cols,
+                "Number of columns in file does not match template parameter. Expected {}, got {}",
+                Cols,
+                rows);
+        } else {
+            // the returned matrix shape should be (rows, cols)
+            ERL_ASSERTM(
+                Rows == Eigen::Dynamic || rows == Rows,
+                "Number of rows in file does not match template parameter. Expected {}, got {}",
+                Rows,
+                rows);
+            ERL_ASSERTM(
+                Cols == Eigen::Dynamic || cols == Cols,
+                "Number of columns in file does not match template parameter. Expected {}, got {}",
+                Cols,
+                cols);
+        }
+
+        if (order_compatible) {
+            // copy the data into the matrix directly and return it
+            Eigen::Matrix<T, Rows, Cols, RowMajor> matrix(
+                transpose ? cols : rows,
+                transpose ? rows : cols);
             std::copy(data.begin(), data.end(), matrix.data());
             return matrix;
         }
-        Eigen::MatrixX<T> matrix(cols, rows);
+
+        // if we reach here, the matrix is not in the expected order
+        Eigen::Matrix<T, Rows, Cols, !RowMajor> matrix(
+            transpose ? rows : cols,
+            transpose ? cols : rows);
         std::copy(data.begin(), data.end(), matrix.data());
-        if (transpose) {
-            ERL_ASSERTM(
-                (Rows == Eigen::Dynamic && Cols == Eigen::Dynamic) || rows == cols,
-                "transpose=true requires square or dynamic-size matrix.");
-            return matrix;
-        }
         return matrix.transpose();
     }
 

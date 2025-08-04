@@ -163,6 +163,18 @@ namespace erl::common {
         const Eigen::Ref<const Eigen::MatrixX<T>>& matrix,
         EigenTextFormat format = EigenTextFormat::kDefaultFmt);
 
+    /**
+     * Load Eigen matrix from text file.
+     * @tparam T Type of the matrix elements.
+     * @tparam Rows Number of rows of the matrix. Use Eigen::Dynamic for dynamic size.
+     * @tparam Cols Number of columns of the matrix. Use Eigen::Dynamic for dynamic size.
+     * @tparam RowMajor Storage order of the matrix. Use Eigen::ColMajor for column-major order,
+     * Eigen::RowMajor for row-major order.
+     * @param file_path Path to the text file.
+     * @param format Format of the text file.
+     * @param transpose Whether the returned matrix is the transpose of the matrix in the file.
+     * @return Eigen matrix loaded from the text file.
+     */
     template<
         typename T,
         int Rows = Eigen::Dynamic,
