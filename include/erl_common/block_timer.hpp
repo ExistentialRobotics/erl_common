@@ -50,7 +50,7 @@ namespace erl::common {
                     unit = " hrs";
                 }
 
-                ERL_INFO("{}: {:.3f}{}", label, t_diff, unit);
+                erl::common::Logging::Info("{}: {:.3f}{}", label, t_diff, unit);
             }
         }
     };
