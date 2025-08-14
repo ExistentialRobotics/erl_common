@@ -272,18 +272,10 @@ namespace YAML {
             const int rows = Rows == Eigen::Dynamic ? rhs.rows() : Rows;
             const int cols = Cols == Eigen::Dynamic ? rhs.cols() : Cols;
 
-            if (Order == Eigen::RowMajor) {
-                for (int i = 0; i < rows; ++i) {
-                    Node row_node(NodeType::Sequence);
-                    for (int j = 0; j < cols; ++j) { row_node.push_back(rhs(i, j)); }
-                    node.push_back(row_node);
-                }
-            } else {
-                for (int j = 0; j < cols; ++j) {
-                    Node col_node(NodeType::Sequence);
-                    for (int i = 0; i < rows; ++i) { col_node.push_back(rhs(i, j)); }
-                    node.push_back(col_node);
-                }
+            for (int i = 0; i < rows; ++i) {
+                Node row_node(NodeType::Sequence);
+                for (int j = 0; j < cols; ++j) { row_node.push_back(rhs(i, j)); }
+                node.push_back(row_node);
             }
 
             return node;
@@ -297,42 +289,22 @@ namespace YAML {
             if (!node.IsSequence()) { return false; }
             if (!node[0].IsSequence()) { return false; }
 
-            if (Order == Eigen::RowMajor) {
-                int rows = Rows == Eigen::Dynamic ? node.size() : Rows;
-                int cols = Cols == Eigen::Dynamic ? node[0].size() : Cols;
-                rhs.resize(rows, cols);
+            int rows = Rows == Eigen::Dynamic ? node.size() : Rows;
+            int cols = Cols == Eigen::Dynamic ? node[0].size() : Cols;
+            rhs.resize(rows, cols);
+            ERL_DEBUG_ASSERT(
+                rows == static_cast<int>(node.size()),
+                "expecting rows: {}, get node.size(): {}",
+                rows,
+                node.size());
+            for (int i = 0; i < rows; ++i) {
                 ERL_DEBUG_ASSERT(
-                    rows == static_cast<int>(node.size()),
-                    "expecting rows: {}, get node.size(): {}",
-                    rows,
-                    node.size());
-                for (int i = 0; i < rows; ++i) {
-                    ERL_DEBUG_ASSERT(
-                        cols == static_cast<int>(node[i].size()),
-                        "expecting cols: {}, get node[0].size(): {}",
-                        cols,
-                        node[i].size());
-                    auto& row_node = node[i];
-                    for (int j = 0; j < cols; ++j) { rhs(i, j) = row_node[j].as<T>(); }
-                }
-            } else {
-                int cols = Cols == Eigen::Dynamic ? node.size() : Cols;
-                int rows = Rows == Eigen::Dynamic ? node[0].size() : Rows;
-                rhs.resize(rows, cols);
-                ERL_DEBUG_ASSERT(
-                    cols == static_cast<int>(node.size()),
-                    "expecting cols: {}, get node.size(): {}",
+                    cols == static_cast<int>(node[i].size()),
+                    "expecting cols: {}, get node[0].size(): {}",
                     cols,
-                    node.size());
-                for (int j = 0; j < cols; ++j) {
-                    ERL_DEBUG_ASSERT(
-                        rows == static_cast<int>(node[j].size()),
-                        "expecting rows: {}, get node[0].size(): {}",
-                        rows,
-                        node[j].size());
-                    auto& col_node = node[j];
-                    for (int i = 0; i < rows; ++i) { rhs(i, j) = col_node[i].as<T>(); }
-                }
+                    node[i].size());
+                auto& row_node = node[i];
+                for (int j = 0; j < cols; ++j) { rhs(i, j) = row_node[j].as<T>(); }
             }
 
             return true;
@@ -419,6 +391,18 @@ namespace YAML {
 
     template<>
     struct convert<Eigen::MatrixX4d> : ConvertEigenMatrix<double, Eigen::Dynamic, 4> {};
+
+    template<>
+    struct convert<Eigen::Matrix23f> : ConvertEigenMatrix<float, 2, 3> {};
+
+    template<>
+    struct convert<Eigen::Matrix23d> : ConvertEigenMatrix<double, 2, 3> {};
+
+    template<>
+    struct convert<Eigen::Matrix34f> : ConvertEigenMatrix<float, 3, 4> {};
+
+    template<>
+    struct convert<Eigen::Matrix34d> : ConvertEigenMatrix<double, 3, 4> {};
 
     template<typename T, int Size = Eigen::Dynamic>
     struct ConvertEigenVector {

@@ -46,11 +46,15 @@ namespace Eigen {
     using MatrixXb = MatrixX<bool>;
     using MatrixX8U = MatrixX<uint8_t>;
     using Matrix6Xd = Matrix<double, 6, Dynamic>;
+    using Matrix6Xf = Matrix<float, 6, Dynamic>;
     using Matrix2Xl = Matrix<long, 2, Dynamic>;
     using Matrix3Xl = Matrix<long, 3, Dynamic>;
     using Matrix23d = Matrix<double, 2, 3>;
+    using Matrix23f = Matrix<float, 2, 3>;
     using Matrix24d = Matrix<double, 2, 4>;
+    using Matrix24f = Matrix<float, 2, 4>;
     using Matrix34d = Matrix<double, 3, 4>;
+    using Matrix34f = Matrix<float, 3, 4>;
 
     template<typename T, int Rows, int Cols>
     using RMatrix = Matrix<T, Rows, Cols, RowMajor>;

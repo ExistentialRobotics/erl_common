@@ -122,10 +122,10 @@ namespace erl::common {
 
         // if we reach here, the matrix is not in the expected order
         Eigen::Matrix<T, Rows, Cols, !RowMajor> matrix(
-            transpose ? rows : cols,
-            transpose ? cols : rows);
+            transpose ? cols : rows,
+            transpose ? rows : cols);
         std::copy(data.begin(), data.end(), matrix.data());
-        return matrix.transpose();
+        return matrix;
     }
 
     template<typename T, int Rows, int Cols>
