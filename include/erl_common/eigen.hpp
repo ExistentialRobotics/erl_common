@@ -4,6 +4,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <absl/hash/hash.h>
 
 // https://stackoverflow.com/questions/4433950/overriding-functions-from-dynamic-libraries
 // https://danieldk.eu/Posts/2020-08-31-MKL-Zen.html
@@ -74,19 +75,37 @@ namespace Eigen {
     using VectorXl = VectorX<long>;
     using VectorXb = VectorX<bool>;
     using VectorX8U = VectorX<uint8_t>;
-}  // namespace Eigen
 
-template<typename H, typename T, int Rows, int Cols>
-H
-AbslHashValue(H h, const Eigen::Matrix<T, Rows, Cols>& mat) {
-    auto data = mat.data();
-    if (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic) {
-        for (int i = 0; i < mat.size(); ++i) { h = H::combine(std::move(h), data[i]); }
-    } else {
-        for (int i = 0; i < Rows * Cols; ++i) { h = H::combine(std::move(h), data[i]); }
+    template<typename H>
+    inline H
+    AbslHashValue(H state, const Eigen::Vector2i& v) {
+        return H::combine(std::move(state), v[0], v[1]);
     }
-    return h;
-}
+
+    template<typename H>
+    inline H
+    AbslHashValue(H state, const Eigen::Vector3i& v) {
+        return H::combine(std::move(state), v[0], v[1], v[2]);
+    }
+
+    template<typename H>
+    inline H
+    AbslHashValue(H state, const Eigen::Vector4i& v) {
+        return H::combine(std::move(state), v[0], v[1], v[2], v[3]);
+    }
+
+    template<typename H, typename T, int Rows, int Cols>
+    H
+    AbslHashValue(H h, const Matrix<T, Rows, Cols>& mat) {
+        auto data = mat.data();
+        if (Rows == Dynamic || Cols == Dynamic) {
+            for (int i = 0; i < mat.size(); ++i) { h = H::combine(std::move(h), data[i]); }
+        } else {
+            for (int i = 0; i < Rows * Cols; ++i) { h = H::combine(std::move(h), data[i]); }
+        }
+        return h;
+    }
+}  // namespace Eigen
 
 namespace erl::common {
 

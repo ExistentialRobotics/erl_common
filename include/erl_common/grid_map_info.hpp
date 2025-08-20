@@ -64,13 +64,14 @@ namespace erl::common {
             const Eigen::Vector<Dtype, Dim>& max,
             const Eigen::Vector<Dtype, Dim>& resolution,
             const Eigen::Vector<int, Dim>& padding)
-            : m_map_shape_(Eigen::Vector<int, Dim>(
-                  ((max - min).array() / resolution.array())
-                      .ceil()
-                      .template cast<int>()
-                      .unaryExpr([](const int& x) { return x % 2 ? x + 1 : x; })
-                      .array() +
-                  1 + 2 * padding.array())),
+            : m_map_shape_(
+                  Eigen::Vector<int, Dim>(
+                      ((max - min).array() / resolution.array())
+                          .ceil()
+                          .template cast<int>()
+                          .unaryExpr([](const int& x) { return x % 2 ? x + 1 : x; })
+                          .array() +
+                      1 + 2 * padding.array())),
               m_resolution_(
                   (max - min).array() /
                   (m_map_shape_.array() - 2 * padding.array()).template cast<Dtype>().array()),
@@ -83,8 +84,9 @@ namespace erl::common {
             const Eigen::Vector<int, Dim>& map_shape,
             const Eigen::Vector<Dtype, Dim>& min,
             const Eigen::Vector<Dtype, Dim>& max)
-            : m_map_shape_(Eigen::Vector<int, Dim>(
-                  map_shape.unaryExpr([](int x) { return x % 2 ? x : x + 1; }))),
+            : m_map_shape_(Eigen::Vector<int, Dim>(map_shape.unaryExpr([](int x) {
+                  return x % 2 ? x : x + 1;
+              }))),
               m_resolution_((max - min).array() / m_map_shape_.template cast<Dtype>().array()),
               m_min_(min),
               m_max_(max),
@@ -100,8 +102,9 @@ namespace erl::common {
             const Eigen::Vector<Dtype, Dim>& origin,
             const Eigen::Vector<Dtype, Dim>& resolution,
             const Eigen::Vector<int, Dim>& map_shape)
-            : m_map_shape_(Eigen::Vector<int, Dim>(
-                  map_shape.unaryExpr([](int x) { return x % 2 ? x : x + 1; }))),
+            : m_map_shape_(Eigen::Vector<int, Dim>(map_shape.unaryExpr([](int x) {
+                  return x % 2 ? x : x + 1;
+              }))),
               m_resolution_(resolution),
               m_min_(origin),
               m_max_(
@@ -610,7 +613,7 @@ namespace erl::common {
                 const int& stride = strides[i];
                 const int dim_size = Shape(i);
                 const int n_copies = size / dim_size;
-                Dtype half_res = Resolution(i) * 0.5;
+                Dtype half_res = Resolution(i) * 0.5f;
                 Dtype min = Min(i) + half_res;
                 Dtype max = Max(i) - half_res;
                 Eigen::MatrixX<Dtype> coords = Eigen::VectorX<Dtype>::LinSpaced(dim_size, min, max)
@@ -624,6 +627,37 @@ namespace erl::common {
             }
 
             return meter_coords;
+        }
+
+        [[nodiscard]] Eigen::Matrix<Dtype, Dim, Eigen::Dynamic>
+        GenerateVoxelVertices(bool c_stride) const {
+            const long n_dims = Dims();
+            // compute the metric coordinates of voxel vertices
+            Eigen::Vector<int, Dim> vertex_grid_shape = Shape() + 1;  // even, not compatible
+            Eigen::VectorXi strides;
+            if (c_stride) {
+                strides = ComputeCStrides<int>(vertex_grid_shape, 1);
+            } else {
+                strides = ComputeFStrides<int>(vertex_grid_shape, 1);
+            }
+            const int n_vertices = vertex_grid_shape.prod();
+            Eigen::Matrix<Dtype, Dim, Eigen::Dynamic> vertex_meter_coords(n_dims, n_vertices);
+            for (long i = 0; i < n_dims; ++i) {
+                const int stride = strides[i];
+                const int dim_size = vertex_grid_shape[i];
+                const int n_copies = n_vertices / dim_size;
+                Dtype min = Min(i);
+                Dtype max = Max(i);
+                Eigen::MatrixX<Dtype> coords = Eigen::VectorX<Dtype>::LinSpaced(dim_size, min, max)
+                                                   .transpose()
+                                                   .replicate(stride, n_copies / stride);
+                Eigen::Map<Eigen::Matrix<Dtype, 1, Eigen::Dynamic>> coords_reshaped(
+                    coords.data(),
+                    1,
+                    n_vertices);
+                vertex_meter_coords.row(i) << coords_reshaped;
+            }
+            return vertex_meter_coords;
         }
 
         template<int D = Dim>
