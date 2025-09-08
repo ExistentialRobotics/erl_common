@@ -43,11 +43,11 @@ namespace erl::common {
         return strides;
     }
 
-    template<int Dim>
-    [[nodiscard]] int
+    template<typename Dtype, int Dim>
+    [[nodiscard]] Dtype
     CoordsToIndex(
-        const Eigen::Vector<int, Dim> &shape,
-        const Eigen::Vector<int, Dim> &coords,
+        const Eigen::Vector<Dtype, Dim> &shape,
+        const Eigen::Vector<Dtype, Dim> &coords,
         const bool c_stride) {
         const auto ndim = static_cast<int>(shape.size());
 
@@ -82,9 +82,11 @@ namespace erl::common {
         return index;
     }
 
-    template<int Dim>
-    [[nodiscard]] int
-    CoordsToIndex(const Eigen::Vector<int, Dim> &strides, const Eigen::Vector<int, Dim> &coords) {
+    template<typename Dtype, int Dim>
+    [[nodiscard]] Dtype
+    CoordsToIndex(
+        const Eigen::Vector<Dtype, Dim> &strides,
+        const Eigen::Vector<Dtype, Dim> &coords) {
         ERL_DEBUG_ASSERT((coords.array() >= 0).all(), "Coords must be non-negative.");
         return strides.dot(coords);
     }
@@ -168,15 +170,15 @@ namespace erl::common {
         return coords;
     }
 
-    template<int Dim>
-    [[nodiscard]] Eigen::Vector<int, Dim>
+    template<typename Dtype, int Dim>
+    [[nodiscard]] Eigen::Vector<Dtype, Dim>
     IndexToCoordsWithStrides(
-        const Eigen::Vector<int, Dim> &strides,
-        int index,
+        const Eigen::Vector<Dtype, Dim> &strides,
+        Dtype index,
         const bool c_stride) {
 
         const auto ndim = Dim == Eigen::Dynamic ? static_cast<int>(strides.size()) : Dim;
-        Eigen::Vector<int, Dim> coords;
+        Eigen::Vector<Dtype, Dim> coords;
         coords.setZero(ndim);
 
         if (Dim == 2) {

@@ -535,7 +535,7 @@ namespace erl::common {
                 InGrids(grid),
                 "{} is out of map.\n",
                 EigenToNumPyFmtString(grid.transpose()));
-            return CoordsToIndex<Dim>(m_map_shape_, grid, c_stride);
+            return CoordsToIndex<int, Dim>(m_map_shape_, grid, c_stride);
         }
 
         [[nodiscard]] Eigen::Vector<int, Dim>

@@ -151,6 +151,14 @@ namespace erl::common {
         return lhs == rhs;
     }
 
+    template<typename T1, typename T2>
+    bool
+    SafeEigenMapEqual(const Eigen::Map<T1>& lhs, const Eigen::Map<T2>& rhs) {
+        if (sizeof(typename T1::Scalar) != sizeof(typename T2::Scalar)) { return false; }
+        if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) { return false; }
+        return std::memcmp(lhs.data(), rhs.data(), sizeof(typename T1::Scalar) * lhs.size()) == 0;
+    }
+
     template<typename T>
     bool
     SafeSparseEigenMatrixEqual(

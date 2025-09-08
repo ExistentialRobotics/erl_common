@@ -104,13 +104,13 @@ namespace erl::common {
 
         T &
         operator[](const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords) {
-            int index = CoordsToIndex<Rank>(m_shape_, coords, RowMajor);
+            int index = CoordsToIndex<int, Rank>(m_shape_, coords, RowMajor);
             return m_data_[index];
         }
 
         const T &
         operator[](const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords) const {
-            int index = CoordsToIndex<Rank>(m_shape_, coords, RowMajor);
+            int index = CoordsToIndex<int, Rank>(m_shape_, coords, RowMajor);
             return m_data_[index];
         }
 
