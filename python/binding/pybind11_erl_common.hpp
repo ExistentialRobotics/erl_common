@@ -3,6 +3,7 @@
 #include "erl_common/grid_map.hpp"
 #include "erl_common/grid_map_drawer_2d.hpp"
 #include "erl_common/pybind11.hpp"
+#include "erl_common/pybind11_yaml.hpp"
 
 namespace py = pybind11;
 

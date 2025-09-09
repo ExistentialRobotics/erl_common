@@ -7,9 +7,6 @@
 using namespace erl::common;
 
 void
-BindYaml(py::module &m);
-
-void
 BindStorage(py::module &m);
 
 void
@@ -19,7 +16,7 @@ PYBIND11_MODULE(PYBIND_MODULE_NAME, m) {
     m.doc() = "Python 3 Interface of erl_common";
     m.def("set_global_random_seed", &SetGlobalRandomSeed, py::arg("seed"));
 
-    BindYaml(m);
+    BindYamlableBase(m);
     BindStorage(m);
     BindLogging(m);
 }
