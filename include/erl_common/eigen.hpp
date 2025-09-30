@@ -4,7 +4,10 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <absl/hash/hash.h>
+
+#ifdef ERL_USE_ABSL
+    #include <absl/hash/hash.h>
+#endif
 
 // https://stackoverflow.com/questions/4433950/overriding-functions-from-dynamic-libraries
 // https://danieldk.eu/Posts/2020-08-31-MKL-Zen.html
@@ -76,20 +79,21 @@ namespace Eigen {
     using VectorXb = VectorX<bool>;
     using VectorX8U = VectorX<uint8_t>;
 
+#ifdef ERL_USE_ABSL
     template<typename H>
-    inline H
+    H
     AbslHashValue(H state, const Eigen::Vector2i& v) {
         return H::combine(std::move(state), v[0], v[1]);
     }
 
     template<typename H>
-    inline H
+    H
     AbslHashValue(H state, const Eigen::Vector3i& v) {
         return H::combine(std::move(state), v[0], v[1], v[2]);
     }
 
     template<typename H>
-    inline H
+    H
     AbslHashValue(H state, const Eigen::Vector4i& v) {
         return H::combine(std::move(state), v[0], v[1], v[2], v[3]);
     }
@@ -105,6 +109,7 @@ namespace Eigen {
         }
         return h;
     }
+#endif
 }  // namespace Eigen
 
 namespace erl::common {

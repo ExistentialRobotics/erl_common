@@ -1,10 +1,4 @@
 #pragma once
-// disable warning when using pybind11
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#pragma GCC diagnostic ignored "-Wunused-variable"
 
 #include <opencv2/core.hpp>
 #include <pybind11/pybind11.h>
@@ -168,5 +162,3 @@ namespace pybind11::detail {
         }
     };
 }  // namespace pybind11::detail
-
-#pragma GCC diagnostic pop

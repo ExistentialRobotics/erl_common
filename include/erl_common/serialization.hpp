@@ -163,7 +163,7 @@ namespace erl::common {
             }
             std::string line;
             std::getline(ifs, line);
-            if (std::string file_header = fmt::format("# {}", type_str);
+            if (std::string file_header = "# " + type_str;
                 line != file_header) {  // check if the first line is valid
                 ERL_WARN("Header does not start with \"{}\"", file_header);
                 return false;
@@ -213,7 +213,7 @@ namespace erl::common {
             }
             std::string line;
             std::getline(ifs, line);
-            if (std::string file_header = fmt::format("# {}", type_str);
+            if (std::string file_header = "# " + type_str;
                 line != file_header) {  // check if the first line is valid
                 ERL_WARN("Header does not start with \"{}\"", file_header);
                 return false;

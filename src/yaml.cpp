@@ -1,6 +1,8 @@
 #include "erl_common/yaml.hpp"
 
-#include <boost/program_options.hpp>
+#ifdef ERL_USE_BOOST
+    #include <boost/program_options.hpp>
+#endif
 
 #include <any>
 #include <fstream>
@@ -82,6 +84,7 @@ namespace erl::common {
 
     void
     YamlableBase::FromCommandLine(int argc, const char *argv[]) {
+#ifdef ERL_USE_BOOST
         namespace po = boost::program_options;
         po::options_description desc;
 
@@ -144,5 +147,10 @@ namespace erl::common {
             }
         }
         ERL_ASSERTM(FromYamlNode(node), "Failed to parse command line options. ");
+#else
+        (void) argc;
+        (void) argv;
+        ERL_FATAL("Not compiled with Boost. Cannot parse command line arguments.");
+#endif
     }
 }  // namespace erl::common

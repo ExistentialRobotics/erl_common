@@ -2,8 +2,10 @@
 
 #include "storage_order.hpp"
 
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
+#ifdef ERL_USE_OPENCV
+    #include <opencv2/core.hpp>
+    #include <opencv2/imgproc.hpp>
+#endif
 
 namespace erl::common {
 
@@ -660,6 +662,8 @@ namespace erl::common {
             return vertex_meter_coords;
         }
 
+#ifdef ERL_USE_OPENCV
+
         template<int D = Dim>
         [[nodiscard]] std::
             enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix<Dtype, D, Eigen::Dynamic>>
@@ -738,6 +742,7 @@ namespace erl::common {
 
             return polygon_pixel_points;
         }
+#endif
 
         [[nodiscard]] Eigen::MatrixXi
         RayCasting(

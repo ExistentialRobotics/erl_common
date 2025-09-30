@@ -606,6 +606,8 @@ namespace YAML {
         }
     };
 
+#ifdef ERL_USE_OPENCV
+
     template<>
     struct convert<cv::Scalar> {
         static Node
@@ -628,6 +630,8 @@ namespace YAML {
             return true;
         }
     };
+
+#endif
 }  // namespace YAML
 
 inline std::ostream&

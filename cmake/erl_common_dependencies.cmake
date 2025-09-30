@@ -9,6 +9,7 @@ erl_config_boost() # Boost libraries
 erl_config_fmt() # string formatting
 erl_config_openmp() # OpenMP support
 erl_config_eigen() # Eigen3 library
+erl_config_absl()  # Abseil library
 
 # file format libraries
 erl_config_json()

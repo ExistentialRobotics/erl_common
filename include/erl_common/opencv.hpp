@@ -1,13 +1,14 @@
 #pragma once
 
-#include "grid_map_info.hpp"
-#include "logging.hpp"
+#ifdef ERL_USE_OPENCV
+    #include "grid_map_info.hpp"
+    #include "logging.hpp"
 
-#include <Eigen/Dense>
-#include <opencv2/core.hpp>
-#include <opencv2/core/eigen.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+    #include <Eigen/Dense>
+    #include <opencv2/core.hpp>
+    #include <opencv2/core/eigen.hpp>
+    #include <opencv2/highgui.hpp>
+    #include <opencv2/imgproc.hpp>
 
 namespace erl::common {
     inline const std::vector<cv::Vec3b> kCustomColorMap = {
@@ -596,3 +597,5 @@ namespace erl::common {
         return merged_mask;
     }
 }  // namespace erl::common
+
+#endif

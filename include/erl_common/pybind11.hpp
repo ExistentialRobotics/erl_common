@@ -27,7 +27,10 @@ namespace py = pybind11;
  * Eigen::MatrixXd::conservativeResize can be used to replace std::vector<gpis::Point<T, Dim>>
  */
 // clang-format on
-#include "pybind11_opencv.hpp"
+
+#ifdef ERL_USE_OPENCV
+    #include "pybind11_opencv.hpp"
+#endif
 
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>

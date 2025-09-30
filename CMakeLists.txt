@@ -30,11 +30,11 @@ add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME}) # this allows namespace style erl_common::erl_common
 erl_collect_targets(LIBRARIES ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_INCLUDE_DIR}>
-                                                  $<INSTALL_INTERFACE:${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}>)
+                           $<INSTALL_INTERFACE:${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}>)
 erl_target_dependencies(
     ${PROJECT_NAME} PUBLIC #
     fmt::fmt yaml-cpp nlohmann_json::nlohmann_json Boost::boost Boost::program_options Boost::graph pthread
-    OpenMP::OpenMP_CXX Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenCV_LIBRARIES})
+    OpenMP::OpenMP_CXX Eigen3::Eigen ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenCV_LIBRARIES} absl::hash)
 if (ERL_USE_INTEL_MKL)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MKL_INCLUDE_DIRS})
 endif ()
@@ -47,6 +47,11 @@ if (plplot_FOUND)
     target_link_libraries(${PROJECT_NAME} PUBLIC PLPLOT::plplot PLPLOT::plplotcxx ${cairomm-1.0_LIBRARIES})
     target_compile_definitions(${PROJECT_NAME} PUBLIC -DERL_USE_PLPLOT)
 endif ()
+# a list of definitions to activate/deactivate features
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DERL_USE_OPENCV)
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DERL_USE_FMT)
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DERL_USE_ABSL)
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DERL_USE_BOOST)
 
 # ######################################################################################################################
 # Python bindings #
