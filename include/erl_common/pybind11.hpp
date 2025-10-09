@@ -1,5 +1,7 @@
 #pragma once
 
+#include "compile_definitions.hpp"
+
 #include "eigen.hpp"
 
 #include <pybind11/pybind11.h>  // must be included first

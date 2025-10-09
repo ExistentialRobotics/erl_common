@@ -4,6 +4,7 @@
 #include "string_utils.hpp"
 
 #include <filesystem>
+#include <functional>
 #include <istream>
 #include <vector>
 

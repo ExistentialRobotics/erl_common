@@ -47,18 +47,27 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     plplot-tcl-dev \
     plplot-driver-cairo \
     python3-plplot \
+    python3-plplot-qt \
     octave-plplot \
     libcairomm-1.0-dev \
     libyaml-cpp-dev \
     pybind11-dev \
     libgtest-dev
 
-RUN touch /usr/lib/python3/dist-packages/_Pltk_init.so
-RUN touch /usr/lib/python3/dist-packages/_plplotc.so
-RUN touch /usr/lib/python3/dist-packages/plplot_pyqt5.so
+RUN PYTHON_VERSION=$(python3 -c "import sys;print(sys.version_info.major,sys.version_info.minor,sep='')") && \
+    ln -s /usr/lib/python3/dist-packages/_Pltk_init.cpython-${PYTHON_VERSION}-x86_64-linux-gnu.so /usr/lib/python3/dist-packages/_Pltk_init.so && \
+    ln -s /usr/lib/python3/dist-packages/_plplotc.cpython-${PYTHON_VERSION}-x86_64-linux-gnu.so /usr/lib/python3/dist-packages/_plplotc.so && \
+    ln -s /usr/lib/python3/dist-packages/plplot_pyqt5.cpython-${PYTHON_VERSION}-x86_64-linux-gnu.so /usr/lib/python3/dist-packages/plplot_pyqt5.so
 RUN touch /usr/bin/pltek
 RUN sed 's/..\/..\/..\/..\/..\/include/..\/..\/..\/..\/include/g' \
     /usr/lib/x86_64-linux-gnu/cmake/yaml-cpp/yaml-cpp-config.cmake
+
+# install abseil-cpp
+RUN git clone --recursive https://github.com/abseil/abseil-cpp.git && cd abseil-cpp && \
+    git checkout 20240722.1 && mkdir -p build && cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="${CXXFLAGS} -DNDEBUG" \
+       -DCMAKE_CXX_STANDARD=17 -DBUILD_SHARED_LIBS=ON -DABSL_PROPAGATE_CXX_STD=ON && \
+    make -j`nproc` && make install && cd /root && rm -rf abseil-cpp
 
 # It is 300000 by default, which slows down OpenMP programs.
 ENV GOMP_SPINCOUNT=1

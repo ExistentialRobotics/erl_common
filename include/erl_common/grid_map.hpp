@@ -212,7 +212,7 @@ namespace erl::common {
         }
 
         Dtype &
-        GetMutableData(const double x, const double y) {
+        GetMutableData(const InfoDtype x, const InfoDtype y) {
             ERL_DEBUG_ASSERT(!omp_in_parallel(), "The grid map is not thread safe.");
             int x_grid = m_grid_map_info_->MeterToGridAtDim(x, 0);
             int y_grid = m_grid_map_info_->MeterToGridAtDim(y, 1);
@@ -231,7 +231,7 @@ namespace erl::common {
         }
 
         Dtype &
-        GetMutableDataThreadSafe(const double x, const double y) {
+        GetMutableDataThreadSafe(const InfoDtype x, const InfoDtype y) {
             std::lock_guard<std::shared_mutex> lock(m_mutex_);
             return GetMutableData(x, y);
         }
@@ -257,10 +257,10 @@ namespace erl::common {
 
         Eigen::Ref<Eigen::MatrixX<Dtype>>
         GetBlock(
-            const double x_min,
-            const double y_min,
-            const double x_max,
-            const double y_max,
+            const InfoDtype x_min,
+            const InfoDtype y_min,
+            const InfoDtype x_max,
+            const InfoDtype y_max,
             const bool safe_crop = true) {
             int x_min_grid = m_grid_map_info_->MeterToGridAtDim(x_min, 0);
             int y_min_grid = m_grid_map_info_->MeterToGridAtDim(y_min, 1);
@@ -289,10 +289,10 @@ namespace erl::common {
 
         void
         CollectNonZeroData(
-            const double x_min,
-            const double y_min,
-            const double x_max,
-            const double y_max,
+            const InfoDtype x_min,
+            const InfoDtype y_min,
+            const InfoDtype x_max,
+            const InfoDtype y_max,
             std::vector<Dtype> &data) {
             int x_min_grid = m_grid_map_info_->MeterToGridAtDim(x_min, 0);
             int y_min_grid = m_grid_map_info_->MeterToGridAtDim(y_min, 1);
@@ -350,15 +350,15 @@ namespace erl::common {
         Extend(ExtendCode code) {
             if (code == kNoExtend) { return; }
 
-            const double x_min = m_grid_map_info_->Min(0);
-            const double y_min = m_grid_map_info_->Min(1);
-            const double x_max = m_grid_map_info_->Max(0);
-            const double y_max = m_grid_map_info_->Max(1);
-            const double x_range = x_max - x_min;
-            const double y_range = y_max - y_min;
-            const double x_res = m_grid_map_info_->Resolution(0);
-            const double y_res = m_grid_map_info_->Resolution(1);
-            double new_x_min = x_min, new_y_min = y_min, new_x_max = x_max, new_y_max = y_max;
+            const InfoDtype x_min = m_grid_map_info_->Min(0);
+            const InfoDtype y_min = m_grid_map_info_->Min(1);
+            const InfoDtype x_max = m_grid_map_info_->Max(0);
+            const InfoDtype y_max = m_grid_map_info_->Max(1);
+            const InfoDtype x_range = x_max - x_min;
+            const InfoDtype y_range = y_max - y_min;
+            const InfoDtype x_res = m_grid_map_info_->Resolution(0);
+            const InfoDtype y_res = m_grid_map_info_->Resolution(1);
+            InfoDtype new_x_min = x_min, new_y_min = y_min, new_x_max = x_max, new_y_max = y_max;
             switch (code) {
                 case kToCentralLeft:
                 case kToTopLeft:

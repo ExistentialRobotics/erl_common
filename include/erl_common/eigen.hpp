@@ -1,5 +1,6 @@
 #pragma once
 
+#include "compile_definitions.hpp"
 #include "logging.hpp"
 
 #include <Eigen/Dense>

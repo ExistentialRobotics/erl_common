@@ -1,6 +1,9 @@
 #pragma once
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
+#ifndef FMT_HEADER_ONLY
+    #define FMT_HEADER_ONLY
+#endif
 #include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/core.h>

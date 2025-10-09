@@ -1,5 +1,7 @@
 #pragma once
 
+#include "compile_definitions.hpp"
+
 #ifdef ERL_USE_PANGOLIN
     #include "pangolin_window.hpp"
 

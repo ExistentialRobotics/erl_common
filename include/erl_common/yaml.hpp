@@ -1,5 +1,7 @@
 #pragma once
 
+#include "compile_definitions.hpp"
+
 #include "eigen.hpp"
 #include "factory_pattern.hpp"
 #include "logging.hpp"
@@ -12,6 +14,10 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+
+#ifdef ERL_USE_ABSL
+    #include <absl/container/flat_hash_map.h>
+#endif
 
 // https://yaml.org/spec/1.2.2/
 // https://www.cloudbees.com/blog/yaml-tutorial-everything-you-need-get-started
@@ -98,6 +104,21 @@ namespace erl::common {
             return YAML::convert<T>::encode(*static_cast<const T*>(this));
         }
     };
+
+    template<typename T>
+    std::vector<T>
+    LoadSequenceFromFile(const std::string& path, const bool multi_nodes = false) {
+        if (multi_nodes) {
+            // each node is an element in the sequence
+            const std::vector<YAML::Node> nodes = YAML::LoadAllFromFile(path);
+            std::vector<T> objs;
+            objs.reserve(nodes.size());
+            for (const auto& node: nodes) { objs.push_back(node.as<T>()); }
+            return objs;
+        }
+
+        return YAML::LoadFile(path).as<std::vector<T>>();
+    }
 }  // namespace erl::common
 
 template<
@@ -169,12 +190,16 @@ template<
             std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
         void>* = nullptr>
 [[nodiscard]] bool
-LoadFromNode(const YAML::Node& node, const char* name, const T& obj) {
+LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
     // we should not call LoadFromNode(node, name, *obj) here.
     // otherwise, we might slice the object by mistake.
     // we cannot call `obj = node[name].as<T>()` here, which might create a new object of wrong type
     // because `T` is a smart pointer, and we don't know the exact derived type we need to load.
     // here `obj` must point to a valid object created earlier when the exact type is known.
+    if (node[name].IsNull()) {
+        obj = nullptr;
+        return true;
+    }
     ERL_DEBUG_ASSERT(obj != nullptr, "Smart pointer is null, cannot load from YAML node.");
     return obj->FromYamlNode(node[name]);
 }
@@ -258,6 +283,30 @@ LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
 
 #define ERL_YAML_SAVE_ATTR(node, obj, attr) SaveToNode(node, #attr, (obj).attr)
 #define ERL_YAML_LOAD_ATTR(node, obj, attr) LoadFromNode(node, #attr, (obj).attr)
+#define ERL_YAML_SAVE_ENUM_ATTR(node, obj, attr, ...)                                  \
+    do {                                                                               \
+        for (auto [enum_name, enum_val]:                                               \
+             std::vector<std::pair<std::string, decltype((obj).attr)>>{__VA_ARGS__}) { \
+            if ((obj).attr == enum_val) {                                              \
+                (node)[#attr] = enum_name;                                             \
+                break;                                                                 \
+            }                                                                          \
+        }                                                                              \
+    } while (false)
+#define ERL_YAML_LOAD_ENUM_ATTR(node, obj, attr, ...)                                  \
+    do {                                                                               \
+        auto enum_str = (node)[#attr].as<std::string>();                               \
+        bool found = false;                                                            \
+        for (auto [enum_name, enum_val]:                                               \
+             std::vector<std::pair<std::string, decltype((obj).attr)>>{__VA_ARGS__}) { \
+            if (enum_str == enum_name) {                                               \
+                (obj).attr = enum_val;                                                 \
+                found = true;                                                          \
+                break;                                                                 \
+            }                                                                          \
+        }                                                                              \
+        ERL_ASSERTM(found, "Cannot find enum value for {}: {}", #attr, enum_str);      \
+    } while (false)
 
 namespace YAML {
     template<
@@ -605,6 +654,38 @@ namespace YAML {
             return true;
         }
     };
+
+#ifdef ERL_USE_ABSL
+
+    template<typename KeyType, typename ValueType>
+    struct convert<absl::flat_hash_map<KeyType, ValueType>> {
+        static Node
+        encode(const absl::flat_hash_map<KeyType, ValueType>& rhs) {
+            Node node(NodeType::Map);
+            for (const auto& [key, value]: rhs) {
+                node[convert<KeyType>::encode(key)] = convert<ValueType>::encode(value);
+            }
+            return node;
+        }
+
+        static bool
+        decode(const Node& node, absl::flat_hash_map<KeyType, ValueType>& rhs) {
+            if (!node.IsMap()) { return false; }
+            for (auto it = node.begin(); it != node.end(); ++it) {
+                KeyType key;
+                ValueType value;
+                if (convert<KeyType>::decode(it->first, key) &&
+                    convert<ValueType>::decode(it->second, value)) {
+                    rhs[key] = value;
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        }
+    };
+
+#endif
 
 #ifdef ERL_USE_OPENCV
 

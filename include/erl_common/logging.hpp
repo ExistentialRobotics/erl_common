@@ -1,5 +1,7 @@
 #pragma once
 
+#include "compile_definitions.hpp"
+
 #ifdef ERL_USE_FMT
     #include "fmt.hpp"
     #include "progress_bar.hpp"

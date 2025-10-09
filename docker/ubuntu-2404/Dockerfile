@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ubuntu:22.04
+ARG BASE_IMAGE=ubuntu:24.04
 FROM ${BASE_IMAGE}
 
 ARG TZ=America/Los_Angeles
@@ -10,8 +10,8 @@ ENV LANG=${LOCALE}
 ENV LANGUAGE=${LOCALE}
 ENV LC_ALL=${LOCALE}
 
-# make sure it is 22.04
-RUN . /etc/os-release && if [ "$VERSION_ID" != "22.04" ]; then echo "This Dockerfile is for Ubuntu 22.04!" && exit 1; fi
+# make sure it is 24.04
+RUN . /etc/os-release && if [ "$VERSION_ID" != "24.04" ]; then echo "This Dockerfile is for Ubuntu 24.04!" && exit 1; fi
 
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.backup &&\
     if [ -n "$APT_MIRROR" ]; then \
@@ -50,11 +50,13 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     libplplot-dev \
     libplplot-java \
     libplplot-data \
-    libplplotada4.1 \
+    libplplotada4.2 \
+    libplplotada-dev \
     plplot-tcl-dev \
     plplot-driver-cairo \
     python3-plplot \
     python3-plplot-qt \
+    octave-plplot \
     libcairomm-1.0-dev \
     libyaml-cpp-dev \
     pybind11-dev \
@@ -65,7 +67,10 @@ RUN PYTHON_VERSION=$(python3 -c "import sys;print(sys.version_info.major,sys.ver
     ln -s /usr/lib/python3/dist-packages/_Pltk_init.cpython-${PYTHON_VERSION}-x86_64-linux-gnu.so /usr/lib/python3/dist-packages/_Pltk_init.so && \
     ln -s /usr/lib/python3/dist-packages/_plplotc.cpython-${PYTHON_VERSION}-x86_64-linux-gnu.so /usr/lib/python3/dist-packages/_plplotc.so && \
     ln -s /usr/lib/python3/dist-packages/plplot_pyqt5.cpython-${PYTHON_VERSION}-x86_64-linux-gnu.so /usr/lib/python3/dist-packages/plplot_pyqt5.so
+RUN ln -s /usr/lib/x86_64-linux-gnu/libplplotada.a /usr/lib/x86_64-linux-gnu/libplplotada_static.a
 RUN touch /usr/bin/pltek
+
+RUN userdel ubuntu
 
 ENV GOMP_SPINCOUNT=1
 

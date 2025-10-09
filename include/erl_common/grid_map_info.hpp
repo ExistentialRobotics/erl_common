@@ -1,5 +1,7 @@
 #pragma once
 
+#include "compile_definitions.hpp"
+
 #include "storage_order.hpp"
 
 #ifdef ERL_USE_OPENCV
