@@ -61,12 +61,12 @@ namespace erl::common {
             return m_data_;
         }
 
-        const Eigen::VectorX<T> &
+        [[nodiscard]] const Eigen::VectorX<T> &
         Data() const {
             return m_data_;
         }
 
-        const T *
+        [[nodiscard]] const T *
         GetDataPtr() const {
             return m_data_.data();
         }
@@ -81,12 +81,12 @@ namespace erl::common {
             return m_shape_.size();
         }
 
-        [[nodiscard]] inline Eigen::VectorXi
+        [[nodiscard]] Eigen::VectorXi
         Shape() const {
             return m_shape_;
         }
 
-        [[nodiscard]] inline int
+        [[nodiscard]] int
         Size() const {
             if (Dims()) { return m_shape_.prod(); }
             return 0;
@@ -108,7 +108,7 @@ namespace erl::common {
             return m_data_[index];
         }
 
-        const T &
+        [[nodiscard]] const T &
         operator[](const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords) const {
             int index = CoordsToIndex<int, Rank>(m_shape_, coords, RowMajor);
             return m_data_[index];
@@ -119,12 +119,12 @@ namespace erl::common {
             return m_data_[index];
         }
 
-        const T &
+        [[nodiscard]] const T &
         operator[](int index) const {
             return m_data_[index];
         }
 
-        Tensor<T, Eigen::Dynamic>
+        [[nodiscard]] Tensor<T, Eigen::Dynamic>
         GetSlice(
             const std::vector<int> &dims_to_remove,
             const std::vector<int> &dim_indices_at_removed) const {
@@ -183,6 +183,42 @@ namespace erl::common {
                << typeid(T).name() << std::endl;
         }
 
+        [[nodiscard]] bool
+        Write(std::ostream &s) const {
+            const int dims = m_shape_.size();
+            if (dims == 0) { return s.good(); }
+            s.write(reinterpret_cast<const char *>(&dims), sizeof(int));
+            s.write(reinterpret_cast<const char *>(m_shape_.data()), sizeof(int) * dims);
+            const std::streamsize data_size =
+                static_cast<std::streamsize>(m_data_.size() * sizeof(T));
+            s.write(reinterpret_cast<const char *>(m_data_.data()), data_size);
+            return s.good();
+        }
+
+        [[nodiscard]] bool
+        Read(std::istream &s) {
+            int dims = 0;
+            s.read(reinterpret_cast<char *>(&dims), sizeof(int));
+            if (dims <= 0) { return s.good(); }
+            ERL_DEBUG_ASSERT(
+                Rank == Eigen::Dynamic || dims == Rank,
+                "The number of dimensions read from the stream (%d) does not match the template "
+                "parameter Rank (%d).",
+                dims,
+                Rank);
+            if constexpr (Rank == Eigen::Dynamic) { m_shape_.resize(dims); }
+            s.read(reinterpret_cast<char *>(m_shape_.data()), sizeof(int) * dims);
+            CheckShape();
+            const int total_size = Size();
+            if (total_size > 0) {
+                m_data_.resize(total_size);
+                const std::streamsize data_size =
+                    static_cast<std::streamsize>(total_size * sizeof(T));
+                s.read(reinterpret_cast<char *>(m_data_.data()), data_size);
+            }
+            return s.good();
+        }
+
     private:
         void
         CheckShape() {
@@ -202,6 +238,19 @@ namespace erl::common {
     template<typename T, bool RowMajor = true>
     using TensorXD = Tensor<T, Eigen::Dynamic, RowMajor>;
 
+    extern template class Tensor<double, 2>;
+    extern template class Tensor<float, 2>;
+    extern template class Tensor<int, 2>;
+    extern template class Tensor<uint8_t, 2>;
+    extern template class Tensor<double, 3>;
+    extern template class Tensor<float, 3>;
+    extern template class Tensor<int, 3>;
+    extern template class Tensor<uint8_t, 3>;
+    extern template class Tensor<double, Eigen::Dynamic>;
+    extern template class Tensor<float, Eigen::Dynamic>;
+    extern template class Tensor<int, Eigen::Dynamic>;
+    extern template class Tensor<uint8_t, Eigen::Dynamic>;
+
     using Tensor2Dd = Tensor<double, 2>;
     using Tensor2Df = Tensor<float, 2>;
     using Tensor2Di = Tensor<int, 2>;
@@ -214,5 +263,4 @@ namespace erl::common {
     using TensorXDf = TensorXD<float>;
     using TensorXDi = TensorXD<int>;
     using TensorXD8u = TensorXD<uint8_t>;
-
 }  // namespace erl::common

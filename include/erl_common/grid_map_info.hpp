@@ -124,6 +124,47 @@ namespace erl::common {
               m_center_(info.Center()),
               m_center_grid_(info.CenterGrid()) {}
 
+        [[nodiscard]] bool
+        Write(std::ostream& s) const {
+            const int n_dims = Dims();
+            s.write(reinterpret_cast<const char*>(&n_dims), sizeof(int));
+            s.write(reinterpret_cast<const char*>(m_map_shape_.data()), sizeof(int) * n_dims);
+            s.write(reinterpret_cast<const char*>(m_resolution_.data()), sizeof(Dtype) * n_dims);
+            s.write(reinterpret_cast<const char*>(m_min_.data()), sizeof(Dtype) * n_dims);
+            s.write(reinterpret_cast<const char*>(m_max_.data()), sizeof(Dtype) * n_dims);
+            s.write(reinterpret_cast<const char*>(m_center_.data()), sizeof(Dtype) * n_dims);
+            s.write(reinterpret_cast<const char*>(m_center_grid_.data()), sizeof(int) * n_dims);
+            return s.good();
+        }
+
+        [[nodiscard]] bool
+        Read(std::istream& s) {
+            int n_dims = 0;
+            s.read(reinterpret_cast<char*>(&n_dims), sizeof(int));
+            ERL_DEBUG_ASSERT(
+                Dim == Eigen::Dynamic || n_dims == Dim,
+                "The number of dimensions read from the stream (%d) does not match the template "
+                "parameter Dim (%d).",
+                n_dims,
+                Dim);
+            if constexpr (Dim == Eigen::Dynamic) {
+                ERL_DEBUG_ASSERT(n_dims > 0, "0-dim map is not allowed!");
+                m_map_shape_.resize(n_dims);
+                m_resolution_.resize(n_dims);
+                m_min_.resize(n_dims);
+                m_max_.resize(n_dims);
+                m_center_.resize(n_dims);
+                m_center_grid_.resize(n_dims);
+            }
+            s.read(reinterpret_cast<char*>(m_map_shape_.data()), sizeof(int) * n_dims);
+            s.read(reinterpret_cast<char*>(m_resolution_.data()), sizeof(Dtype) * n_dims);
+            s.read(reinterpret_cast<char*>(m_min_.data()), sizeof(Dtype) * n_dims);
+            s.read(reinterpret_cast<char*>(m_max_.data()), sizeof(Dtype) * n_dims);
+            s.read(reinterpret_cast<char*>(m_center_.data()), sizeof(Dtype) * n_dims);
+            s.read(reinterpret_cast<char*>(m_center_grid_.data()), sizeof(int) * n_dims);
+            return s.good();
+        }
+
         template<typename Dtype2>
         GridMapInfo<Dtype2, Dim>
         Cast() const {
@@ -386,6 +427,16 @@ namespace erl::common {
                 [&](const Dtype v) -> int { return MeterToGrid(v, min, res); });
         }
 
+        [[nodiscard]] Eigen::Vector<Dtype, Dim>
+        GridToMeterForPoint(const Eigen::Ref<const Eigen::Vector<int, Dim>>& grid_point) const {
+            Eigen::Vector<Dtype, Dim> meter_point;
+            if constexpr (Dim == Eigen::Dynamic) { meter_point.resize(grid_point.size()); }
+            for (int i = 0; i < Dim; ++i) {
+                meter_point[i] = GridToMeter(grid_point[i], m_min_[i], m_resolution_[i]);
+            }
+            return meter_point;
+        }
+
         [[nodiscard]] Eigen::Matrix<Dtype, Dim, Eigen::Dynamic>
         GridToMeterForPoints(
             const Eigen::Ref<const Eigen::Matrix<int, Dim, Eigen::Dynamic>>& grid_points) const {
@@ -399,6 +450,16 @@ namespace erl::common {
                 }
             }
             return meter_points;
+        }
+
+        [[nodiscard]] Eigen::Vector<int, Dim>
+        MeterToGridForPoint(const Eigen::Ref<const Eigen::Vector<Dtype, Dim>>& meter_point) const {
+            Eigen::Vector<int, Dim> grid_point;
+            if constexpr (Dim == Eigen::Dynamic) { grid_point.resize(meter_point.size()); }
+            for (int i = 0; i < Dim; ++i) {
+                grid_point[i] = MeterToGrid(meter_point[i], m_min_[i], m_resolution_[i]);
+            }
+            return grid_point;
         }
 
         [[nodiscard]] Eigen::Matrix<int, Dim, Eigen::Dynamic>
@@ -417,9 +478,18 @@ namespace erl::common {
         }
 
         template<int D = Dim>
-        [[nodiscard]] std::enable_if_t<D == 2 || D == -1, Eigen::Matrix2Xi>
+        [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2i>
+        GridToPixelForPoint(const Eigen::Ref<const Eigen::Vector2i>& grid_point) const {
+            Eigen::Vector2i pixel;
+            pixel[0] = grid_point[0];
+            pixel[1] = m_map_shape_[1] - grid_point[1];
+            return pixel;
+        }
+
+        template<int D = Dim>
+        [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
         GridToPixelForPoints(const Eigen::Ref<const Eigen::Matrix2Xi>& grid_points) const {
-            if (D == Eigen::Dynamic) {
+            if constexpr (D == Eigen::Dynamic) {
                 ERL_DEBUG_ASSERT(Dims() == 2, "Not available when Dims() != 2");
             }
 
@@ -437,15 +507,33 @@ namespace erl::common {
         }
 
         template<int D = Dim>
+        [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2i>
+        PixelToGridForPoint(const Eigen::Ref<const Eigen::Vector2i>& pixel_point) const {
+            return GridToPixelForPoint(pixel_point);
+        }
+
+        template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
         PixelToGridForPoints(const Eigen::Ref<const Eigen::Matrix2Xi>& pixel_points) const {
             return GridToPixelForPoints(pixel_points);
         }
 
         template<int D = Dim>
+        [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2i>
+        MeterToPixelForPoint(const Eigen::Ref<const Eigen::Vector2<Dtype>>& meter_points) const {
+            return GridToPixelForPoint(MeterToGridForPoint(meter_points));
+        }
+
+        template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
         MeterToPixelForPoints(const Eigen::Ref<const Eigen::Matrix2X<Dtype>>& meter_points) const {
             return GridToPixelForPoints(MeterToGridForPoints(meter_points));
+        }
+
+        template<int D = Dim>
+        [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2<Dtype>>
+        PixelToMeterForPoint(const Eigen::Ref<const Eigen::Vector2i>& pixel_points) const {
+            return GridToMeterForPoint(PixelToGridForPoint(pixel_points));
         }
 
         template<int D = Dim>

@@ -1,10 +1,9 @@
 #pragma once
 
 #include "grid_map_info.hpp"
+#include "serialization.hpp"
 #include "template_helper.hpp"
 #include "tensor.hpp"
-
-#include <omp.h>
 
 #include <memory>
 #include <mutex>
@@ -17,30 +16,69 @@ namespace erl::common {
         static_assert(std::is_same_v<InfoDtype, double> || std::is_same_v<InfoDtype, float>);
         using Info = GridMapInfo<InfoDtype, Dim>;
 
-        Tensor<MapDtype, Dim, RowMajor> data;
         std::shared_ptr<Info> info;
+        Tensor<MapDtype, Dim, RowMajor> data;
 
         explicit GridMap(std::shared_ptr<Info> grid_map_info)
-            : data(grid_map_info->Shape()),
-              info(std::move(grid_map_info)) {}
+            : info(NotNull(std::move(grid_map_info), true, "grid_map_info is nullptr.")),
+              data(info->Shape()) {}
 
         GridMap(std::shared_ptr<Info> grid_map_info, MapDtype value)
-            : data(grid_map_info->Shape(), value),
-              info(std::move(grid_map_info)) {}
+            : info(NotNull(std::move(grid_map_info), true, "grid_map_info is nullptr.")),
+              data(info->Shape(), value) {}
 
         GridMap(std::shared_ptr<Info> grid_map_info, Tensor<MapDtype, Dim, RowMajor> data)
-            : data(std::move(data)),
-              info(std::move(grid_map_info)) {}
+            : info(NotNull(std::move(grid_map_info), true, "grid_map_info is nullptr.")),
+              data(std::move(data)) {
+            ERL_ASSERTM(data.Shape() == info->Shape(), "shape of data and info are not matched.");
+        }
 
         GridMap(std::shared_ptr<Info> grid_map_info, Eigen::VectorX<MapDtype> data)
-            : data(grid_map_info->Shape(), data),
-              info(std::move(grid_map_info)) {}
+            : info(NotNull(std::move(grid_map_info), true, "grid_map_info is nullptr.")),
+              data(info->Shape(), data) {}
 
         GridMap(
             std::shared_ptr<Info> grid_map_info,
             const std::function<MapDtype()> &data_init_func)
-            : data(grid_map_info->Shape(), data_init_func),
-              info(std::move(grid_map_info)) {}
+            : info(NotNull(std::move(grid_map_info), true, "grid_map_info is nullptr.")),
+              data(info->Shape(), data_init_func) {}
+
+        [[nodiscard]] bool
+        Write(std::ostream &s) const {
+            static const common::TokenWriteFunctionPairs<GridMap> token_function_pairs = {
+                {
+                    "info",
+                    [](const GridMap *self, std::ostream &stream) {
+                        return self->info->Write(stream);
+                    },
+                },
+                {
+                    "data",
+                    [](const GridMap *self, std::ostream &stream) {
+                        return self->data.Write(stream);
+                    },
+                },
+            };
+            return WriteTokens(s, this, token_function_pairs);
+        }
+
+        [[nodiscard]] bool
+        Read(std::istream &s) {
+            static const common::TokenReadFunctionPairs<GridMap> token_function_pairs = {
+                {
+                    "info",
+                    [](GridMap *self, std::istream &stream) {
+                        if (self->info == nullptr) { self->info = std::make_shared<Info>(); }
+                        return self->info->Read(stream);
+                    },
+                },
+                {
+                    "data",
+                    [](GridMap *self, std::istream &stream) { return self->data.Read(stream); },
+                },
+            };
+            return ReadTokens(s, this, token_function_pairs);
+        }
     };
 
     template<typename MapDtype, typename InfoDtype, int Dim, bool RowMajor>
