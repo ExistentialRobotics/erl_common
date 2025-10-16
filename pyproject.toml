@@ -5,13 +5,20 @@ requires = ["setuptools", "wheel", "toml"]
 line-length = 120
 
 [erl]
-description = "Python bindings for erl_common"
-python_pkg_name = "erl_common"
-pybind_module_name = "pyerl_common"
 erl_dependencies = ["erl_cmake_tools"]
 build_type = "Release"
+
+[project]
+name = "erl_common"
 version = "0.2.0"
-author = "Zhirui Dai"
-author_email = "zhdai@ucsd.edu"
-entry_points = { console_scripts = [] }
+description = "Python package for erl_common"
+authors = [
+    { name = "Zhirui Dai", email = "zhdai@ucsd.edu" }
+]
+maintainers = [
+    { name = "Zhirui Dai", email = "zhdai@ucsd.edu" }
+]
+readme = "README.md"
 license = "MIT"
+requires-python = ">=3.8"
+dependencies = []

@@ -125,6 +125,18 @@ namespace erl::common {
               m_center_grid_(info.CenterGrid()) {}
 
         [[nodiscard]] bool
+        operator==(const GridMapInfo& other) const {
+            return (m_map_shape_ == other.m_map_shape_) && (m_resolution_ == other.m_resolution_) &&
+                   (m_min_ == other.m_min_) && (m_max_ == other.m_max_) &&
+                   (m_center_ == other.m_center_) && (m_center_grid_ == other.m_center_grid_);
+        }
+
+        [[nodiscard]] bool
+        operator!=(const GridMapInfo& other) const {
+            return !(*this == other);
+        }
+
+        [[nodiscard]] bool
         Write(std::ostream& s) const {
             const int n_dims = Dims();
             s.write(reinterpret_cast<const char*>(&n_dims), sizeof(int));

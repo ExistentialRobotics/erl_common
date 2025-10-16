@@ -262,10 +262,19 @@ LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
     0,                      \
     6,                      \
     3)
+    if (node[name].as<std::string>() == "inf") {  // support .inf but not inf
+        obj = std::numeric_limits<T>::infinity();
+        return;
+    }
     obj = node[name].as<T>();
 #else
-    // YAML 0.6.2 fails to parse "inf".
-    obj = static_cast<T>(std::stod(node[name].as<std::string>()));
+    // YAML 0.6.2 fails to parse "inf" and ".inf".
+    auto str = node[name].as<std::string>();
+    if (str == ".inf") {
+        obj = std::numeric_limits<T>::infinity();
+        return;
+    }
+    obj = static_cast<T>(std::stod(node[name].as<std::string>()));  // support inf but not .inf
 #endif
 }
 
