@@ -83,7 +83,7 @@ namespace erl::common {
     }
 
     void
-    YamlableBase::FromCommandLine(int argc, const char *argv[]) {
+    YamlableBase::FromCommandLine(int argc, char *argv[]) {
 #ifdef ERL_USE_BOOST
         namespace po = boost::program_options;
         po::options_description desc;
@@ -93,6 +93,12 @@ namespace erl::common {
         std::unordered_map<std::string, std::pair<YAML::Node, std::vector<std::string>>> option_map;
 
         options("help,h", "Show help message");
+        options("config", po::value<std::string>(), "Path to YAML config file");
+
+        auto check_arg_name = [](const std::string &name) -> std::string {
+            ERL_ASSERTM(name != "config", "Option name 'config' is reserved.");
+            return name;
+        };
 
         std::stack<std::pair<std::string, YAML::Node>> node_stack;
         node_stack.emplace("", node);
@@ -111,22 +117,22 @@ namespace erl::common {
             }
 
             if (current_node.IsSequence()) {
-                auto itr = option_map.try_emplace(
+                auto [itr, inserted] = option_map.try_emplace(
                     prefix,
                     std::pair{current_node, std::vector<std::string>()});
-                ERL_ASSERTM(itr.second, "Failed to insert option: {}", prefix);
+                ERL_ASSERTM(inserted, "Failed to insert option: {}", prefix);
                 options(
-                    itr.first->first.c_str(),
-                    po::value<std::vector<std::string>>(&itr.first->second.second)->multitoken(),
+                    check_arg_name(itr->first).c_str(),
+                    po::value<std::vector<std::string>>(&itr->second.second)->multitoken(),
                     ("List of values for " + prefix).c_str());
                 continue;
             }
 
-            auto itr =
+            auto [itr, inserted] =
                 option_map.try_emplace(prefix, std::pair{current_node, std::vector{std::string()}});
             options(
-                itr.first->first.c_str(),
-                po::value<std::string>(itr.first->second.second.data()),
+                itr->first.c_str(),
+                po::value<std::string>(itr->second.second.data()),
                 ("Value for " + prefix).c_str());
         }
 
@@ -137,13 +143,24 @@ namespace erl::common {
             exit(0);
         }
         po::notify(vm);
-        for (auto &[name, value]: option_map) {
-            if (vm.count(name)) {
-                if (auto &node_value = value.first; node_value.IsSequence()) {
-                    node_value = value.second;
-                } else {
-                    node_value = value.second[0];
-                }
+        if (vm.count("config")) {
+            auto config_file = vm["config"].as<std::string>();
+            ERL_ASSERTM(
+                std::filesystem::exists(config_file),
+                "Config file does not exist: {}",
+                config_file);
+            ERL_ASSERTM(FromYamlFile(config_file), "Failed to load config file: {}", config_file);
+            UpdateYamlNode(AsYamlNode(), node, false);
+        }
+        // update node
+        for (auto &[arg_name, arg_value]: vm) {
+            auto itr = option_map.find(arg_name);
+            if (itr == option_map.end()) { continue; }
+            auto &[node_value, str_values] = itr->second;
+            if (node_value.IsSequence()) {
+                node_value = str_values;
+            } else {
+                node_value = str_values[0];
             }
         }
         ERL_ASSERTM(FromYamlNode(node), "Failed to parse command line options. ");
@@ -153,4 +170,41 @@ namespace erl::common {
         ERL_FATAL("Not compiled with Boost. Cannot parse command line arguments.");
 #endif
     }
+
+    void
+    UpdateYamlNode(const YAML::Node &src, YAML::Node &dst, const bool ignore_unknown) {
+
+        std::stack<std::pair<const YAML::Node &, YAML::Node>> node_stack;
+        node_stack.emplace(src, dst);
+        while (!node_stack.empty()) {
+            auto [current_src, current_dst] = node_stack.top();
+            node_stack.pop();
+
+            ERL_ASSERTM(
+                current_src.IsMap() && current_dst.IsMap(),
+                "Both source and destination nodes must be maps.");
+
+            for (const auto &item: current_src) {
+                const auto &key = item.first.as<std::string>();
+                const auto &src_value = item.second;
+
+                if (!current_dst[key].IsDefined()) {
+                    if (ignore_unknown) { continue; }
+                    ERL_FATAL("Unknown key in YAML node: {}", key);
+                }
+
+                if (src_value.IsMap()) {
+                    YAML::Node dst_value = current_dst[key];
+                    ERL_ASSERTM(
+                        dst_value.IsMap(),
+                        "Destination node must be a map for key: {}",
+                        key);
+                    node_stack.emplace(src_value, dst_value);
+                } else {
+                    current_dst[key] = src_value;
+                }
+            }
+        }
+    }
+
 }  // namespace erl::common

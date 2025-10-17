@@ -88,8 +88,11 @@ namespace erl::common {
         Read(std::istream& s);
 
         void
-        FromCommandLine(int argc, const char* argv[]);
+        FromCommandLine(int argc, char* argv[]);
     };
+
+    void
+    UpdateYamlNode(const YAML::Node& src, YAML::Node& dst, bool ignore_unknown);
 
     template<typename T, typename Base = YamlableBase>
     struct Yamlable : Base {
