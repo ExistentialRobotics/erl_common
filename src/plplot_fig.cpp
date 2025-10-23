@@ -9,8 +9,7 @@ namespace erl::common {
     const std::string PlplotFig::kDefaultAxisOpt = std::string(AxisOpt());
 
     PlplotFig::PlplotFig(const int width, const int height, const bool alpha_enabled)
-        : m_alpha_enabled_(alpha_enabled),
-          m_pls_(std::make_shared<plstream>()) {
+        : m_alpha_enabled_(alpha_enabled), m_pls_(std::make_shared<plstream>()) {
 
         if (alpha_enabled) {
             m_cairo_img_ = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, height);
@@ -517,6 +516,43 @@ namespace erl::common {
         return ColorBar(width_out, height_out, opt);
     }
 
+    PlplotFig::HistOpt &
+    PlplotFig::HistOpt::ScaleAxis(bool scale_axis_) {
+        scale_axis = scale_axis_;
+        return *this;
+    }
+
+    PlplotFig::HistOpt &
+    PlplotFig::HistOpt::IgnoreOutliers(bool ignore_outliers_) {
+        ignore_outliers = ignore_outliers_;
+        return *this;
+    }
+
+    PlplotFig::HistOpt &
+    PlplotFig::HistOpt::NoExpand(bool no_expand_) {
+        no_expand = no_expand_;
+        return *this;
+    }
+
+    PlplotFig::HistOpt &
+    PlplotFig::HistOpt::NoEmpty(bool no_empty_) {
+        no_empty = no_empty_;
+        return *this;
+    }
+
+    PlplotFig &
+    PlplotFig::DrawHist(
+        const double *data,
+        const int n_data,
+        const double min_val,
+        const double max_val,
+        const int n_bins,
+        const HistOpt &hist_opt) {
+
+        m_pls_->hist(n_data, data, min_val, max_val, n_bins, static_cast<int>(hist_opt));
+        return *this;
+    }
+
     PlplotFig &
     PlplotFig::DrawContour(
         const double *data,
@@ -553,8 +589,7 @@ namespace erl::common {
     }
 
     PlplotFig::LegendOpt::LegendOpt(int n_legend_, std::vector<const char *> texts_)
-        : n_legend(n_legend_),
-          texts(std::move(texts_)) {}
+        : n_legend(n_legend_), texts(std::move(texts_)) {}
 
     PlplotFig::LegendOpt &
     PlplotFig::LegendOpt::SetNumLegend(int n_legend_) {

@@ -350,6 +350,46 @@ namespace erl::common {
         PlplotFig&
         ColorBar(ColorBarOpt& opt);
 
+        struct HistOpt {
+            bool scale_axis = true;        // scale the existing axes to fit the histogram
+            bool ignore_outliers = false;  // ignore data outside the given extremes
+            bool no_expand = false;  // outer bins are drawn with equal size as the ones inside
+            bool no_empty = false;   // bins with zero height are not drawn
+
+            HistOpt() = default;
+
+            HistOpt&
+            ScaleAxis(bool scale_axis_ = true);
+
+            HistOpt&
+            IgnoreOutliers(bool ignore_outliers_ = true);
+
+            HistOpt&
+            NoExpand(bool no_expand_ = true);
+
+            HistOpt&
+            NoEmpty(bool no_empty_ = true);
+
+            explicit
+            operator int() const {
+                int opt = PL_HIST_DEFAULT;
+                if (!scale_axis) { opt |= PL_HIST_NOSCALING; }
+                if (ignore_outliers) { opt |= PL_HIST_IGNORE_OUTLIERS; }
+                if (no_expand) { opt |= PL_HIST_NOEXPAND; }
+                if (no_empty) { opt |= PL_HIST_NOEMPTY; }
+                return opt;
+            }
+        };
+
+        PlplotFig&
+        DrawHist(
+            const double* data,
+            int n_data,
+            double min_val,
+            double max_val,
+            int n_bins,
+            const HistOpt& hist_opt);
+
         PlplotFig&
         DrawContour(
             const double* data,
