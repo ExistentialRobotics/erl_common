@@ -2,6 +2,8 @@
 
 #include "compile_definitions.hpp"
 
+#include "logging_level.hpp"
+
 #ifdef ERL_USE_FMT
     #include "fmt.hpp"
     #include "progress_bar.hpp"
@@ -9,26 +11,16 @@
     #include <mutex>
 
 namespace erl::common {
+
     class Logging {
-
-    public:
-        enum Level {
-            kInfo,
-            kDebug,
-            kWarn,
-            kError,
-            kSilent,
-        };
-
-    private:
-        static Level s_level_;
+        static LoggingLevel s_level_;
         static std::mutex g_print_mutex;
 
     public:
         static void
-        SetLevel(Level level);
+        SetLevel(LoggingLevel level);
 
-        static Level
+        static LoggingLevel
         GetLevel();
 
         static std::string
@@ -205,7 +197,7 @@ namespace erl::common {
         }
 
         static void
-        Write(const std::string& msg) {
+        Write(const std::string &msg) {
             std::lock_guard lock(g_print_mutex);
             ProgressBar::Write(msg);
         }

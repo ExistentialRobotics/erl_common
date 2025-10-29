@@ -64,7 +64,8 @@ namespace erl::common {
 
         [[nodiscard]] bool
         Read(std::istream &s) {
-            static const common::TokenReadFunctionPairs<GridMap> token_function_pairs = {
+            using namespace serialization;
+            static const TokenReadFunctionPairs<GridMap> token_function_pairs = {
                 {
                     "info",
                     [](GridMap *self, std::istream &stream) {

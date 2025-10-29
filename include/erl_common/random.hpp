@@ -10,7 +10,7 @@
 
 namespace erl::common {
 
-    extern std::mt19937 g_random_engine;
+    extern std::mt19937_64 g_random_engine;
 
     template<typename T>
     std::vector<T>

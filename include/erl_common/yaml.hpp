@@ -25,12 +25,12 @@
 template<>
 struct YAML::convert<std::filesystem::path> {
     static Node
-    encode(const std::filesystem::path& path) {
+    encode(const std::filesystem::path &path) {
         return Node(path.string());
     }
 
     static bool
-    decode(const Node& node, std::filesystem::path& path) {
+    decode(const Node &node, std::filesystem::path &path) {
         path = node.as<std::string>();
         return true;
     }
@@ -45,7 +45,7 @@ namespace erl::common {
 
         template<typename Derived>
         static bool
-        Register(const std::string& yamlable_type = "") {
+        Register(const std::string &yamlable_type = "") {
             return Factory::GetInstance().Register<Derived>(yamlable_type, [] {
                 return std::make_shared<Derived>();
             });
@@ -53,21 +53,21 @@ namespace erl::common {
 
         template<typename Derived>
         static std::shared_ptr<Derived>
-        Create(const std::string& yamlable_type) {
+        Create(const std::string &yamlable_type) {
             return std::dynamic_pointer_cast<Derived>(Factory::GetInstance().Create(yamlable_type));
         }
 
         [[nodiscard]] bool
-        operator==(const YamlableBase& other) const;
+        operator==(const YamlableBase &other) const;
 
         [[nodiscard]] bool
-        operator!=(const YamlableBase& other) const;
+        operator!=(const YamlableBase &other) const;
 
         [[nodiscard]] virtual bool
-        FromYamlNode(const YAML::Node& node) = 0;
+        FromYamlNode(const YAML::Node &node) = 0;
 
         [[nodiscard]] bool
-        FromYamlString(const std::string& yaml_string);
+        FromYamlString(const std::string &yaml_string);
 
         [[nodiscard]] virtual YAML::Node
         AsYamlNode() const = 0;
@@ -76,47 +76,47 @@ namespace erl::common {
         AsYamlString() const;
 
         [[nodiscard]] bool
-        FromYamlFile(const std::string& yaml_file);
+        FromYamlFile(const std::string &yaml_file);
 
         void
-        AsYamlFile(const std::string& yaml_file) const;
+        AsYamlFile(const std::string &yaml_file) const;
 
         [[nodiscard]] bool
-        Write(std::ostream& s) const;
+        Write(std::ostream &s) const;
 
         [[nodiscard]] bool
-        Read(std::istream& s);
+        Read(std::istream &s);
 
         void
-        FromCommandLine(int argc, char* argv[]);
+        FromCommandLine(int argc, const char *argv[]);
     };
 
     void
-    UpdateYamlNode(const YAML::Node& src, YAML::Node& dst, bool ignore_unknown);
+    UpdateYamlNode(const YAML::Node &src, YAML::Node &dst, bool ignore_unknown);
 
     template<typename T, typename Base = YamlableBase>
     struct Yamlable : Base {
 
         [[nodiscard]] bool
-        FromYamlNode(const YAML::Node& node) override {
-            return YAML::convert<T>::decode(node, *static_cast<T*>(this));
+        FromYamlNode(const YAML::Node &node) override {
+            return YAML::convert<T>::decode(node, *static_cast<T *>(this));
         }
 
         [[nodiscard]] YAML::Node
         AsYamlNode() const override {
-            return YAML::convert<T>::encode(*static_cast<const T*>(this));
+            return YAML::convert<T>::encode(*static_cast<const T *>(this));
         }
     };
 
     template<typename T>
     std::vector<T>
-    LoadSequenceFromFile(const std::string& path, const bool multi_nodes = false) {
+    LoadSequenceFromFile(const std::string &path, const bool multi_nodes = false) {
         if (multi_nodes) {
             // each node is an element in the sequence
             const std::vector<YAML::Node> nodes = YAML::LoadAllFromFile(path);
             std::vector<T> objs;
             objs.reserve(nodes.size());
-            for (const auto& node: nodes) { objs.push_back(node.as<T>()); }
+            for (const auto &node: nodes) { objs.push_back(node.as<T>()); }
             return objs;
         }
 
@@ -129,9 +129,9 @@ template<
     std::enable_if_t<
         IsSmartPtr<T>::value &&
             std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
-        void>* = nullptr>
+        void> * = nullptr>
 void
-SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+SaveToNode(YAML::Node &node, const char *name, const T &obj) {
     if (obj == nullptr) {
         node[name] = YAML::Node(YAML::NodeType::Null);
         return;
@@ -144,9 +144,9 @@ template<
     std::enable_if_t<
         IsSmartPtr<T>::value &&
             !std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
-        void>* = nullptr>
+        void> * = nullptr>
 void
-SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+SaveToNode(YAML::Node &node, const char *name, const T &obj) {
     node[name] = obj;  // this will try to call YAML::convert<T>::encode
 }
 
@@ -155,9 +155,9 @@ template<
     std::enable_if_t<
         IsWeakPtr<T>::value &&
             std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
-        void>* = nullptr>
+        void> * = nullptr>
 void
-SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+SaveToNode(YAML::Node &node, const char *name, const T &obj) {
     if (obj == nullptr) {
         node[name] = YAML::Node(YAML::NodeType::Null);
         return;
@@ -168,9 +168,9 @@ SaveToNode(YAML::Node& node, const char* name, const T& obj) {
 
 template<
     typename T,
-    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void> * = nullptr>
 void
-SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+SaveToNode(YAML::Node &node, const char *name, const T &obj) {
     node[name] = obj.AsYamlNode();
 }
 
@@ -180,9 +180,9 @@ template<
         // don't allow raw pointers additionally. if T is a raw pointer, no SaveToNode will work.
         !IsSmartPtr<T>::value && !IsWeakPtr<T>::value && !std::is_pointer_v<T> &&
             !std::is_base_of_v<erl::common::YamlableBase, T>,
-        void>* = nullptr>
+        void> * = nullptr>
 void
-SaveToNode(YAML::Node& node, const char* name, const T& obj) {
+SaveToNode(YAML::Node &node, const char *name, const T &obj) {
     node[name] = obj;
 }
 
@@ -191,9 +191,9 @@ template<
     std::enable_if_t<
         IsSmartPtr<T>::value &&
             std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
-        void>* = nullptr>
+        void> * = nullptr>
 [[nodiscard]] bool
-LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+LoadFromNode(const YAML::Node &node, const char *name, T &obj) {
     // we should not call LoadFromNode(node, name, *obj) here.
     // otherwise, we might slice the object by mistake.
     // we cannot call `obj = node[name].as<T>()` here, which might create a new object of wrong type
@@ -212,9 +212,9 @@ template<
     std::enable_if_t<
         IsSmartPtr<T>::value &&
             !std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
-        void>* = nullptr>
+        void> * = nullptr>
 void
-LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+LoadFromNode(const YAML::Node &node, const char *name, T &obj) {
     // we assume T::element_type is the exact type we want to load.
     // we might get nullptr here if `node[name]` is null.
     obj = node[name].as<T>();
@@ -225,9 +225,9 @@ template<
     std::enable_if_t<
         IsWeakPtr<T>::value &&
             std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
-        void>* = nullptr>
+        void> * = nullptr>
 [[nodiscard]] bool
-LoadFromNode(const YAML::Node& node, const char* name, const T& obj) {
+LoadFromNode(const YAML::Node &node, const char *name, const T &obj) {
     ERL_DEBUG_ASSERT(obj != nullptr, "Weak pointer is null, cannot load from YAML node.");
     ERL_DEBUG_ASSERT(!obj.expired(), "Weak pointer is expired, cannot load from YAML node.");
     return obj.lock()->FromYamlNode(node[name]);
@@ -238,26 +238,26 @@ template<
     std::enable_if_t<
         IsWeakPtr<T>::value &&
             !std::is_base_of_v<erl::common::YamlableBase, typename T::element_type>,
-        void>* = nullptr>
+        void> * = nullptr>
 void
-LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+LoadFromNode(const YAML::Node &node, const char *name, T &obj) {
     ERL_DEBUG_ASSERT(obj != nullptr, "Weak pointer is null, cannot load from YAML node.");
     ERL_DEBUG_ASSERT(!obj.expired(), "Weak pointer is expired, cannot load from YAML node.");
-    auto& locked_obj = *obj.lock();
+    auto &locked_obj = *obj.lock();
     locked_obj = node[name].as<decltype(locked_obj)>();
 }
 
 template<
     typename T,
-    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void>* = nullptr>
+    std::enable_if_t<std::is_base_of_v<erl::common::YamlableBase, T>, void> * = nullptr>
 [[nodiscard]] bool
-LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+LoadFromNode(const YAML::Node &node, const char *name, T &obj) {
     return obj.FromYamlNode(node[name]);
 }
 
-template<typename T, std::enable_if_t<std::is_floating_point_v<T>, void>* = nullptr>
+template<typename T, std::enable_if_t<std::is_floating_point_v<T>, void> * = nullptr>
 void
-LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+LoadFromNode(const YAML::Node &node, const char *name, T &obj) {
 #if ERL_CHECK_VERSION_GE(   \
     YAML_CPP_VERSION_MAJOR, \
     YAML_CPP_VERSION_MINOR, \
@@ -287,9 +287,9 @@ template<
         // don't allow raw pointers additionally. if T is a raw pointer, no LoadFromNode will work.
         !IsSmartPtr<T>::value && !IsWeakPtr<T>::value && !std::is_pointer_v<T> &&
             !std::is_base_of_v<erl::common::YamlableBase, T> && !std::is_floating_point_v<T>,
-        void>* = nullptr>
+        void> * = nullptr>
 void
-LoadFromNode(const YAML::Node& node, const char* name, T& obj) {
+LoadFromNode(const YAML::Node &node, const char *name, T &obj) {
     obj = node[name].as<T>();
 }
 
@@ -328,7 +328,7 @@ namespace YAML {
         int Order = Eigen::ColMajor>
     struct ConvertEigenMatrix {
         static Node
-        encode(const Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
+        encode(const Eigen::Matrix<T, Rows, Cols, Order> &rhs) {
             Node node(NodeType::Sequence);
             const int rows = Rows == Eigen::Dynamic ? rhs.rows() : Rows;
             const int cols = Cols == Eigen::Dynamic ? rhs.cols() : Cols;
@@ -343,7 +343,7 @@ namespace YAML {
         }
 
         static bool
-        decode(const Node& node, Eigen::Matrix<T, Rows, Cols, Order>& rhs) {
+        decode(const Node &node, Eigen::Matrix<T, Rows, Cols, Order> &rhs) {
             if (node.IsNull() && (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic)) {
                 return true;
             }
@@ -364,7 +364,7 @@ namespace YAML {
                     "expecting cols: {}, get node[0].size(): {}",
                     cols,
                     node[i].size());
-                auto& row_node = node[i];
+                auto &row_node = node[i];
                 for (int j = 0; j < cols; ++j) { rhs(i, j) = row_node[j].as<T>(); }
             }
 
@@ -468,7 +468,7 @@ namespace YAML {
     template<typename T, int Size = Eigen::Dynamic>
     struct ConvertEigenVector {
         static Node
-        encode(const Eigen::Vector<T, Size>& rhs) {
+        encode(const Eigen::Vector<T, Size> &rhs) {
             Node node(NodeType::Sequence);
             if (Size == Eigen::Dynamic) {
                 for (int i = 0; i < rhs.size(); ++i) { node.push_back(rhs[i]); }
@@ -479,7 +479,7 @@ namespace YAML {
         }
 
         static bool
-        decode(const Node& node, Eigen::Vector<T, Size>& rhs) {
+        decode(const Node &node, Eigen::Vector<T, Size> &rhs) {
             if (!node.IsSequence()) { return false; }
             if (Size == Eigen::Dynamic) {
                 rhs.resize(node.size());
@@ -536,10 +536,10 @@ namespace YAML {
     template<typename... Args>
     struct convert<std::tuple<Args...>> {
         static Node
-        encode(const std::tuple<Args...>& rhs) {
+        encode(const std::tuple<Args...> &rhs) {
             Node node(NodeType::Sequence);
             std::apply(
-                [&node](const Args&... args) {
+                [&node](const Args &...args) {
                     (node.push_back(convert<Args>::encode(args)), ...);
                 },
                 rhs);
@@ -547,10 +547,10 @@ namespace YAML {
         }
 
         static bool
-        decode(const Node& node, std::tuple<Args...>& rhs) {
+        decode(const Node &node, std::tuple<Args...> &rhs) {
             if (!node.IsSequence()) { return false; }
             if (node.size() != sizeof...(Args)) { return false; }
-            std::apply([&node](Args&... args) { (convert<Args>::decode(node, args) && ...); }, rhs);
+            std::apply([&node](Args &...args) { (convert<Args>::decode(node, args) && ...); }, rhs);
             return true;
         }
     };
@@ -558,13 +558,13 @@ namespace YAML {
     template<typename T>
     struct convert<std::optional<T>> {
         static Node
-        encode(const std::optional<T>& rhs) {
+        encode(const std::optional<T> &rhs) {
             if (rhs) { return convert<T>::encode(*rhs); }
             return Node(NodeType::Null);
         }
 
         static bool
-        decode(const Node& node, std::optional<T>& rhs) {
+        decode(const Node &node, std::optional<T> &rhs) {
             if (node.Type() != NodeType::Null) {
                 T value;
                 if (convert<T>::decode(node, value)) {
@@ -581,13 +581,13 @@ namespace YAML {
     template<typename T>
     struct convert<std::shared_ptr<T>> {
         static Node
-        encode(const std::shared_ptr<T>& rhs) {
+        encode(const std::shared_ptr<T> &rhs) {
             if (rhs == nullptr) { return Node(NodeType::Null); }
             return convert<T>::encode(*rhs);
         }
 
         static bool
-        decode(const Node& node, std::shared_ptr<T>& rhs) {
+        decode(const Node &node, std::shared_ptr<T> &rhs) {
             if (node.IsNull()) {
                 rhs = nullptr;
                 return true;
@@ -604,13 +604,13 @@ namespace YAML {
     template<typename T>
     struct convert<std::unique_ptr<T>> {
         static Node
-        encode(const std::unique_ptr<T>& rhs) {
+        encode(const std::unique_ptr<T> &rhs) {
             if (rhs == nullptr) { return Node(NodeType::Null); }
             return convert<T>::encode(*rhs);
         }
 
         static bool
-        decode(const Node& node, std::unique_ptr<T>& rhs) {
+        decode(const Node &node, std::unique_ptr<T> &rhs) {
             if (node.IsNull()) {
                 rhs = nullptr;
                 return true;
@@ -627,16 +627,16 @@ namespace YAML {
     template<typename KeyType, typename ValueType>
     struct convert<std::unordered_map<KeyType, ValueType>> {
         static Node
-        encode(const std::unordered_map<KeyType, ValueType>& rhs) {
+        encode(const std::unordered_map<KeyType, ValueType> &rhs) {
             Node node(NodeType::Map);
-            for (const auto& [key, value]: rhs) {
+            for (const auto &[key, value]: rhs) {
                 node[convert<KeyType>::encode(key)] = convert<ValueType>::encode(value);
             }
             return node;
         }
 
         static bool
-        decode(const Node& node, std::unordered_map<KeyType, ValueType>& rhs) {
+        decode(const Node &node, std::unordered_map<KeyType, ValueType> &rhs) {
             if (!node.IsMap()) { return false; }
             for (auto it = node.begin(); it != node.end(); ++it) {
                 KeyType key;
@@ -655,12 +655,12 @@ namespace YAML {
     template<typename Period>
     struct convert<std::chrono::duration<int64_t, Period>> {
         static Node
-        encode(const std::chrono::duration<int64_t, Period>& rhs) {
+        encode(const std::chrono::duration<int64_t, Period> &rhs) {
             return Node(rhs.count());
         }
 
         static bool
-        decode(const Node& node, std::chrono::duration<int64_t, Period>& rhs) {
+        decode(const Node &node, std::chrono::duration<int64_t, Period> &rhs) {
             if (!node.IsScalar()) { return false; }
             rhs = std::chrono::duration<int64_t, Period>(node.as<int64_t>());
             return true;
@@ -672,16 +672,16 @@ namespace YAML {
     template<typename KeyType, typename ValueType>
     struct convert<absl::flat_hash_map<KeyType, ValueType>> {
         static Node
-        encode(const absl::flat_hash_map<KeyType, ValueType>& rhs) {
+        encode(const absl::flat_hash_map<KeyType, ValueType> &rhs) {
             Node node(NodeType::Map);
-            for (const auto& [key, value]: rhs) {
+            for (const auto &[key, value]: rhs) {
                 node[convert<KeyType>::encode(key)] = convert<ValueType>::encode(value);
             }
             return node;
         }
 
         static bool
-        decode(const Node& node, absl::flat_hash_map<KeyType, ValueType>& rhs) {
+        decode(const Node &node, absl::flat_hash_map<KeyType, ValueType> &rhs) {
             if (!node.IsMap()) { return false; }
             for (auto it = node.begin(); it != node.end(); ++it) {
                 KeyType key;
@@ -704,7 +704,7 @@ namespace YAML {
     template<>
     struct convert<cv::Scalar> {
         static Node
-        encode(const cv::Scalar& rhs) {
+        encode(const cv::Scalar &rhs) {
             Node node(NodeType::Sequence);
             node.push_back(rhs[0]);
             node.push_back(rhs[1]);
@@ -714,7 +714,7 @@ namespace YAML {
         }
 
         static bool
-        decode(const Node& node, cv::Scalar& rhs) {
+        decode(const Node &node, cv::Scalar &rhs) {
             if (!node.IsSequence()) { return false; }
             rhs[0] = node[0].as<double>();
             rhs[1] = node[1].as<double>();
@@ -727,8 +727,8 @@ namespace YAML {
 #endif
 }  // namespace YAML
 
-inline std::ostream&
-operator<<(std::ostream& out, const erl::common::YamlableBase& yaml) {
+inline std::ostream &
+operator<<(std::ostream &out, const erl::common::YamlableBase &yaml) {
     out << yaml.AsYamlString();
     return out;
 }

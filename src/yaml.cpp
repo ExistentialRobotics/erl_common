@@ -83,7 +83,7 @@ namespace erl::common {
     }
 
     void
-    YamlableBase::FromCommandLine(int argc, char *argv[]) {
+    YamlableBase::FromCommandLine(int argc, const char *argv[]) {
 #ifdef ERL_USE_BOOST
         namespace po = boost::program_options;
         po::options_description desc;

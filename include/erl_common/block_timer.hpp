@@ -13,9 +13,7 @@ namespace erl::common {
         std::chrono::time_point<std::chrono::high_resolution_clock> t1;
 
         explicit BlockTimer(std::string label, double *dt = nullptr)
-            : label(std::move(label)),
-              dt(dt),
-              t1(std::chrono::high_resolution_clock::now()) {}
+            : label(std::move(label)), dt(dt), t1(std::chrono::high_resolution_clock::now()) {}
 
         template<typename T, typename Period>
         T
@@ -25,7 +23,7 @@ namespace erl::common {
         }
 
         ~BlockTimer() {
-            const bool verbose = Logging::GetLevel() <= Logging::Level::kInfo;
+            const bool verbose = Logging::GetLevel() <= LoggingLevel::kInfo;
             // No need to measure time and print the message.
             if (this->dt == nullptr && !verbose) { return; }
 

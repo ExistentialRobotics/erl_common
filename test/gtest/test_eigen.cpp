@@ -1,5 +1,6 @@
 #include "erl_common/eigen.hpp"
 
+#include <absl/container/flat_hash_set.h>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -134,7 +135,7 @@ TEST(EigenTest, SaveAndLoadEigenMap) {
 TEST(EigenTest, SaveAndLoadVectorOfFixedSizedMatrices) {
     using namespace erl::common;
     std::vector<Eigen::Matrix4d> matrices(10);
-    for (auto& matrix: matrices) { matrix = Eigen::Matrix4d::Random(); }
+    for (auto &matrix: matrices) { matrix = Eigen::Matrix4d::Random(); }
 
     std::ofstream ofs("matrices.bin", std::ios::binary);
     ASSERT_TRUE(SaveVectorOfEigenMatricesToBinaryStream(ofs, matrices));
@@ -155,7 +156,7 @@ TEST(EigenTest, SaveAndLoadVectorOfDynamicSizedMatrices) {
     std::uniform_int_distribution dist(1, 10);
     std::mt19937 gen(0);
     std::vector<Eigen::MatrixXd> matrices(10);
-    for (auto& matrix: matrices) { matrix = Eigen::MatrixXd::Random(dist(gen), dist(gen)); }
+    for (auto &matrix: matrices) { matrix = Eigen::MatrixXd::Random(dist(gen), dist(gen)); }
 
     std::ofstream ofs("matrices.bin", std::ios::binary);
     ASSERT_TRUE(SaveVectorOfEigenMatricesToBinaryStream(ofs, matrices));
@@ -216,4 +217,11 @@ TEST(EigenTest, Solve) {
     std::cout << (A * X.col(0)).eval().transpose() << std::endl;
     std::cout << (A * X.col(1)).eval().transpose() << std::endl;
     std::cout << (A * X.col(2)).eval().transpose() << std::endl;
+}
+
+TEST(EigenTest, AbslHash) {
+    absl::flat_hash_set<std::array<int, 3>> set1;
+    set1.insert({-2, -2, -2});
+    absl::flat_hash_set<Eigen::Vector3i> set2;
+    set2.insert(Eigen::Vector3i(-2, -2, -2));
 }
