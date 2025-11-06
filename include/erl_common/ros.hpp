@@ -274,7 +274,7 @@ namespace erl::common::ros_params {
                 using yaml_convert = YAML::convert<T>;                                    \
                 std::string value_str = yaml_convert::encode(member).as<std::string>();   \
                 if (!nh.param<std::string>(param_name, value_str, value_str)) { return; } \
-                yaml_convert::decode(YAML::Node(value_str), member);                      \
+                ERL_ASSERT(yaml_convert::decode(YAML::Node(value_str), member));          \
             }                                                                             \
         }
 #else
@@ -490,7 +490,7 @@ namespace erl::common::ros_params {
                 std::string value_str = yaml_convert::encode(member).as<std::string>();   \
                 node->declare_parameter<std::string>(param_name, value_str);              \
                 if (!node->get_parameter<std::string>(param_name, value_str)) { return; } \
-                yaml_convert::decode(YAML::Node(value_str), member);                      \
+                ERL_ASSERT(yaml_convert::decode(YAML::Node(value_str), member));          \
             }                                                                             \
         }
 #else

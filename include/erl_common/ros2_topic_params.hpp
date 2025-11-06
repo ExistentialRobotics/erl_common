@@ -39,8 +39,8 @@ namespace erl::common::ros_params {
             ERL_REFLECT_MEMBER(Ros2TopicParams, qos_liveliness_lease_duration_nanosec),
             ERL_REFLECT_MEMBER(Ros2TopicParams, avoid_ros_namespace_conventions));
 
-        explicit Ros2TopicParams(std::string path)
-            : path(std::move(path)) {}
+        explicit Ros2TopicParams(std::string path, std::string preset = "")
+            : path(std::move(path)), qos_preset(std::move(preset)) {}
 
         bool
         PostDeserialization() override;
@@ -56,9 +56,8 @@ namespace erl::common::ros_params {
          *  History: KEEP_LAST with depth 10
          *  Reliability: RELIABLE
          *  Durability: VOLATILE
-         *  Liveliness: System default
          */
-        rclcpp::QoS m_qos_ = rclcpp::SystemDefaultsQoS();
+        rclcpp::QoS m_qos_{rclcpp::KeepLast(10)};
     };
 }  // namespace erl::common::ros_params
 

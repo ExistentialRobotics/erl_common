@@ -123,10 +123,15 @@ namespace erl::common {
 
         if (!FromCommandLineImpl(po_data, "")) { return false; }
 
+        if (!po_data.args.empty()) {
+            ERL_ERROR("Unrecognized arguments: {}", po_data.args);
+            exit(EXIT_FAILURE);
+        }
+
         if (print_help) {
             std::cout << "Usage: " << argv[0] << " [options]" << std::endl
                       << po_data.desc << std::endl;
-            exit(0);
+            exit(EXIT_SUCCESS);
         }
         return true;
 #else
