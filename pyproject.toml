@@ -10,7 +10,7 @@ build_type = "Release"
 
 [project]
 name = "erl_common"
-version = "0.2.0"
+version = "0.3.0"
 description = "Python package for erl_common"
 authors = [
     { name = "Zhirui Dai", email = "zhdai@ucsd.edu" }
