@@ -2,9 +2,6 @@
 
 #include "erl_common/storage_order.hpp"
 
-#include <numeric>
-#include <unordered_set>
-
 namespace erl::common {
 
     /**
@@ -15,53 +12,56 @@ namespace erl::common {
      */
     template<typename T, int Rank, bool RowMajor = true>
     class Tensor {
+    public:
+        using IndexType = int;
+        using DataBufferType = Eigen::VectorX<T>;
+        using ShapeType = Eigen::Vector<IndexType, Rank>;
 
     protected:
-        Eigen::VectorX<T> m_data_;
-        Eigen::Vector<int, Rank> m_shape_;
+        DataBufferType m_data_;
+        ShapeType m_shape_;
+        ShapeType m_strides_;
 
     public:
         Tensor() = default;
 
-        explicit Tensor(Eigen::VectorXi shape)
+        explicit Tensor(ShapeType shape)
             : m_shape_(std::move(shape)) {
             CheckShape();
-            int total_size = Size();
-            if (total_size > 0) { m_data_.resize(total_size); }
+            if (const IndexType total_size = Size(); total_size > 0) { m_data_.resize(total_size); }
         }
 
-        Tensor(Eigen::VectorXi shape, const T fill_value)
+        Tensor(ShapeType shape, const T fill_value)
             : m_shape_(std::move(shape)) {
             CheckShape();
-            if (int total_size = Size(); total_size > 0) {
+            if (IndexType total_size = Size(); total_size > 0) {
                 m_data_.setConstant(total_size, fill_value);
             }
         }
 
-        Tensor(Eigen::VectorXi shape, Eigen::VectorX<T> data)
+        Tensor(ShapeType shape, DataBufferType data)
             : m_shape_(std::move(shape)) {
             CheckShape();
-            int total_size = Size();
+            IndexType total_size = Size();
             ERL_ASSERTM(total_size == data.size(), "shape and data are not matched.");
             if (total_size > 0) { m_data_ = data; }
         }
 
-        Tensor(Eigen::VectorXi shape, const std::function<T(void)> &data_init_func)
+        Tensor(ShapeType shape, const std::function<T()> &data_init_func)
             : m_shape_(std::move(shape)) {
             CheckShape();
-            int total_size = Size();
-            if (total_size > 0) {
+            if (IndexType total_size = Size(); total_size > 0) {
                 m_data_.resize(total_size);
-                for (int i = 0; i < total_size; ++i) { m_data_[i] = data_init_func(); }
+                for (IndexType i = 0; i < total_size; ++i) { m_data_[i] = data_init_func(); }
             }
         }
 
-        Eigen::VectorX<T> &
+        DataBufferType &
         Data() {
             return m_data_;
         }
 
-        [[nodiscard]] const Eigen::VectorX<T> &
+        [[nodiscard]] const DataBufferType &
         Data() const {
             return m_data_;
         }
@@ -76,17 +76,17 @@ namespace erl::common {
             return m_data_.data();
         }
 
-        [[nodiscard]] int
+        [[nodiscard]] IndexType
         Dims() const {
             return m_shape_.size();
         }
 
-        [[nodiscard]] Eigen::VectorXi
+        [[nodiscard]] ShapeType
         Shape() const {
             return m_shape_;
         }
 
-        [[nodiscard]] int
+        [[nodiscard]] IndexType
         Size() const {
             if (Dims()) { return m_shape_.prod(); }
             return 0;
@@ -99,82 +99,144 @@ namespace erl::common {
 
         void
         Fill(const T value) {
-            if (int total_size = Size(); total_size > 0) { m_data_.setConstant(total_size, value); }
+            if (IndexType total_size = Size(); total_size > 0) {
+                m_data_.setConstant(total_size, value);
+            }
         }
 
         T &
-        operator[](const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords) {
-            int index = CoordsToIndex<int, Rank>(m_shape_, coords, RowMajor);
+        operator[](const ShapeType &coords) {
+            IndexType index = CoordsToIndex<IndexType>(m_strides_, coords);
             return m_data_[index];
         }
 
         [[nodiscard]] const T &
-        operator[](const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords) const {
-            int index = CoordsToIndex<int, Rank>(m_shape_, coords, RowMajor);
+        operator[](const ShapeType &coords) const {
+            IndexType index = CoordsToIndex<IndexType>(m_strides_, coords);
             return m_data_[index];
         }
 
         T &
-        operator[](int index) {
+        operator[](IndexType index) {
             return m_data_[index];
         }
 
         [[nodiscard]] const T &
-        operator[](int index) const {
+        operator[](IndexType index) const {
             return m_data_[index];
         }
 
-        [[nodiscard]] Tensor<T, Eigen::Dynamic>
-        GetSlice(
-            const std::vector<int> &dims_to_remove,
-            const std::vector<int> &dim_indices_at_removed) const {
-            ERL_ASSERTM(
-                dims_to_remove.size() == dim_indices_at_removed.size(),
-                "dims_to_remove and dim_indices_at_removed should be of the same size");
-            ERL_ASSERTM(!dims_to_remove.empty(), "dims_to_remove should not be empty");
-            ERL_ASSERTM(
-                !dim_indices_at_removed.empty(),
-                "dim_indices_at_removed should not be empty");
-            ERL_ASSERTM(
-                std::unordered_set(dims_to_remove.begin(), dims_to_remove.end()).size() ==
-                    dims_to_remove.size(),
-                "there are duplicate dims in dims_to_remove");
+        class Slice {
+        public:
+            using SliceShape = Eigen::VectorX<IndexType>;
 
-            const auto ndim = Dims();
-            // Remove unwanted dimensions
-            std::vector<int> dims_to_keep(ndim);
-            std::iota(dims_to_keep.begin(), dims_to_keep.end(), 0);
+        private:
+            Tensor &m_tensor_;
+            std::vector<std::vector<IndexType>> m_index_map_;
+            SliceShape m_shape_;
+            SliceShape m_strides_;
 
-            // descending order ensures that indices remain valid when removing
-            std::vector<int> sorted_indices(dims_to_remove.size());
-            std::iota(sorted_indices.begin(), sorted_indices.end(), 0);
-            std::sort(sorted_indices.begin(), sorted_indices.end(), std::greater());
-            Eigen::VectorXi coords = Eigen::VectorXi::Zero(ndim);
-            for (auto &i: sorted_indices) {
-                ERL_ASSERTM(
-                    0 <= dims_to_remove[i] && dims_to_remove[i] < ndim,
-                    "%d-dim is out of range for %d-dim shape",
-                    dims_to_remove[i],
-                    ndim);
-                dims_to_keep.erase(dims_to_keep.begin() + dims_to_remove[i]);
-                coords[dims_to_remove[i]] = dim_indices_at_removed[i];
-            }
+        public:
+            Slice(Tensor &tensor, const std::vector<std::pair<IndexType, IndexType>> &slice_layout)
+                : m_tensor_(tensor) {
 
-            // generate new tensor
-            Eigen::VectorXi slice_shape(dims_to_keep.size());
-            for (std::size_t i = 0; i < dims_to_keep.size(); ++i) {
-                slice_shape[static_cast<long>(i)] = m_shape_[dims_to_keep[i]];
-            }
-            Tensor<T, Eigen::Dynamic> slice(slice_shape);
-            for (int i = 0; i < slice.Size(); ++i) {
-                auto slice_coords = IndexToCoords<Eigen::Dynamic>(slice_shape, i, RowMajor);
-                for (int j = 0; j < static_cast<int>(dims_to_keep.size()); ++j) {
-                    coords[dims_to_keep[j]] = slice_coords[j];
+                ERL_ASSERTM(m_tensor_.Size() > 0, "tensor should not be empty");
+
+                ERL_ASSERTM(!slice_layout.empty(), "slice_layout should not be empty");
+
+                const IndexType ndim = tensor.Dims();
+                m_index_map_.resize(ndim);
+                for (const auto &[dim, index]: slice_layout) {
+                    ERL_ASSERTM(
+                        0 <= dim && dim < ndim,
+                        "{}-dim is out of range for {}-dim shape",
+                        dim,
+                        ndim);
+                    ERL_ASSERTM(
+                        0 <= index && index < tensor.m_shape_[dim],
+                        "{}-dim index {} is out of range for size {}",
+                        dim,
+                        index,
+                        tensor.m_shape_[dim]);
+                    m_index_map_[dim].push_back(index);
                 }
-                slice[i] = (*this)[coords];
+                m_shape_ = tensor.m_shape_;
+                IndexType slice_dims = 0;
+                for (IndexType i = 0; i < ndim; ++i) {
+                    const auto &indices = m_index_map_[i];
+                    if (indices.empty()) {
+                        m_shape_[slice_dims++] = tensor.m_shape_[i];
+                        continue;
+                    }
+                    if (indices.size() == 1) { continue; }
+                    m_shape_[slice_dims++] = static_cast<IndexType>(indices.size());
+                }
+                m_shape_.conservativeResize(slice_dims);
+                m_strides_ = RowMajor ? ComputeCStrides<IndexType>(m_shape_, 1)
+                                      : ComputeFStrides<IndexType>(m_shape_, 1);
             }
 
-            return slice;
+            [[nodiscard]] IndexType
+            Dims() const {
+                return m_shape_.size();
+            }
+
+            [[nodiscard]] SliceShape
+            Shape() const {
+                return m_shape_;
+            }
+
+            [[nodiscard]] IndexType
+            Size() const {
+                return m_shape_.prod();
+            }
+
+            T &
+            operator[](const SliceShape &coords) {
+                ShapeType org_coords = ShapeType::Zero(m_tensor_.Dims());
+                IndexType coord_idx = 0;
+                for (IndexType i = 0; i < m_tensor_.Dims(); ++i) {
+                    const auto &indices = m_index_map_[i];
+                    if (indices.empty()) {
+                        org_coords[i] = coords[coord_idx++];
+                        continue;
+                    }
+                    if (indices.size() == 1) {
+                        org_coords[i] = indices[0];
+                        continue;
+                    }
+                    ERL_ASSERTM(
+                        0 <= coords[coord_idx] &&
+                            coords[coord_idx] < static_cast<IndexType>(indices.size()),
+                        "slice coord {} at {}-dim is out of range for size {}",
+                        coords[coord_idx],
+                        i,
+                        indices.size());
+                    org_coords[i] = indices[coords[coord_idx++]];
+                }
+                return m_tensor_[org_coords];
+            }
+
+            [[nodiscard]] const T &
+            operator[](const SliceShape &coords) const {
+                return const_cast<Slice *>(this)->operator[](coords);
+            }
+
+            T &
+            operator[](const IndexType index) {
+                const SliceShape org_coords = IndexToCoordsWithStrides(m_strides_, index, RowMajor);
+                return operator[](org_coords);
+            }
+
+            [[nodiscard]] const T &
+            operator[](const IndexType index) const {
+                return const_cast<Slice *>(this)->operator[](index);
+            }
+        };
+
+        [[nodiscard]] Slice
+        GetSlice(const std::vector<std::pair<IndexType, IndexType>> &slice_layout) {
+            return Slice(*this, slice_layout);
         }
 
         void
@@ -185,35 +247,34 @@ namespace erl::common {
 
         [[nodiscard]] bool
         Write(std::ostream &s) const {
-            const int dims = m_shape_.size();
+            const IndexType dims = m_shape_.size();
             if (dims == 0) { return s.good(); }
-            s.write(reinterpret_cast<const char *>(&dims), sizeof(int));
-            s.write(reinterpret_cast<const char *>(m_shape_.data()), sizeof(int) * dims);
-            const std::streamsize data_size =
-                static_cast<std::streamsize>(m_data_.size() * sizeof(T));
+            s.write(reinterpret_cast<const char *>(&dims), sizeof(IndexType));
+            s.write(reinterpret_cast<const char *>(m_shape_.data()), sizeof(IndexType) * dims);
+            const auto data_size = static_cast<std::streamsize>(m_data_.size() * sizeof(T));
             s.write(reinterpret_cast<const char *>(m_data_.data()), data_size);
             return s.good();
         }
 
         [[nodiscard]] bool
         Read(std::istream &s) {
-            int dims = 0;
-            s.read(reinterpret_cast<char *>(&dims), sizeof(int));
+            IndexType dims = 0;
+            s.read(reinterpret_cast<char *>(&dims), sizeof(IndexType));
             if (dims <= 0) { return s.good(); }
             ERL_DEBUG_ASSERT(
                 Rank == Eigen::Dynamic || dims == Rank,
-                "The number of dimensions read from the stream (%d) does not match the template "
-                "parameter Rank (%d).",
+                "The number of dimensions read from the stream ({}) does not match the template "
+                "parameter Rank ({}).",
                 dims,
                 Rank);
             if constexpr (Rank == Eigen::Dynamic) { m_shape_.resize(dims); }
-            s.read(reinterpret_cast<char *>(m_shape_.data()), sizeof(int) * dims);
+            s.read(
+                reinterpret_cast<char *>(m_shape_.data()),
+                static_cast<std::streamsize>(sizeof(IndexType) * dims));
             CheckShape();
-            const int total_size = Size();
-            if (total_size > 0) {
+            if (const IndexType total_size = Size(); total_size > 0) {
                 m_data_.resize(total_size);
-                const std::streamsize data_size =
-                    static_cast<std::streamsize>(total_size * sizeof(T));
+                const auto data_size = static_cast<std::streamsize>(total_size * sizeof(T));
                 s.read(reinterpret_cast<char *>(m_data_.data()), data_size);
             }
             return s.good();
@@ -222,9 +283,11 @@ namespace erl::common {
     private:
         void
         CheckShape() {
-            for (int i = 0; i < m_shape_.size(); ++i) {
-                ERL_ASSERTM(m_shape_[i] >= 0, "negative size %d at %d-dim", m_shape_[i], i);
+            for (IndexType i = 0; i < m_shape_.size(); ++i) {
+                ERL_ASSERTM(m_shape_[i] >= 0, "negative size {} at {}-dim", m_shape_[i], i);
             }
+            m_strides_ = RowMajor ? ComputeCStrides<IndexType>(m_shape_, 1)
+                                  : ComputeFStrides<IndexType>(m_shape_, 1);
         }
     };
 

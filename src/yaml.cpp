@@ -1,13 +1,8 @@
 #include "erl_common/yaml.hpp"
 
-#ifdef ERL_USE_BOOST
-    #include <boost/program_options.hpp>
-#endif
-
 #include <any>
 #include <fstream>
 #include <stack>
-#include <unordered_map>
 
 namespace erl::common {
 
@@ -82,92 +77,63 @@ namespace erl::common {
         return FromYamlString(yaml_str) && s.good();
     }
 
-    void
-    YamlableBase::FromCommandLine(int argc, const char *argv[]) {
+    bool
+    YamlableBase::FromCommandLine(const std::vector<std::string> &args) {
+        std::vector<const char *> argv_vec;
+        argv_vec.reserve(args.size());
+        for (const auto &arg: args) { argv_vec.push_back(arg.c_str()); }
+        return FromCommandLine(static_cast<int>(args.size()), argv_vec.data());
+    }
+
+    bool
+    YamlableBase::FromCommandLine(const int argc, char *argv[]) {
+        std::vector<const char *> argv_vec;
+        argv_vec.reserve(argc);
+        for (int i = 0; i < argc; ++i) { argv_vec.push_back(argv[i]); }
+        return FromCommandLine(argc, argv_vec.data());
+    }
+
+    bool
+    YamlableBase::FromCommandLine(const int argc, const char *argv[]) {
 #ifdef ERL_USE_BOOST
+        program_options::ProgramOptionsData po_data;
+
         namespace po = boost::program_options;
-        po::options_description desc;
 
-        YAML::Node node = AsYamlNode();
-        auto options = desc.add_options();
-        std::unordered_map<std::string, std::pair<YAML::Node, std::vector<std::string>>> option_map;
+        std::string config_file;
+        po_data.desc.add_options()           //
+            ("help,h", "Show help message")  //
+            ("config", po::value<std::string>(&config_file), "Path to YAML config file");
+        auto parsed =
+            po::command_line_parser(argc, argv).options(po_data.desc).allow_unregistered().run();
+        po::store(parsed, po_data.vm);
+        po::notify(po_data.vm);
+        const bool print_help = po_data.vm.count("help") > 0;
 
-        options("help,h", "Show help message");
-        options("config", po::value<std::string>(), "Path to YAML config file");
-
-        auto check_arg_name = [](const std::string &name) -> std::string {
-            ERL_ASSERTM(name != "config", "Option name 'config' is reserved.");
-            return name;
-        };
-
-        std::stack<std::pair<std::string, YAML::Node>> node_stack;
-        node_stack.emplace("", node);
-        while (!node_stack.empty()) {
-            auto [prefix, current_node] = node_stack.top();
-            node_stack.pop();
-
-            if (current_node.IsMap()) {
-                for (const auto &item: current_node) {
-                    node_stack.emplace(
-                        prefix.empty() ? item.first.as<std::string>()
-                                       : prefix + "." + item.first.as<std::string>(),
-                        item.second);
-                }
-                continue;
-            }
-
-            if (current_node.IsSequence()) {
-                auto [itr, inserted] = option_map.try_emplace(
-                    prefix,
-                    std::pair{current_node, std::vector<std::string>()});
-                ERL_ASSERTM(inserted, "Failed to insert option: {}", prefix);
-                options(
-                    check_arg_name(itr->first).c_str(),
-                    po::value<std::vector<std::string>>(&itr->second.second)->multitoken(),
-                    ("List of values for " + prefix).c_str());
-                continue;
-            }
-
-            auto [itr, inserted] =
-                option_map.try_emplace(prefix, std::pair{current_node, std::vector{std::string()}});
-            options(
-                itr->first.c_str(),
-                po::value<std::string>(itr->second.second.data()),
-                ("Value for " + prefix).c_str());
-        }
-
-        po::variables_map vm;
-        po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().run(), vm);
-        if (vm.count("help")) {
-            std::cout << "Usage: " << argv[0] << " [options]" << std::endl << desc << std::endl;
-            exit(0);
-        }
-        po::notify(vm);
-        if (vm.count("config")) {
-            auto config_file = vm["config"].as<std::string>();
+        if (!config_file.empty()) {
             ERL_ASSERTM(
                 std::filesystem::exists(config_file),
                 "Config file does not exist: {}",
                 config_file);
             ERL_ASSERTM(FromYamlFile(config_file), "Failed to load config file: {}", config_file);
-            UpdateYamlNode(AsYamlNode(), node, false);
         }
-        // update node
-        for (auto &[arg_name, arg_value]: vm) {
-            auto itr = option_map.find(arg_name);
-            if (itr == option_map.end()) { continue; }
-            auto &[node_value, str_values] = itr->second;
-            if (node_value.IsSequence()) {
-                node_value = str_values;
-            } else {
-                node_value = str_values[0];
-            }
+
+        po_data.args = po::collect_unrecognized(parsed.options, po::include_positional);
+        po_data.vm.clear();
+
+        if (!FromCommandLineImpl(po_data, "")) { return false; }
+
+        if (print_help) {
+            std::cout << "Usage: " << argv[0] << " [options]" << std::endl
+                      << po_data.desc << std::endl;
+            exit(0);
         }
-        ERL_ASSERTM(FromYamlNode(node), "Failed to parse command line options. ");
+        return true;
 #else
         (void) argc;
         (void) argv;
-        ERL_FATAL("Not compiled with Boost. Cannot parse command line arguments.");
+        ERL_ERROR("Not compiled with Boost. Cannot parse command line arguments.");
+        return false;
 #endif
     }
 

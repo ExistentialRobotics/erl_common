@@ -45,7 +45,7 @@ namespace erl::common {
 
         [[nodiscard]] bool
         Write(std::ostream &s) const {
-            static const common::TokenWriteFunctionPairs<GridMap> token_function_pairs = {
+            static const serialization::TokenWriteFunctionPairs<GridMap> token_function_pairs = {
                 {
                     "info",
                     [](const GridMap *self, std::ostream &stream) {
@@ -192,7 +192,7 @@ namespace erl::common {
         operator()(const int x_grid, const int y_grid) const {
             if (x_grid < 0 || y_grid < 0 || x_grid >= m_grid_map_info_->Shape(0) ||
                 y_grid >= m_grid_map_info_->Shape(1)) {
-                if (!IsSmartPtr<Dtype>::value) {
+                if (!is_smart_ptr_v<Dtype>) {
                     throw std::out_of_range("The grid coordinates are out of range.");
                 }
                 return 0;
@@ -239,7 +239,7 @@ namespace erl::common {
                 "The grid coordinates are out of the grid map, auto extend is not working "
                 "properly.");
             auto &data = m_data_(x_grid, y_grid);
-            if (IsSmartPtr<Dtype>::value && m_data_init_func_ != nullptr && data == 0) {
+            if (is_smart_ptr_v<Dtype> && m_data_init_func_ != nullptr && data == 0) {
                 data = m_data_init_func_();
             }
             return data;

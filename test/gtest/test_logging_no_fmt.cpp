@@ -3,7 +3,7 @@
 int
 main() {
     // Set logging level
-    erl::common::LoggingNoFmt::SetLevel(erl::common::LoggingNoFmt::Level::kDebug);
+    erl::common::LoggingNoFmt::SetLevel(erl::common::LoggingLevel::kDebug);
 
     // Test different logging levels
     erl::common::LoggingNoFmt::Info("This is an info message: ", 42, " items processed");

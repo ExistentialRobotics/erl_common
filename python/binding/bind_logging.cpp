@@ -6,14 +6,14 @@ void
 BindLogging(const py::module &m) {
     using namespace erl::common;
 
-    py::class_<Logging> logging(m, "Logging");
-    py::enum_<Logging::Level>(logging, "Level")
-        .value("kInfo", Logging::Level::kInfo)
-        .value("kDebug", Logging::Level::kDebug)
-        .value("kWarn", Logging::Level::kWarn)
-        .value("kError", Logging::Level::kError)
-        .value("kSilent", Logging::Level::kSilent)
+    py::enum_<LoggingLevel>(m, "Level")
+        .value("kInfo", LoggingLevel::kInfo)
+        .value("kDebug", LoggingLevel::kDebug)
+        .value("kWarn", LoggingLevel::kWarn)
+        .value("kError", LoggingLevel::kError)
+        .value("kSilent", LoggingLevel::kSilent)
         .export_values();
+    py::class_<Logging> logging(m, "Logging");
     logging.def_static("get_level", &Logging::GetLevel)
         .def_static("set_level", &Logging::SetLevel)
         .def_static("get_date_str", &Logging::GetDateStr)

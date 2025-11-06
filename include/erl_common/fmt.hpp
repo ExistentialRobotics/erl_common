@@ -18,6 +18,8 @@
 #endif
 #pragma GCC diagnostic pop
 
+// Eigen support for fmt library
+
 #include <Eigen/Core>
 
 #if FMT_VERSION >= 100200

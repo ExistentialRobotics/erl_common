@@ -1,101 +1,81 @@
+#include "erl_common/enum_parse.hpp"
 #include "erl_common/test_helper.hpp"
 #include "erl_common/yaml.hpp"
 
 #include <iostream>
 
-namespace erl::test {
+enum class Color {
+    kRed = 0,
+    kBlue = 1,
+};
 
-    struct SubSetting : common::Yamlable<SubSetting> {
-        int c = 0;
-        int d = 1;
-    };
+ERL_REFLECT_ENUM_SCHEMA(
+    Color,
+    2,
+    ERL_REFLECT_ENUM_MEMBER("red", Color::kRed),
+    ERL_REFLECT_ENUM_MEMBER("blue", Color::kBlue));
 
-    struct Setting : common::Yamlable<Setting> {
-        int a = 0;
-        double b = 3.0;
-        SubSetting sub_setting;
-    };
-}  // namespace erl::test
+ERL_PARSE_ENUM(Color, 2);
 
-namespace YAML {
+struct SubSetting : erl::common::Yamlable<SubSetting> {
+    int c = 0;
+    int d = 1;
 
-    template<>
-    struct convert<erl::test::SubSetting> {
-        static Node
-        encode(const erl::test::SubSetting& rhs) {
-            Node node;
-            node["c"] = rhs.c;
-            node["d"] = rhs.d;
-            return node;
-        }
+    ERL_REFLECT_SCHEMA(
+        SubSetting,
+        ERL_REFLECT_MEMBER(SubSetting, c),
+        ERL_REFLECT_MEMBER(SubSetting, d));
+};
 
-        static bool
-        decode(const Node& node, erl::test::SubSetting& rhs) {
-            if (!node.IsMap()) { return false; }
-            rhs.c = node["c"].as<int>();
-            rhs.d = node["d"].as<int>();
-            return true;
-        }
-    };
+struct Setting : erl::common::Yamlable<Setting> {
+    int a = 0;
+    double b = 3.0;
+    SubSetting sub_setting;
+    std::shared_ptr<SubSetting> sub_setting_shared = std::make_shared<SubSetting>();
+    Eigen::Vector2d v = {1.0, 2.0};
+    Eigen::Matrix2d m = Eigen::Matrix2d::Identity();
+    std::vector<float> vec_float;
+    std::pair<long, int> p = {100, 200};
+    Color color = Color::kRed;
 
-    template<>
-    struct convert<erl::test::Setting> {
-        static Node
-        encode(const erl::test::Setting& rhs) {
-            Node node;
-            node["a"] = rhs.a;
-            node["b"] = rhs.b;
-            node["sub_setting"] = rhs.sub_setting;
-            return node;
-        }
-
-        static bool
-        decode(const Node& node, erl::test::Setting& rhs) {
-            if (!node.IsMap()) { return false; }
-            rhs.a = node["a"].as<int>();
-            rhs.b = node["b"].as<double>();
-            rhs.sub_setting = node["sub_setting"].as<erl::test::SubSetting>();
-            return true;
-        }
-    };
-
-    inline Emitter&
-    operator<<(Emitter& out, const erl::test::SubSetting& sub_setting) {
-        out << BeginMap;
-        out << Key << "c" << Value << sub_setting.c;
-        out << Key << "d" << Value << sub_setting.d;
-        out << EndMap;
-        return out;
-    }
-
-    inline Emitter&
-    operator<<(Emitter& out, const erl::test::Setting& setting) {
-        out << BeginMap;
-        out << Key << "a" << Value << setting.a;
-        out << Key << "b" << Value << setting.b;
-        out << Key << "sub_setting" << Value << setting.sub_setting;
-        out << EndMap;
-        return out;
-    }
-}  // namespace YAML
+    ERL_REFLECT_SCHEMA(
+        Setting,
+        ERL_REFLECT_MEMBER(Setting, a),
+        ERL_REFLECT_MEMBER(Setting, b),
+        ERL_REFLECT_MEMBER(Setting, sub_setting),
+        ERL_REFLECT_MEMBER(Setting, sub_setting_shared),
+        ERL_REFLECT_MEMBER(Setting, v),
+        ERL_REFLECT_MEMBER(Setting, m),
+        ERL_REFLECT_MEMBER(Setting, vec_float),
+        ERL_REFLECT_MEMBER(Setting, p),
+        ERL_REFLECT_MEMBER(Setting, color));
+};
 
 TEST(YamlTest, FromYamlString) {
-    erl::test::Setting setting;
+    Setting setting;
     ASSERT_EQ(setting.a, 0);
     ASSERT_EQ(setting.b, 3.0);
     ASSERT_EQ(setting.sub_setting.c, 0);
     ASSERT_EQ(setting.sub_setting.d, 1);
     std::cout << setting << std::endl;
 
-    const std::string& yaml_str = R"(
+    const std::string &yaml_str = R"(
 a: 10
 b: 1.0
 sub_setting:
     c: 2
-    d: 3)";
+    d: 3
+sub_setting_shared:
+    c: 4
+    d: 5
+v: [3.0, 4.0]
+m: [[1.0, 2.0], [3.0, 4.0]]
+vec_float: [1.0, 2.0, 4.0]
+p: [500, 600]
+color: blue)";
 
     const YAML::Node node(yaml_str);
-    std::cout << node << std::endl;  //
+    std::cout << node << std::endl;
 
     ASSERT_TRUE(setting.FromYamlString(yaml_str));
 
@@ -104,6 +84,21 @@ sub_setting:
     ASSERT_EQ(setting.b, 1.0);
     ASSERT_EQ(setting.sub_setting.c, 2);
     ASSERT_EQ(setting.sub_setting.d, 3);
+    ASSERT_EQ(setting.sub_setting_shared->c, 4);
+    ASSERT_EQ(setting.sub_setting_shared->d, 5);
+    ASSERT_EQ(setting.v[0], 3.0);
+    ASSERT_EQ(setting.v[1], 4.0);
+    ASSERT_EQ(setting.m(0, 0), 1.0);
+    ASSERT_EQ(setting.m(0, 1), 2.0);
+    ASSERT_EQ(setting.m(1, 0), 3.0);
+    ASSERT_EQ(setting.m(1, 1), 4.0);
+    ASSERT_EQ(setting.vec_float.size(), 3);
+    ASSERT_EQ(setting.vec_float[0], 1.0f);
+    ASSERT_EQ(setting.vec_float[1], 2.0f);
+    ASSERT_EQ(setting.vec_float[2], 4.0f);
+    ASSERT_EQ(setting.p.first, 500);
+    ASSERT_EQ(setting.p.second, 600);
+    ASSERT_EQ(setting.color, Color::kBlue);
 
     std::cout << "`YAML::Node another_node = node` is shallow copy." << std::endl;
     YAML::Node node2 = setting.AsYamlNode();
@@ -114,27 +109,61 @@ sub_setting:
 }
 
 TEST(YamlTest, FromCommandLine) {
-    erl::test::Setting setting;
+    Setting setting;
 
     std::cout << setting << std::endl;
 
-    {
-        const char* argv[] =
-            {"test", "--a=10", "--b=1.0", "--sub_setting.c=2", "--sub_setting.d=3"};
-        std::cout << "FromCommandLine with 5 arguments: \n";
-        for (auto arg: argv) { std::cout << arg << " "; }
-        std::cout << std::endl;
-        setting.FromCommandLine(5, argv);
-        std::cout << setting << std::endl;
-    }
+    // {
+    //     const char *argv[] = {"test", "--help"};
+    //     std::cout << "FromCommandLine with 2 arguments: \n";
+    //     for (auto arg: argv) { std::cout << arg << " "; }
+    //     std::cout << std::endl;
+    //     setting.FromCommandLine(2, argv);
+    //     std::cout << setting << std::endl;
+    // }
 
     {
-        const char* argv[] = {"test", "--sub_setting.d=5"};
-        std::cout << "FromCommandLine with 2 arguments: \n";
+        const char *argv[] = {
+            "test", "--a",
+            "10",   "--b",
+            "1.0",  "--sub_setting.c",
+            "2",    "--sub_setting.d",
+            "3",    "--sub_setting_shared.c",
+            "4",    "--v",
+            "5.0",  "6.0",
+            "--m",  "7.0",
+            "8.0",  "9.0",
+            "10.0", "--vec_float",
+            "1.0",  "2.0",
+            "4.0",  "--p.first",
+            "500",  "--p.second",
+            "600",  "--color",
+            "blue",
+        };
+        int argc = sizeof(argv) / sizeof(argv[0]);
+        std::cout << "FromCommandLine with " << argc << " arguments: \n";
         for (auto arg: argv) { std::cout << arg << " "; }
         std::cout << std::endl;
-        setting.FromCommandLine(2, argv);
+        setting.FromCommandLine(argc, argv);
         std::cout << setting << std::endl;
+        ASSERT_EQ(setting.a, 10);
+        ASSERT_EQ(setting.b, 1.0);
+        ASSERT_EQ(setting.sub_setting.c, 2);
+        ASSERT_EQ(setting.sub_setting.d, 3);
+        ASSERT_EQ(setting.sub_setting_shared->c, 4);
+        ASSERT_EQ(setting.v[0], 5.0);
+        ASSERT_EQ(setting.v[1], 6.0);
+        ASSERT_EQ(setting.m(0, 0), 7.0);
+        ASSERT_EQ(setting.m(1, 0), 8.0);
+        ASSERT_EQ(setting.m(0, 1), 9.0);
+        ASSERT_EQ(setting.m(1, 1), 10.0);
+        ASSERT_EQ(setting.vec_float.size(), 3);
+        ASSERT_EQ(setting.vec_float[0], 1.0f);
+        ASSERT_EQ(setting.vec_float[1], 2.0f);
+        ASSERT_EQ(setting.vec_float[2], 4.0f);
+        ASSERT_EQ(setting.p.first, 500);
+        ASSERT_EQ(setting.p.second, 600);
+        ASSERT_EQ(setting.color, Color::kBlue);
     }
 }
 
@@ -146,43 +175,6 @@ TEST(YamlTest, EigenConversion) {
     std::cout << node << std::endl;
     ASSERT_STREQ(YAML::Dump(node).c_str(), "- 1\n- 2\n- 3");
 }
-
-enum class Color {
-    kRed = 0,
-    kBlue = 1,
-};
-
-template<>
-struct YAML::convert<Color> {
-    static Node
-    encode(const Color& rhs) {
-        Node node;
-        switch (rhs) {
-            case Color::kRed:
-                node = "red";
-                break;
-            case Color::kBlue:
-                node = "blue";
-                break;
-            default:
-                throw std::runtime_error("Unknown color");
-        }
-        return node;
-    }
-
-    static bool
-    decode(const Node& node, Color& rhs) {
-        auto color_str = node.as<std::string>();
-        if (color_str == "red") {
-            rhs = Color::kRed;
-        } else if (color_str == "blue") {
-            rhs = Color::kBlue;
-        } else {
-            return false;
-        }
-        return true;
-    }
-};
 
 TEST(YamlTest, EnumConversion) {
 

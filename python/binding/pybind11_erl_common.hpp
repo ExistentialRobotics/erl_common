@@ -203,28 +203,55 @@ namespace erl::common {
     std::enable_if_t<py::SupportedByNumpy<Dtype>::value, py::class_<Tensor<Dtype, Rank>>>
     BindTensor(py::module &m, const char *name) {
         using Self = Tensor<Dtype, Rank>;
-        return py::class_<Self>(m, name, py::buffer_protocol())
-            .def(py::init([&](const py::array_t<Dtype, py::array::c_style> &b) {
-                py::buffer_info info = b.request();
-                std::string buffer_format = info.format;
-                std::string expected_format = py::format_descriptor<Dtype>::format();
-                if (buffer_format != expected_format) {
-                    throw std::runtime_error(
-                        "Incompatible format: " + buffer_format + " vs " + expected_format);
-                }
-                if (Rank != -1) {
-                    ERL_ASSERTM(Rank == info.ndim, "Incompatible ndim for %s: {}", name, info.ndim);
-                }
-                Eigen::VectorXi tensor_shape(info.ndim);
-                for (int i = 0; i < Rank; ++i) {
-                    tensor_shape[i] = static_cast<int>(info.shape[i]);
-                }
-                Eigen::VectorX<Dtype> data(info.size);
-                auto ptr = static_cast<Dtype *>(info.ptr);
-                std::copy(ptr, ptr + info.size, data.data());
-                Self tensor(tensor_shape, data);
-                return tensor;
-            }))
+        using IndexType = typename Self::IndexType;
+        using ShapeType = typename Self::ShapeType;
+        using Slice = typename Self::Slice;
+        using SliceShape = typename Slice::SliceShape;
+        py::class_<Self> cls(m, name, py::buffer_protocol());
+        py::class_<Slice>(cls, "Slice")
+            .def_property_readonly("dims", &Slice::Dims)
+            .def_property_readonly("shape", &Slice::Shape)
+            .def_property_readonly("size", &Slice::Size)
+            .def(
+                "__setitem__",
+                [](Slice &self, const SliceShape &coords, Dtype value) { self[coords] = value; },
+                py::arg("coords"),
+                py::arg("value"))
+            .def(
+                "__getitem__",
+                py::overload_cast<const SliceShape &>(&Slice::operator[], py::const_),
+                py::arg("coords"))
+            .def(
+                "__setitem__",
+                [](Slice &self, IndexType index, Dtype value) { self[index] = value; },
+                py::arg("index"),
+                py::arg("value"))
+            .def(
+                "__getitem__",
+                py::overload_cast<IndexType>(&Slice::operator[], py::const_),
+                py::arg("index"));
+
+        cls.def(py::init([&](const py::array_t<Dtype, py::array::c_style> &b) {
+               py::buffer_info info = b.request();
+               std::string buffer_format = info.format;
+               std::string expected_format = py::format_descriptor<Dtype>::format();
+               if (buffer_format != expected_format) {
+                   throw std::runtime_error(
+                       "Incompatible format: " + buffer_format + " vs " + expected_format);
+               }
+               if (Rank != -1) {
+                   ERL_ASSERTM(Rank == info.ndim, "Incompatible ndim for %s: {}", name, info.ndim);
+               }
+               ShapeType tensor_shape(info.ndim);
+               for (int i = 0; i < Rank; ++i) {
+                   tensor_shape[i] = static_cast<IndexType>(info.shape[i]);
+               }
+               Eigen::VectorX<Dtype> data(info.size);
+               auto ptr = static_cast<Dtype *>(info.ptr);
+               std::copy(ptr, ptr + info.size, data.data());
+               Self tensor(tensor_shape, data);
+               return tensor;
+           }))
             .def_buffer([](Self &tensor) -> py::buffer_info {
                 auto shape = tensor.Shape();
                 std::vector<py::ssize_t> array_shape(shape.size());
@@ -239,13 +266,10 @@ namespace erl::common {
                     array_shape,
                     strides};
             })
-            .def(py::init<Eigen::VectorXi, const Dtype &>(), py::arg("shape"), py::arg("constant"))
+            .def(py::init<ShapeType, const Dtype &>(), py::arg("shape"), py::arg("constant"))
+            .def(py::init<ShapeType, Eigen::VectorX<Dtype>>(), py::arg("shape"), py::arg("data"))
             .def(
-                py::init<Eigen::VectorXi, Eigen::VectorX<Dtype>>(),
-                py::arg("shape"),
-                py::arg("data"))
-            .def(
-                py::init<Eigen::VectorXi, const std::function<Dtype(void)> &>(),
+                py::init<ShapeType, const std::function<Dtype()> &>(),
                 py::arg("shape"),
                 py::arg("data_init_func"))
             .def_property_readonly("dims", &Self::Dims)
@@ -255,53 +279,72 @@ namespace erl::common {
             .def("fill", &Self::Fill, py::arg("value"))
             .def(
                 "__setitem__",
-                [](Self &tensor,
-                   const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords,
-                   Dtype value) { tensor[coords] = value; },
+                [](Self &self, const ShapeType &coords, Dtype value) { self[coords] = value; },
                 py::arg("coords"),
                 py::arg("value"))
             .def(
                 "__getitem__",
-                py::overload_cast<const Eigen::Ref<const Eigen::Vector<int, Rank>> &>(
-                    &Self::operator[],
-                    py::const_),
+                py::overload_cast<const ShapeType &>(&Self::operator[], py::const_),
                 py::arg("coords"))
             .def(
                 "__setitem__",
-                [](Self &tensor, int index, Dtype value) { tensor[index] = value; },
+                [](Self &self, IndexType index, Dtype value) { self[index] = value; },
                 py::arg("index"),
                 py::arg("value"))
             .def(
                 "__getitem__",
-                py::overload_cast<int>(&Self::operator[], py::const_),
+                py::overload_cast<IndexType>(&Self::operator[], py::const_),
                 py::arg("index"))
-            .def(
-                "get_slice",
-                &Self::GetSlice,
-                py::arg("dims_to_remove"),
-                py::arg("dim_indices_at_removed"))
-            .def("__str__", [](Self &tensor) -> std::string {
+            .def("get_slice", &Self::GetSlice, py::arg("slice_layout"))
+            .def("__str__", [](Self &self) -> std::string {
                 std::stringstream ss;
-                tensor.Print(ss);
+                self.Print(ss);
                 return ss.str();
             });
+        return cls;
     }
 
     template<typename Dtype, int Rank>
     std::enable_if_t<!py::SupportedByNumpy<Dtype>::value, py::class_<Tensor<Dtype, Rank>>>
     BindTensor(py::module &m, const char *name) {
         using Self = Tensor<Dtype, Rank>;
-        return py::class_<Self>(m, name)
-            .def(py::init<Eigen::VectorXi, const Dtype &>(), py::arg("shape"), py::arg("constant"))
+        using IndexType = typename Self::IndexType;
+        using ShapeType = typename Self::ShapeType;
+        using Slice = typename Self::Slice;
+        using SliceShape = typename Slice::SliceShape;
+        py::class_<Self> cls(m, name);
+        py::class_<Slice>(cls, "Slice")
+            .def_property_readonly("dims", &Slice::Dims)
+            .def_property_readonly("shape", &Slice::Shape)
+            .def_property_readonly("size", &Slice::Size)
             .def(
-                py::init<>([](Eigen::VectorXi shape, const std::vector<Dtype> &data) {
+                "__setitem__",
+                [](Slice &self, const SliceShape &coords, Dtype value) { self[coords] = value; },
+                py::arg("coords"),
+                py::arg("value"))
+            .def(
+                "__getitem__",
+                py::overload_cast<const SliceShape &>(&Slice::operator[], py::const_),
+                py::arg("coords"))
+            .def(
+                "__setitem__",
+                [](Slice &self, IndexType index, Dtype value) { self[index] = value; },
+                py::arg("index"),
+                py::arg("value"))
+            .def(
+                "__getitem__",
+                py::overload_cast<IndexType>(&Slice::operator[], py::const_),
+                py::arg("index"));
+        cls.def(py::init<ShapeType, const Dtype &>(), py::arg("shape"), py::arg("constant"))
+            .def(
+                py::init<>([](ShapeType shape, const std::vector<Dtype> &data) {
                     Eigen::Map<const Eigen::VectorX<Dtype>> data_map(data.data(), data.size());
                     return Self(shape, Eigen::VectorX<Dtype>(data_map));
                 }),
                 py::arg("shape"),
                 py::arg("data"))
             .def(
-                py::init<Eigen::VectorXi, const std::function<Dtype(void)> &>(),
+                py::init<ShapeType, const std::function<Dtype()> &>(),
                 py::arg("shape"),
                 py::arg("data_init_func"))
             .def_property_readonly("dims", &Self::Dims)
@@ -311,36 +354,29 @@ namespace erl::common {
             .def("fill", &Self::Fill, py::arg("value"))
             .def(
                 "__setitem__",
-                [](Self &tensor,
-                   const Eigen::Ref<const Eigen::Vector<int, Rank>> &coords,
-                   Dtype value) { tensor[coords] = value; },
+                [](Self &self, const ShapeType &coords, Dtype value) { self[coords] = value; },
                 py::arg("coords"),
                 py::arg("value"))
             .def(
                 "__getitem__",
-                py::overload_cast<const Eigen::Ref<const Eigen::Vector<int, Rank>> &>(
-                    &Self::operator[],
-                    py::const_),
+                py::overload_cast<const ShapeType &>(&Self::operator[], py::const_),
                 py::arg("coords"))
             .def(
                 "__setitem__",
-                [](Self &tensor, int index, Dtype value) { tensor[index] = value; },
+                [](Self &tensor, IndexType index, Dtype value) { tensor[index] = value; },
                 py::arg("index"),
                 py::arg("value"))
             .def(
                 "__getitem__",
-                py::overload_cast<int>(&Self::operator[], py::const_),
+                py::overload_cast<IndexType>(&Self::operator[], py::const_),
                 py::arg("index"))
-            .def(
-                "get_slice",
-                &Self::GetSlice,
-                py::arg("dims_to_remove"),
-                py::arg("dim_indices_at_removed"))
-            .def("__str__", [](Self &tensor) -> std::string {
+            .def("get_slice", &Self::GetSlice, py::arg("slice_layout"))
+            .def("__str__", [](Self &self) -> std::string {
                 std::stringstream ss;
-                tensor.Print(ss);
+                self.Print(ss);
                 return ss.str();
             });
+        return cls;
     }
 
     template<
@@ -367,7 +403,7 @@ namespace erl::common {
                     py::arg("grid_map_info"),
                     py::arg("data"))
                 .def(
-                    py::init<std::shared_ptr<Info>, const std::function<MapDtype(void)> &>(),
+                    py::init<std::shared_ptr<Info>, const std::function<MapDtype()> &>(),
                     py::arg("grid_map_info"),
                     py::arg("data_init_func"))
                 .def_readwrite("data", &Self::data)
@@ -425,7 +461,7 @@ namespace erl::common {
         return py::class_<Self, std::shared_ptr<Self>>(m, name)
             .def(
                 py::init<>([](std::shared_ptr<Info> grid_map_info,
-                              const std::function<Dtype(void)> &data_init_func) {
+                              const std::function<Dtype()> &data_init_func) {
                     return std::make_shared<Self>(grid_map_info, data_init_func);
                 }),
                 py::arg("grid_map_info"),
@@ -534,7 +570,7 @@ namespace erl::common {
         return py::class_<Self, std::shared_ptr<Self>>(m, name)
             .def(
                 py::init<>([](std::shared_ptr<Info> grid_map_info,
-                              const std::function<Dtype(void)> &data_init_func) {
+                              const std::function<Dtype()> &data_init_func) {
                     return std::make_shared<Self>(grid_map_info, data_init_func);
                 }),
                 py::arg("grid_map_info"),

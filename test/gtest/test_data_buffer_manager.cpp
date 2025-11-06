@@ -3,6 +3,7 @@
 
 TEST(DataBufferManager, Basic) {
     using namespace erl::common;
+    using namespace erl::common::serialization;
     using Manager = DataBufferManager<int>;
     Manager manager;
 

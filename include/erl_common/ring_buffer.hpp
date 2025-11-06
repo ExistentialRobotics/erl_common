@@ -2,6 +2,7 @@
 
 #include "serialization.hpp"
 
+#include <array>
 #include <cstddef>
 #include <initializer_list>
 #include <optional>
@@ -15,8 +16,8 @@ namespace erl::common {
 
         using Storage = std::conditional_t<
             (N > 0),
-            T[(N > 0 ? N : 1)],        // static array if N > 0
-            std::vector<T, Allocator>  // dynamic vector if N == -1
+            std::array<T, (N > 0 ? N : 1)>,  // static array if N > 0
+            std::vector<T, Allocator>        // dynamic vector if N == -1
             >;
 
         Storage m_buffer_;                          // static array or dynamic vector
@@ -114,7 +115,7 @@ namespace erl::common {
                     std::advance(first, m_size_);
                     n -= m_size_;
                 }
-                std::copy(first, last, GetDataPointer());
+                std::copy(first, last, m_buffer_.data());
                 m_write_ = 0;
                 m_read_ = 0;
                 m_size_ = m_capacity_;
@@ -128,12 +129,12 @@ namespace erl::common {
             // Check for wrap-around
             std::size_t available_at_end = m_capacity_ - m_write_;
             if (n <= available_at_end) {  // No wrap-around
-                std::copy(first, last, GetDataPointer() + m_write_);
+                std::copy(first, last, m_buffer_.data() + m_write_);
             } else {
                 // Wrap-around occurs
                 It mid = std::next(first, available_at_end);
-                std::copy(first, mid, GetDataPointer() + m_write_);
-                std::copy(mid, last, GetDataPointer());
+                std::copy(first, mid, m_buffer_.data() + m_write_);
+                std::copy(mid, last, m_buffer_.data());
             }
 
             // Update write and read indices and size
@@ -192,11 +193,11 @@ namespace erl::common {
             const std::size_t available_to_end = m_capacity_ - m_read_;
             std::size_t part1_count = std::min(actual_count, available_to_end);
             std::size_t part2_count = actual_count - part1_count;
-            T *data_ptr = GetDataPointer() + m_read_;
+            T *data_ptr = m_buffer_.data() + m_read_;
             dest = std::copy(data_ptr, data_ptr + part1_count, dest);
             if (part2_count > 0) {
                 // Wrap-around occurs
-                data_ptr = GetDataPointer();
+                data_ptr = m_buffer_.data();
                 std::copy(data_ptr, data_ptr + part2_count, dest);
             }
 
@@ -367,16 +368,6 @@ namespace erl::common {
                 },
             };
             return ReadTokens(stream, this, token_function_pairs);
-        }
-
-    private:
-        T *
-        GetDataPointer() {
-            if constexpr (N > 0) {
-                return m_buffer_;
-            } else {
-                return m_buffer_.data();
-            }
         }
     };
 }  // namespace erl::common
