@@ -85,7 +85,9 @@ namespace erl::common {
         AsYamlString() const;
 
         [[nodiscard]] bool
-        FromYamlFile(const std::string &yaml_file);
+        FromYamlFile(
+            const std::string &yaml_file,
+            const std::string &base_config_field = "__base__");
 
         void
         AsYamlFile(const std::string &yaml_file) const;
@@ -159,8 +161,21 @@ namespace erl::common {
 #endif
     };
 
+    enum class UnknownFieldPolicy {
+        kIgnore = 0,
+        kMerge = 1,
+        kWarn = 2,
+        kError = 3,
+    };
+
+    /**
+     * Update destination YAML node with source YAML node.
+     * @param src source YAML node
+     * @param dst destination YAML node
+     * @param unknown_field_policy policy for handling unknown fields
+     */
     void
-    UpdateYamlNode(const YAML::Node &src, YAML::Node &dst, bool ignore_unknown);
+    UpdateYamlNode(const YAML::Node &src, YAML::Node &dst, UnknownFieldPolicy unknown_field_policy);
 
     namespace yaml_helper {
         // Helper template functions/structs for YAML encoding and decoding of Yamlable types. These

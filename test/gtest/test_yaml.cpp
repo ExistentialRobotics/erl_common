@@ -186,3 +186,41 @@ TEST(YamlTest, EnumConversion) {
     node["color"] = Color::kRed;  // does not work unless we define struct convert<Color>
     std::cout << node << std::endl;
 }
+
+TEST(YamlTest, RecursiveLoad) {
+    {
+        Setting setting;
+        setting.a = 42;
+        setting.AsYamlFile("base.yaml");
+
+        SubSetting sub_setting;
+        sub_setting.d = 10;
+        sub_setting.AsYamlFile("sub_setting_base.yaml");
+    }
+
+    {
+        std::string yaml_str = R"(__base__: base.yaml
+b: 2.5
+sub_setting:
+    c: 7
+sub_setting_shared:
+    __base__: sub_setting_base.yaml
+    c: 20
+color: blue
+)";
+        std::ofstream out("setting.yaml");
+        out << yaml_str;
+        out.close();
+    }
+
+    Setting setting;
+    ASSERT_TRUE(setting.FromYamlFile("setting.yaml"));
+    std::cout << setting << std::endl;
+    ASSERT_EQ(setting.a, 42);                      // from base.yaml
+    ASSERT_EQ(setting.b, 2.5);                     // overridden
+    ASSERT_EQ(setting.sub_setting.c, 7);           // overridden
+    ASSERT_EQ(setting.sub_setting.d, 1);           // from base.yaml
+    ASSERT_EQ(setting.sub_setting_shared->c, 20);  // overridden
+    ASSERT_EQ(setting.sub_setting_shared->d, 10);  // from sub_setting_base.yaml
+    ASSERT_EQ(setting.color, Color::kBlue);        // overridden
+}

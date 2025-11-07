@@ -34,13 +34,65 @@ namespace erl::common {
         return emitter.c_str();
     }
 
+    static void
+    FromYamlFileRecursive(
+        const std::string &yaml_file,
+        const std::string &base_field,
+        YAML::Node &node) {
+        if (!std::filesystem::exists(yaml_file)) {
+            ERL_WARN("File does not exist: {}", yaml_file);
+            return;
+        }
+
+        auto cur_node = YAML::LoadFile(yaml_file);
+        const auto yaml_dir = std::filesystem::absolute(yaml_file).parent_path();
+
+        if (!base_field.empty()) {
+            // first process all base files in child nodes
+            for (auto item: cur_node) {
+                if (!item.second.IsMap()) { continue; }
+                if (!item.second[base_field].IsDefined()) { continue; }
+                const auto base_file_str = item.second[base_field].as<std::string>();
+                if (base_file_str.empty()) { continue; }
+                auto base_file = std::filesystem::path(base_file_str);
+                if (!base_file.is_absolute()) { base_file = yaml_dir / base_file; }
+                YAML::Node child_node(YAML::NodeType::Map);
+                FromYamlFileRecursive(base_file, base_field, child_node);
+                UpdateYamlNode(item.second, child_node, UnknownFieldPolicy::kMerge);
+                item.second = child_node;
+            }
+
+            // then process the base file of the current node
+            std::string base_file_str;
+            if (cur_node[base_field].IsDefined()) {
+                base_file_str = cur_node[base_field].as<std::string>();
+            }
+
+            if (!base_file_str.empty()) {
+                auto base_file = std::filesystem::path(base_file_str);
+                if (!base_file.is_absolute()) { base_file = yaml_dir / base_file; }
+                FromYamlFileRecursive(base_file, base_field, node);
+                UpdateYamlNode(cur_node, node, UnknownFieldPolicy::kMerge);
+                return;
+            }
+        }
+
+        // top-level file or no base file specified
+        if (node.size() == 0) {
+            node = cur_node;  // assign it directly, more efficient
+            return;
+        }
+        UpdateYamlNode(cur_node, node, UnknownFieldPolicy::kMerge);
+    }
+
     bool
-    YamlableBase::FromYamlFile(const std::string &yaml_file) {
+    YamlableBase::FromYamlFile(const std::string &yaml_file, const std::string &base_config_field) {
         if (!std::filesystem::exists(yaml_file)) {
             ERL_WARN("File does not exist: {}", yaml_file);
             return false;
         }
-        const auto node = YAML::LoadFile(yaml_file);
+        YAML::Node node(YAML::NodeType::Map);
+        FromYamlFileRecursive(yaml_file, base_config_field, node);
         return FromYamlNode(node);
     }
 
@@ -143,25 +195,38 @@ namespace erl::common {
     }
 
     void
-    UpdateYamlNode(const YAML::Node &src, YAML::Node &dst, const bool ignore_unknown) {
+    UpdateYamlNode(
+        const YAML::Node &src,
+        YAML::Node &dst,
+        const UnknownFieldPolicy unknown_field_policy) {
 
-        std::stack<std::pair<const YAML::Node &, YAML::Node>> node_stack;
+        std::stack<std::pair<YAML::Node, YAML::Node>> node_stack;
         node_stack.emplace(src, dst);
         while (!node_stack.empty()) {
             auto [current_src, current_dst] = node_stack.top();
             node_stack.pop();
 
-            ERL_ASSERTM(
-                current_src.IsMap() && current_dst.IsMap(),
-                "Both source and destination nodes must be maps.");
+            ERL_ASSERTM(current_src.IsMap(), "Source node must be a map.");
+            ERL_ASSERTM(current_dst.IsMap(), "Destination node must be a map.");
 
             for (const auto &item: current_src) {
                 const auto &key = item.first.as<std::string>();
                 const auto &src_value = item.second;
 
                 if (!current_dst[key].IsDefined()) {
-                    if (ignore_unknown) { continue; }
-                    ERL_FATAL("Unknown key in YAML node: {}", key);
+                    switch (unknown_field_policy) {
+                        case UnknownFieldPolicy::kIgnore:
+                            break;
+                        case UnknownFieldPolicy::kMerge:
+                            current_dst[key] = YAML::Clone(src_value);
+                            break;
+                        case UnknownFieldPolicy::kWarn:
+                            ERL_WARN("Unknown field {} in the dst node");
+                            break;
+                        case UnknownFieldPolicy::kError:
+                            ERL_FATAL("Unknown field {} in the dst node");
+                    }
+                    continue;
                 }
 
                 if (src_value.IsMap()) {
@@ -172,7 +237,7 @@ namespace erl::common {
                         key);
                     node_stack.emplace(src_value, dst_value);
                 } else {
-                    current_dst[key] = src_value;
+                    current_dst[key] = YAML::Clone(src_value);
                 }
             }
         }
