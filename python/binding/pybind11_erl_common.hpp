@@ -235,10 +235,11 @@ namespace erl::common {
                py::buffer_info info = b.request();
                std::string buffer_format = info.format;
                std::string expected_format = py::format_descriptor<Dtype>::format();
-               if (buffer_format != expected_format) {
-                   throw std::runtime_error(
-                       "Incompatible format: " + buffer_format + " vs " + expected_format);
-               }
+               ERL_ASSERTM(
+                   buffer_format == expected_format,
+                   "Incompatible format: {} vs {}",
+                   buffer_format,
+                   expected_format);
                if (Rank != -1) {
                    ERL_ASSERTM(Rank == info.ndim, "Incompatible ndim for %s: {}", name, info.ndim);
                }

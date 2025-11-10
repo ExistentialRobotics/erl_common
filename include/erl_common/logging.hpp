@@ -383,3 +383,28 @@ namespace erl::common {
         ERL_NO_FMT_DEBUG_WARN_ONCE_COND(condition, __VA_ARGS__)
 
 #endif
+
+#define ERL_ASSERT_EQ(a, b)     ERL_ASSERTM((a) == (b), "{} == {} failed", (a), (b))
+#define ERL_ASSERT_NE(a, b)     ERL_ASSERTM((a) != (b), "{} != {} failed", (a), (b))
+#define ERL_ASSERT_LT(a, b)     ERL_ASSERTM((a) < (b), "{} < {} failed", (a), (b))
+#define ERL_ASSERT_LE(a, b)     ERL_ASSERTM((a) <= (b), "{} <= {} failed", (a), (b))
+#define ERL_ASSERT_GT(a, b)     ERL_ASSERTM((a) > (b), "{} > {} failed", (a), (b))
+#define ERL_ASSERT_GE(a, b)     ERL_ASSERTM((a) >= (b), "{} >= {} failed", (a), (b))
+#define ERL_ASSERT_PTR(ptr)     ERL_ASSERTM((ptr) != nullptr, "{} != nullptr failed", #ptr)
+#define ERL_ASSERT_POS_EQ(a, b) ERL_ASSERTM((a) <= 0 || (a) == (b), "{} == {} failed", (a), (b))
+#define ERL_ASSERT_POS_LT(a, b) ERL_ASSERTM((a) <= 0 || (a) < (b), "{} < {} failed", (a), (b))
+#define ERL_ASSERT_POS_LE(a, b) ERL_ASSERTM((a) <= 0 || (a) <= (b), "{} <= {} failed", (a), (b))
+
+#define ERL_DEBUG_ASSERT_EQ(a, b) ERL_DEBUG_ASSERT((a) == (b), "{} == {} failed", (a), (b))
+#define ERL_DEBUG_ASSERT_NE(a, b) ERL_DEBUG_ASSERT((a) != (b), "{} != {} failed", (a), (b))
+#define ERL_DEBUG_ASSERT_LT(a, b) ERL_DEBUG_ASSERT((a) < (b), "{} < {} failed", (a), (b))
+#define ERL_DEBUG_ASSERT_LE(a, b) ERL_DEBUG_ASSERT((a) <= (b), "{} <= {} failed", (a), (b))
+#define ERL_DEBUG_ASSERT_GT(a, b) ERL_DEBUG_ASSERT((a) > (b), "{} > {} failed", (a), (b))
+#define ERL_DEBUG_ASSERT_GE(a, b) ERL_DEBUG_ASSERT((a) >= (b), "{} >= {} failed", (a), (b))
+#define ERL_DEBUG_ASSERT_PTR(ptr) ERL_DEBUG_ASSERT((ptr) != nullptr, "{} != nullptr failed", #ptr)
+#define ERL_DEBUG_ASSERT_POS_EQ(a, b) \
+    ERL_DEBUG_ASSERT((a) <= 0 || (a) == (b), "{} == {} failed", (a), (b))
+#define ERL_DEBUG_ASSERT_POS_LT(a, b) \
+    ERL_DEBUG_ASSERT((a) <= 0 || (a) < (b), "{} < {} failed", (a), (b))
+#define ERL_DEBUG_ASSERT_POS_LE(a, b) \
+    ERL_DEBUG_ASSERT((a) <= 0 || (a) <= (b), "{} <= {} failed", (a), (b))

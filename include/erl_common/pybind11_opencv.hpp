@@ -75,9 +75,7 @@ namespace pybind11::detail {
             auto buf = array::ensure(src);
 
             const auto ndim = buf.ndim();
-            if (ndim != 2 && ndim != 3) {
-                throw std::runtime_error("Buffer dimension should be 2 or 3.");
-            }
+            if (ndim != 2 && ndim != 3) { ERL_FATAL("Buffer dimension should be 2 or 3."); }
             const int num_channels = ndim == 2 ? 1 : static_cast<int>(buf.shape(2));
 
             if (buf.dtype().equal(dtype::of<uint8_t>())) {
@@ -123,8 +121,7 @@ namespace pybind11::detail {
                     CV_MAKETYPE(CV_64F, num_channels),
                     buf.mutable_data());
             } else {
-                throw std::runtime_error(
-                    "Unsupported format: " + str(buf.dtype()).operator std::string());
+                ERL_FATAL("Unsupported format: {}", str(buf.dtype()).operator std::string());
             }
 
             return true;

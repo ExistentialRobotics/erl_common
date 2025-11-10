@@ -64,16 +64,16 @@ namespace erl::common {
 
     public:
         GridMapInfo(
-            const Eigen::Vector<Dtype, Dim>& min,
-            const Eigen::Vector<Dtype, Dim>& max,
-            const Eigen::Vector<Dtype, Dim>& resolution,
-            const Eigen::Vector<int, Dim>& padding)
+            const Eigen::Vector<Dtype, Dim> &min,
+            const Eigen::Vector<Dtype, Dim> &max,
+            const Eigen::Vector<Dtype, Dim> &resolution,
+            const Eigen::Vector<int, Dim> &padding)
             : m_map_shape_(
                   Eigen::Vector<int, Dim>(
                       ((max - min).array() / resolution.array())
                           .ceil()
                           .template cast<int>()
-                          .unaryExpr([](const int& x) { return x % 2 ? x + 1 : x; })
+                          .unaryExpr([](const int &x) { return x % 2 ? x + 1 : x; })
                           .array() +
                       1 + 2 * padding.array())),
               m_resolution_(
@@ -85,9 +85,9 @@ namespace erl::common {
               m_center_grid_(m_map_shape_.array() / 2) {}
 
         GridMapInfo(
-            const Eigen::Vector<int, Dim>& map_shape,
-            const Eigen::Vector<Dtype, Dim>& min,
-            const Eigen::Vector<Dtype, Dim>& max)
+            const Eigen::Vector<int, Dim> &map_shape,
+            const Eigen::Vector<Dtype, Dim> &min,
+            const Eigen::Vector<Dtype, Dim> &max)
             : m_map_shape_(Eigen::Vector<int, Dim>(map_shape.unaryExpr([](int x) {
                   return x % 2 ? x : x + 1;
               }))),
@@ -103,9 +103,9 @@ namespace erl::common {
         }
 
         GridMapInfo(
-            const Eigen::Vector<Dtype, Dim>& origin,
-            const Eigen::Vector<Dtype, Dim>& resolution,
-            const Eigen::Vector<int, Dim>& map_shape)
+            const Eigen::Vector<Dtype, Dim> &origin,
+            const Eigen::Vector<Dtype, Dim> &resolution,
+            const Eigen::Vector<int, Dim> &map_shape)
             : m_map_shape_(Eigen::Vector<int, Dim>(map_shape.unaryExpr([](int x) {
                   return x % 2 ? x : x + 1;
               }))),
@@ -116,7 +116,7 @@ namespace erl::common {
               m_center_((m_min_ + m_max_) * 0.5),
               m_center_grid_(m_map_shape_.array() / 2) {}
 
-        explicit GridMapInfo(const GridMapInfo<Dtype, Eigen::Dynamic>& info)
+        explicit GridMapInfo(const GridMapInfo<Dtype, Eigen::Dynamic> &info)
             : m_map_shape_(info.Shape()),
               m_resolution_(info.Resolution()),
               m_min_(info.Min()),
@@ -125,34 +125,34 @@ namespace erl::common {
               m_center_grid_(info.CenterGrid()) {}
 
         [[nodiscard]] bool
-        operator==(const GridMapInfo& other) const {
+        operator==(const GridMapInfo &other) const {
             return (m_map_shape_ == other.m_map_shape_) && (m_resolution_ == other.m_resolution_) &&
                    (m_min_ == other.m_min_) && (m_max_ == other.m_max_) &&
                    (m_center_ == other.m_center_) && (m_center_grid_ == other.m_center_grid_);
         }
 
         [[nodiscard]] bool
-        operator!=(const GridMapInfo& other) const {
+        operator!=(const GridMapInfo &other) const {
             return !(*this == other);
         }
 
         [[nodiscard]] bool
-        Write(std::ostream& s) const {
+        Write(std::ostream &s) const {
             const int n_dims = Dims();
-            s.write(reinterpret_cast<const char*>(&n_dims), sizeof(int));
-            s.write(reinterpret_cast<const char*>(m_map_shape_.data()), sizeof(int) * n_dims);
-            s.write(reinterpret_cast<const char*>(m_resolution_.data()), sizeof(Dtype) * n_dims);
-            s.write(reinterpret_cast<const char*>(m_min_.data()), sizeof(Dtype) * n_dims);
-            s.write(reinterpret_cast<const char*>(m_max_.data()), sizeof(Dtype) * n_dims);
-            s.write(reinterpret_cast<const char*>(m_center_.data()), sizeof(Dtype) * n_dims);
-            s.write(reinterpret_cast<const char*>(m_center_grid_.data()), sizeof(int) * n_dims);
+            s.write(reinterpret_cast<const char *>(&n_dims), sizeof(int));
+            s.write(reinterpret_cast<const char *>(m_map_shape_.data()), sizeof(int) * n_dims);
+            s.write(reinterpret_cast<const char *>(m_resolution_.data()), sizeof(Dtype) * n_dims);
+            s.write(reinterpret_cast<const char *>(m_min_.data()), sizeof(Dtype) * n_dims);
+            s.write(reinterpret_cast<const char *>(m_max_.data()), sizeof(Dtype) * n_dims);
+            s.write(reinterpret_cast<const char *>(m_center_.data()), sizeof(Dtype) * n_dims);
+            s.write(reinterpret_cast<const char *>(m_center_grid_.data()), sizeof(int) * n_dims);
             return s.good();
         }
 
         [[nodiscard]] bool
-        Read(std::istream& s) {
+        Read(std::istream &s) {
             int n_dims = 0;
-            s.read(reinterpret_cast<char*>(&n_dims), sizeof(int));
+            s.read(reinterpret_cast<char *>(&n_dims), sizeof(int));
             ERL_DEBUG_ASSERT(
                 Dim == Eigen::Dynamic || n_dims == Dim,
                 "The number of dimensions read from the stream (%d) does not match the template "
@@ -168,12 +168,12 @@ namespace erl::common {
                 m_center_.resize(n_dims);
                 m_center_grid_.resize(n_dims);
             }
-            s.read(reinterpret_cast<char*>(m_map_shape_.data()), sizeof(int) * n_dims);
-            s.read(reinterpret_cast<char*>(m_resolution_.data()), sizeof(Dtype) * n_dims);
-            s.read(reinterpret_cast<char*>(m_min_.data()), sizeof(Dtype) * n_dims);
-            s.read(reinterpret_cast<char*>(m_max_.data()), sizeof(Dtype) * n_dims);
-            s.read(reinterpret_cast<char*>(m_center_.data()), sizeof(Dtype) * n_dims);
-            s.read(reinterpret_cast<char*>(m_center_grid_.data()), sizeof(int) * n_dims);
+            s.read(reinterpret_cast<char *>(m_map_shape_.data()), sizeof(int) * n_dims);
+            s.read(reinterpret_cast<char *>(m_resolution_.data()), sizeof(Dtype) * n_dims);
+            s.read(reinterpret_cast<char *>(m_min_.data()), sizeof(Dtype) * n_dims);
+            s.read(reinterpret_cast<char *>(m_max_.data()), sizeof(Dtype) * n_dims);
+            s.read(reinterpret_cast<char *>(m_center_.data()), sizeof(Dtype) * n_dims);
+            s.read(reinterpret_cast<char *>(m_center_grid_.data()), sizeof(int) * n_dims);
             return s.good();
         }
 
@@ -302,7 +302,7 @@ namespace erl::common {
             return m_map_shape_.size();
         }
 
-        [[nodiscard]] const Eigen::Vector<int, Dim>&
+        [[nodiscard]] const Eigen::Vector<int, Dim> &
         Shape() const {
             return m_map_shape_;
         }
@@ -344,7 +344,7 @@ namespace erl::common {
             return 0;
         }
 
-        [[nodiscard]] const Eigen::Vector<Dtype, Dim>&
+        [[nodiscard]] const Eigen::Vector<Dtype, Dim> &
         Min() const {
             return m_min_;
         }
@@ -364,7 +364,7 @@ namespace erl::common {
             return m_min_[dim] + 0.5f * m_resolution_[dim];
         }
 
-        [[nodiscard]] const Eigen::Vector<Dtype, Dim>&
+        [[nodiscard]] const Eigen::Vector<Dtype, Dim> &
         Max() const {
             return m_max_;
         }
@@ -384,7 +384,7 @@ namespace erl::common {
             return m_max_[dim] - 0.5f * m_resolution_[dim];
         }
 
-        [[nodiscard]] const Eigen::Vector<Dtype, Dim>&
+        [[nodiscard]] const Eigen::Vector<Dtype, Dim> &
         Resolution() const {
             return m_resolution_;
         }
@@ -394,12 +394,12 @@ namespace erl::common {
             return m_resolution_[dim];
         }
 
-        [[nodiscard]] const Eigen::Vector<Dtype, Dim>&
+        [[nodiscard]] const Eigen::Vector<Dtype, Dim> &
         Center() const {
             return m_center_;
         }
 
-        [[nodiscard]] const Eigen::Vector<int, Dim>&
+        [[nodiscard]] const Eigen::Vector<int, Dim> &
         CenterGrid() const {
             return m_center_grid_;
         }
@@ -418,9 +418,9 @@ namespace erl::common {
         }
 
         [[nodiscard]] Eigen::VectorX<Dtype>
-        GridToMeterAtDim(const Eigen::Ref<const Eigen::VectorXi>& grid_values, int dim) const {
-            const Dtype& min = m_min_[dim];
-            const Dtype& res = m_resolution_[dim];
+        GridToMeterAtDim(const Eigen::Ref<const Eigen::VectorXi> &grid_values, int dim) const {
+            const Dtype &min = m_min_[dim];
+            const Dtype &res = m_resolution_[dim];
             return grid_values.unaryExpr(
                 [&](const int v) -> Dtype { return GridToMeter(v, min, res); });
         }
@@ -431,16 +431,16 @@ namespace erl::common {
         }
 
         [[nodiscard]] Eigen::VectorXi
-        MeterToGridAtDim(const Eigen::Ref<const Eigen::VectorX<Dtype>>& meter_values, int dim)
+        MeterToGridAtDim(const Eigen::Ref<const Eigen::VectorX<Dtype>> &meter_values, int dim)
             const {
-            const Dtype& min = m_min_[dim];
-            const Dtype& res = m_resolution_[dim];
+            const Dtype &min = m_min_[dim];
+            const Dtype &res = m_resolution_[dim];
             return meter_values.unaryExpr(
                 [&](const Dtype v) -> int { return MeterToGrid(v, min, res); });
         }
 
         [[nodiscard]] Eigen::Vector<Dtype, Dim>
-        GridToMeterForPoint(const Eigen::Ref<const Eigen::Vector<int, Dim>>& grid_point) const {
+        GridToMeterForPoint(const Eigen::Ref<const Eigen::Vector<int, Dim>> &grid_point) const {
             Eigen::Vector<Dtype, Dim> meter_point;
             if constexpr (Dim == Eigen::Dynamic) { meter_point.resize(grid_point.size()); }
             for (int i = 0; i < Dim; ++i) {
@@ -451,7 +451,7 @@ namespace erl::common {
 
         [[nodiscard]] Eigen::Matrix<Dtype, Dim, Eigen::Dynamic>
         GridToMeterForPoints(
-            const Eigen::Ref<const Eigen::Matrix<int, Dim, Eigen::Dynamic>>& grid_points) const {
+            const Eigen::Ref<const Eigen::Matrix<int, Dim, Eigen::Dynamic>> &grid_points) const {
             const long n_rows = grid_points.rows();
             const long n_cols = grid_points.cols();
             Eigen::Matrix<Dtype, Dim, Eigen::Dynamic> meter_points(n_rows, n_cols);
@@ -465,7 +465,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] Eigen::Vector<int, Dim>
-        MeterToGridForPoint(const Eigen::Ref<const Eigen::Vector<Dtype, Dim>>& meter_point) const {
+        MeterToGridForPoint(const Eigen::Ref<const Eigen::Vector<Dtype, Dim>> &meter_point) const {
             Eigen::Vector<int, Dim> grid_point;
             if constexpr (Dim == Eigen::Dynamic) { grid_point.resize(meter_point.size()); }
             for (int i = 0; i < Dim; ++i) {
@@ -476,7 +476,7 @@ namespace erl::common {
 
         [[nodiscard]] Eigen::Matrix<int, Dim, Eigen::Dynamic>
         MeterToGridForPoints(
-            const Eigen::Ref<const Eigen::Matrix<Dtype, Dim, Eigen::Dynamic>>& meter_points) const {
+            const Eigen::Ref<const Eigen::Matrix<Dtype, Dim, Eigen::Dynamic>> &meter_points) const {
             const long n_rows = meter_points.rows();
             const long n_cols = meter_points.cols();
             Eigen::Matrix<int, Dim, Eigen::Dynamic> grid_points(n_rows, n_cols);
@@ -491,7 +491,7 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2i>
-        GridToPixelForPoint(const Eigen::Ref<const Eigen::Vector2i>& grid_point) const {
+        GridToPixelForPoint(const Eigen::Ref<const Eigen::Vector2i> &grid_point) const {
             Eigen::Vector2i pixel;
             pixel[0] = grid_point[0];
             pixel[1] = m_map_shape_[1] - grid_point[1];
@@ -500,7 +500,7 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
-        GridToPixelForPoints(const Eigen::Ref<const Eigen::Matrix2Xi>& grid_points) const {
+        GridToPixelForPoints(const Eigen::Ref<const Eigen::Matrix2Xi> &grid_points) const {
             if constexpr (D == Eigen::Dynamic) {
                 ERL_DEBUG_ASSERT(Dims() == 2, "Not available when Dims() != 2");
             }
@@ -520,47 +520,47 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2i>
-        PixelToGridForPoint(const Eigen::Ref<const Eigen::Vector2i>& pixel_point) const {
+        PixelToGridForPoint(const Eigen::Ref<const Eigen::Vector2i> &pixel_point) const {
             return GridToPixelForPoint(pixel_point);
         }
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
-        PixelToGridForPoints(const Eigen::Ref<const Eigen::Matrix2Xi>& pixel_points) const {
+        PixelToGridForPoints(const Eigen::Ref<const Eigen::Matrix2Xi> &pixel_points) const {
             return GridToPixelForPoints(pixel_points);
         }
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2i>
-        MeterToPixelForPoint(const Eigen::Ref<const Eigen::Vector2<Dtype>>& meter_points) const {
+        MeterToPixelForPoint(const Eigen::Ref<const Eigen::Vector2<Dtype>> &meter_points) const {
             return GridToPixelForPoint(MeterToGridForPoint(meter_points));
         }
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
-        MeterToPixelForPoints(const Eigen::Ref<const Eigen::Matrix2X<Dtype>>& meter_points) const {
+        MeterToPixelForPoints(const Eigen::Ref<const Eigen::Matrix2X<Dtype>> &meter_points) const {
             return GridToPixelForPoints(MeterToGridForPoints(meter_points));
         }
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2<Dtype>>
-        PixelToMeterForPoint(const Eigen::Ref<const Eigen::Vector2i>& pixel_points) const {
+        PixelToMeterForPoint(const Eigen::Ref<const Eigen::Vector2i> &pixel_points) const {
             return GridToMeterForPoint(PixelToGridForPoint(pixel_points));
         }
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2X<Dtype>>
-        PixelToMeterForPoints(const Eigen::Ref<const Eigen::Matrix2Xi>& pixel_points) const {
+        PixelToMeterForPoints(const Eigen::Ref<const Eigen::Matrix2Xi> &pixel_points) const {
             return GridToMeterForPoints(PixelToGridForPoints(pixel_points));
         }
 
         [[nodiscard]] Eigen::MatrixX<Dtype>
-        GridToMeterForVectors(const Eigen::Ref<const Eigen::MatrixXi>& grid_vectors) const {
+        GridToMeterForVectors(const Eigen::Ref<const Eigen::MatrixXi> &grid_vectors) const {
             return grid_vectors.cast<Dtype>().array().colwise() * m_resolution_.array();
         }
 
         [[nodiscard]] Eigen::MatrixXi
-        MeterToGridForVectors(const Eigen::Ref<const Eigen::MatrixX<Dtype>>& meter_vectors) const {
+        MeterToGridForVectors(const Eigen::Ref<const Eigen::MatrixX<Dtype>> &meter_vectors) const {
             return (meter_vectors.array().colwise() / m_resolution_.array())
                 .floor()
                 .template cast<int>();
@@ -568,8 +568,8 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
-        GridToPixelForVectors(const Eigen::Ref<const Eigen::Matrix2Xi>& grid_vectors) const {
-            if (D == Eigen::Dynamic) { ERL_ASSERTM(Dims() == 2, "Not available when Dims() != 2"); }
+        GridToPixelForVectors(const Eigen::Ref<const Eigen::Matrix2Xi> &grid_vectors) const {
+            if (D == Eigen::Dynamic) { ERL_ASSERT_EQ(Dims(), 2); }
 
             Eigen::Matrix2Xi pixel_vectors(2, grid_vectors.cols());
             const long n_cols = grid_vectors.cols();
@@ -583,25 +583,25 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
-        PixelToGridForVectors(const Eigen::Ref<const Eigen::Matrix2Xi>& pixel_vectors) const {
+        PixelToGridForVectors(const Eigen::Ref<const Eigen::Matrix2Xi> &pixel_vectors) const {
             return GridToPixelForVectors(pixel_vectors);
         }
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2Xi>
         MeterToPixelForVectors(
-            const Eigen::Ref<const Eigen::Matrix2X<Dtype>>& meter_vectors) const {
+            const Eigen::Ref<const Eigen::Matrix2X<Dtype>> &meter_vectors) const {
             return GridToPixelForVectors(MeterToGridForVectors(meter_vectors));
         }
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2X<Dtype>>
-        PixelToMeterForVectors(const Eigen::Ref<const Eigen::Matrix2Xi>& pixel_vectors) const {
+        PixelToMeterForVectors(const Eigen::Ref<const Eigen::Matrix2Xi> &pixel_vectors) const {
             return GridToMeterForVectors(PixelToGridForVectors(pixel_vectors));
         }
 
         [[nodiscard]] bool
-        InMap(const Eigen::Ref<const Eigen::Vector<Dtype, Dim>>& meter_point) const {
+        InMap(const Eigen::Ref<const Eigen::Vector<Dtype, Dim>> &meter_point) const {
             ERL_DEBUG_ASSERT(
                 meter_point.size() == m_map_shape_.size(),
                 "meter_point is {}-dim but the map is {}-dim.",
@@ -614,7 +614,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] bool
-        InGrids(const Eigen::Ref<const Eigen::Vector<int, Dim>>& grid_point) const {
+        InGrids(const Eigen::Ref<const Eigen::Vector<int, Dim>> &grid_point) const {
             // clang-format off
             if (Dim == 2) {
                 return grid_point[0] >= 0 && grid_point[0] < m_map_shape_[0] &&
@@ -634,7 +634,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] int
-        GridToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>>& grid, bool c_stride) const {
+        GridToIndex(const Eigen::Ref<const Eigen::Vector<int, Dim>> &grid, bool c_stride) const {
             ERL_DEBUG_ASSERT(
                 InGrids(grid),
                 "{} is out of map.\n",
@@ -649,19 +649,19 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, int>
-        PixelToIndex(const Eigen::Ref<const Eigen::Vector<int, D>>& pixel, const bool c_stride)
+        PixelToIndex(const Eigen::Ref<const Eigen::Vector<int, D>> &pixel, const bool c_stride)
             const {
             return GridToIndex(PixelToGridForPoints(pixel), c_stride);
         }
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector<int, D>>
-        IndexToPixel(const int& index, const bool& c_stride) const {
+        IndexToPixel(const int &index, const bool &c_stride) const {
             return GridToPixelForPoints(IndexToGrid(index, c_stride));
         }
 
         [[nodiscard]] Eigen::Matrix<int, Dim, Eigen::Dynamic>
-        GenerateGridCoordinates(const bool& c_stride) const {
+        GenerateGridCoordinates(const bool &c_stride) const {
             const int size = Size();
             if (!size) { return {}; }
 
@@ -679,7 +679,7 @@ namespace erl::common {
             long n_dims = Dims();
             Eigen::Matrix<int, Dim, Eigen::Dynamic> grid_coords(n_dims, size);
             for (long i = 0; i < n_dims; ++i) {
-                const int& stride = strides[i];
+                const int &stride = strides[i];
                 const int dim_size = Shape(i);
                 const int n_copies = size / dim_size;
                 Eigen::MatrixXi coords = Eigen::VectorXi::LinSpaced(dim_size, 0, dim_size - 1)
@@ -696,7 +696,7 @@ namespace erl::common {
         }
 
         [[nodiscard]] Eigen::Matrix<Dtype, Dim, Eigen::Dynamic>
-        GenerateMeterCoordinates(const bool& c_stride) const {
+        GenerateMeterCoordinates(const bool &c_stride) const {
             int size = Size();
             if (!size) { return {}; }
 
@@ -714,7 +714,7 @@ namespace erl::common {
             const long n_dims = Dims();
             Eigen::Matrix<Dtype, Dim, Eigen::Dynamic> meter_coords(n_dims, size);
             for (long i = 0; i < n_dims; ++i) {
-                const int& stride = strides[i];
+                const int &stride = strides[i];
                 const int dim_size = Shape(i);
                 const int n_copies = size / dim_size;
                 Dtype half_res = Resolution(i) * 0.5f;
@@ -770,8 +770,8 @@ namespace erl::common {
         [[nodiscard]] std::
             enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix<Dtype, D, Eigen::Dynamic>>
             GetMetricCoordinatesOfFilledMetricPolygon(
-                const Eigen::Ref<const Eigen::Matrix<Dtype, 2, Eigen::Dynamic>>&
-                    polygon_metric_vertices) const {
+                const Eigen::Ref<const Eigen::Matrix<Dtype, 2, Eigen::Dynamic>>
+                    &polygon_metric_vertices) const {
             return PixelToMeterForPoints(
                 GetPixelCoordinatesOfFilledMetricPolygon<D>(polygon_metric_vertices));
         }
@@ -780,8 +780,8 @@ namespace erl::common {
         [[nodiscard]] std::
             enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix<int, D, Eigen::Dynamic>>
             GetGridCoordinatesOfFilledMetricPolygon(
-                const Eigen::Ref<const Eigen::Matrix<Dtype, 2, Eigen::Dynamic>>&
-                    polygon_metric_vertices) const {
+                const Eigen::Ref<const Eigen::Matrix<Dtype, 2, Eigen::Dynamic>>
+                    &polygon_metric_vertices) const {
             return PixelToGridForPoints(
                 GetPixelCoordinatesOfFilledMetricPolygon<D>(polygon_metric_vertices));
         }
@@ -790,8 +790,8 @@ namespace erl::common {
         [[nodiscard]] std::
             enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix<int, D, Eigen::Dynamic>>
             GetPixelCoordinatesOfFilledMetricPolygon(
-                const Eigen::Ref<const Eigen::Matrix<Dtype, 2, Eigen::Dynamic>>&
-                    polygon_metric_vertices) const {
+                const Eigen::Ref<const Eigen::Matrix<Dtype, 2, Eigen::Dynamic>>
+                    &polygon_metric_vertices) const {
             if (D == Eigen::Dynamic) {
                 ERL_DEBUG_ASSERT(
                     polygon_metric_vertices.rows() == Dims(),
@@ -812,8 +812,8 @@ namespace erl::common {
             for (long i = 0; i < num_vertices; ++i) {
                 polygon_pixel_points.col(i) =
                     MeterToPixelForPoints<D>(polygon_metric_vertices.col(i));
-                const int& u = polygon_pixel_points(0, i);
-                const int& v = polygon_pixel_points(1, i);
+                const int &u = polygon_pixel_points(0, i);
+                const int &v = polygon_pixel_points(1, i);
                 if (u < u_min) { u_min = u; }
                 if (u > u_max) { u_max = u; }
                 if (v < v_min) { v_min = v; }
@@ -822,7 +822,7 @@ namespace erl::common {
 
             cv::Mat canvas(v_max - v_min + 1, u_max - u_min + 1, CV_8UC1, cv::Scalar(0));
             std::vector<std::vector<cv::Point>> polygon_points(1);
-            auto& points = polygon_points[0];
+            auto &points = polygon_points[0];
             for (long i = 0; i < num_vertices; ++i) {  // make sure all points are in the canvas
                 points.emplace_back(
                     polygon_pixel_points(0, i) - u_min,
@@ -848,8 +848,8 @@ namespace erl::common {
 
         [[nodiscard]] Eigen::MatrixXi
         RayCasting(
-            const Eigen::Ref<const Eigen::VectorX<Dtype>>& start,
-            const Eigen::Ref<const Eigen::VectorX<Dtype>>& end) const {
+            const Eigen::Ref<const Eigen::VectorX<Dtype>> &start,
+            const Eigen::Ref<const Eigen::VectorX<Dtype>> &end) const {
             if (!InMap(start)) {
                 ERL_WARN("start point ({}, {}, {}) is out of map.", start[0], start[1], start[2]);
                 return {};
@@ -927,7 +927,7 @@ namespace erl::common {
                 Dtype dist_from_origin = t_max.minCoeff();
                 if (dist_from_origin > length) { break; }  // this happens due to numerical error
                 points.col(cnt++) = cur_grid;
-                ERL_ASSERTM(cnt < points.cols() - 1, "Pre-allocated points are not enough.");
+                ERL_ASSERT_LT(cnt, points.cols() - 1);
             }
             points.conservativeResize(Eigen::NoChange, cnt);
             return points;

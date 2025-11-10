@@ -8,7 +8,7 @@ namespace erl::common {
     LoadCsvFile(const char *path, char delimiter) {
         std::ifstream ifs;
         ifs.open(path);
-        if (!ifs.is_open()) { throw std::runtime_error("Fail to open file: " + std::string(path)); }
+        ERL_ASSERTM(ifs.is_open(), "Fail to open file {}", path);
 
         std::vector<std::vector<std::string>> rows;
         std::string line;

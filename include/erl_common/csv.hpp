@@ -1,5 +1,7 @@
 #pragma once
 
+#include "logging.hpp"
+
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -18,7 +20,7 @@ namespace erl::common {
         char delimiter = ',') {
         std::ifstream ifs;
         ifs.open(path);
-        if (!ifs.is_open()) { throw std::runtime_error("Fail to open file: " + std::string(path)); }
+        if (!ifs.is_open()) { ERL_FATAL("Fail to open file: {}", path); }
 
         std::vector<std::vector<T>> rows;
         std::string line;
@@ -51,7 +53,7 @@ namespace erl::common {
         const char delimiter = ',') {
         std::ofstream ofs;
         ofs.open(path);
-        if (!ofs.is_open()) { throw std::runtime_error("Fail to open file: " + std::string(path)); }
+        if (!ofs.is_open()) { ERL_FATAL("Fail to open file: {}", path); }
 
         for (const auto &row: rows) {
             auto iter = row.begin();
