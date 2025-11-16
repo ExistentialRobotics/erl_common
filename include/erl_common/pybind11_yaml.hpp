@@ -10,7 +10,15 @@ BindYamlableBase(const py::module &m) {
         .def("as_yaml_string", &YamlableBase::AsYamlString)
         .def("as_yaml_file", &YamlableBase::AsYamlFile, py::arg("yaml_file"))
         .def("from_yaml_string", &YamlableBase::FromYamlString, py::arg("yaml_str"))
-        .def("from_yaml_file", &YamlableBase::FromYamlFile, py::arg("yaml_file"))
+        .def(
+            "from_yaml_file",
+            &YamlableBase::FromYamlFile,
+            py::arg("yaml_file"),
+            py::arg("base_config_field"))
+        .def(
+            "from_command_line",
+            py::overload_cast<const std::vector<std::string> &>(&YamlableBase::FromCommandLine),
+            py::arg("args"))
         .def("__str__", [](const YamlableBase &self) -> std::string {
             std::stringstream ss;
             ss << self;

@@ -462,7 +462,7 @@ namespace erl::common {
             using ElementType = typename M::element_type;
             member = std::make_shared<ElementType>();
             try {
-                program_options::ParseOption<M>::Run(po_data, option_name, *member);
+                po_data.GetOptionParser<M>(option_name)->Run(po_data, option_name, *member);
             } catch (std::exception &e) {
                 ERL_WARN("Failed to load member {} from command line: {}", option_name, e.what());
                 return false;
@@ -497,7 +497,7 @@ namespace erl::common {
             const std::string & /*type*/,
             const bool /*poly*/) {
             try {
-                program_options::ParseOption<M>::Run(po_data, option_name, member);
+                po_data.GetOptionParser<M>(option_name)->Run(po_data, option_name, member);
             } catch (std::exception &e) {
                 ERL_WARN("Failed to load member {} from command line: {}", option_name, e.what());
                 return false;

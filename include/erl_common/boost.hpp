@@ -21,10 +21,35 @@ namespace erl::common::program_options {
         return prefix + "." + name;
     }
 
+    struct ParseOptionBase {
+        virtual ~ParseOptionBase() = default;  // enable polymorphism
+    };
+
+    template<typename M>
+    struct ParseOption;
+
     struct ProgramOptionsData {
         std::vector<std::string> args;
         po::options_description desc;
         po::variables_map vm;
+        // Map from option name to its parser.
+        // This is used to keep the option parsers alive across multiple Parse() calls.
+        // Some parsers need to store intermediate data (e.g., for Eigen matrices).
+        // So we need to keep them in memory.
+        std::unordered_map<std::string, std::shared_ptr<ParseOptionBase>> option_parsers;
+
+        template<typename M>
+        std::shared_ptr<ParseOption<M>>
+        GetOptionParser(const std::string &option_name) {
+            using T = ParseOption<M>;
+            if (const auto it = option_parsers.find(option_name); it != option_parsers.end()) {
+                auto parser = std::dynamic_pointer_cast<T>(it->second);
+                return parser;
+            }
+            auto parser = std::make_shared<T>();
+            option_parsers[option_name] = parser;
+            return parser;
+        }
 
         void
         Parse() {
@@ -38,8 +63,8 @@ namespace erl::common::program_options {
     };
 
     template<typename T>
-    struct ParseOption {
-        static void
+    struct ParseOption : ParseOptionBase {
+        void
         Run(ProgramOptionsData &po_data, const std::string &option_name, T &member) {
             // do not set default_value here to avoid overwriting parsed values because
             // po_data.vm is cleared after each Parse() call.
@@ -49,8 +74,8 @@ namespace erl::common::program_options {
     };
 
     template<typename T>
-    struct ParseOption<std::vector<T>> {
-        static void
+    struct ParseOption<std::vector<T>> : ParseOptionBase {
+        void
         Run(ProgramOptionsData &po_data, const std::string &option_name, std::vector<T> &member) {
             po_data.desc.add_options()(
                 option_name.c_str(),
@@ -60,26 +85,32 @@ namespace erl::common::program_options {
     };
 
     template<typename T1, typename T2>
-    struct ParseOption<std::pair<T1, T2>> {
-        static void
+    struct ParseOption<std::pair<T1, T2>> : ParseOptionBase {
+        void
         Run(ProgramOptionsData &po_data,
             const std::string &option_name,
             std::pair<T1, T2> &member) {
 
-            ParseOption<T1>::Run(po_data, option_name + ".first", member.first);
-            ParseOption<T2>::Run(po_data, option_name + ".second", member.second);
+            std::string first_option_name = option_name + ".first";
+            std::string second_option_name = option_name + ".second";
+            po_data.GetOptionParser<T1>(first_option_name)
+                ->Run(po_data, first_option_name, member.first);
+            po_data.GetOptionParser<T2>(second_option_name)
+                ->Run(po_data, second_option_name, member.second);
         }
     };
 
     template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
-    struct ParseOption<Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> {
-        static void
+    struct ParseOption<Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>>
+        : ParseOptionBase {
+        std::vector<Scalar_> values;
+
+        void
         Run(ProgramOptionsData &po_data,
             const std::string &option_name,
             Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> &member) {
 
             // add options
-            std::vector<Scalar_> values;
             values.reserve(member.size());
             auto options = po_data.desc.add_options();
 
@@ -181,10 +212,11 @@ namespace erl::common::program_options {
     #ifdef ERL_USE_OPENCV
 
     template<>
-    struct ParseOption<cv::Scalar> {
-        static void
+    struct ParseOption<cv::Scalar> : ParseOptionBase {
+        std::vector<double> values;
+
+        void
         Run(ProgramOptionsData &po_data, const std::string &option_name, cv::Scalar &member) {
-            std::vector<double> values;
             po_data.desc.add_options()(
                 option_name.c_str(),
                 po::value<std::vector<double>>(&values)->multitoken());
@@ -207,8 +239,9 @@ namespace erl::common::program_options {
 
     #define ERL_PARSE_BOOST_OPTION_ENUM(T)                                                        \
         template<>                                                                                \
-        struct erl::common::program_options::ParseOption<T> {                                     \
-            static void                                                                           \
+        struct erl::common::program_options::ParseOption<T>                                       \
+            : erl::common::program_options::ParseOptionBase {                                     \
+            void                                                                                  \
             Run(erl::common::program_options::ProgramOptionsData &po_data,                        \
                 const std::string &option_name,                                                   \
                 T &member) {                                                                      \
