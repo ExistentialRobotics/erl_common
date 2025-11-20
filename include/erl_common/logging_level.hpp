@@ -2,8 +2,8 @@
 
 namespace erl::common {
     enum LoggingLevel {
-        kInfo = 1,
-        kDebug = 2,
+        kDebug = 1,
+        kInfo = 2,
         kWarn = 3,
         kError = 4,
         kSilent = 5,

@@ -14,12 +14,12 @@ namespace erl::common {
         static std::mutex g_print_mutex;
 
         // ANSI color codes for terminal output
-        static constexpr const char *COLOR_RESET = "\033[0m";
-        static constexpr const char *COLOR_BLUE = "\033[1;36m";      // Deep sky blue + bold
-        static constexpr const char *COLOR_ORANGE = "\033[1;33m";    // Orange + bold
-        static constexpr const char *COLOR_RED = "\033[1;31m";       // Red + bold
-        static constexpr const char *COLOR_DARK_RED = "\033[1;91m";  // Dark red + bold
-        static constexpr const char *COLOR_GREEN = "\033[1;92m";     // Spring green + bold
+        static constexpr auto *COLOR_RESET = "\033[0m";
+        static constexpr auto *COLOR_BLUE = "\033[1;36m";      // Deep sky blue + bold
+        static constexpr auto *COLOR_ORANGE = "\033[1;33m";    // Orange + bold
+        static constexpr auto *COLOR_RED = "\033[1;31m";       // Red + bold
+        static constexpr auto *COLOR_DARK_RED = "\033[1;91m";  // Dark red + bold
+        static constexpr auto COLOR_GREEN = "\033[1;92m";      // Spring green + bold
 
         template<typename T>
         static void
@@ -377,19 +377,19 @@ namespace erl::common::detail {
                 erl::common::detail::FormatArgs(__VA_ARGS__)); \
         } while (false)
 
+    #define ERL_NO_FMT_DEBUG(...)                              \
+        do {                                                   \
+            erl::common::LoggingNoFmt::Debug(                  \
+                __FILE__,                                      \
+                ":",                                           \
+                __LINE__,                                      \
+                ": ",                                          \
+                erl::common::detail::FormatArgs(__VA_ARGS__)); \
+        } while (false)
+
     #ifndef NDEBUG
-        #define ERL_NO_FMT_DEBUG(...)                              \
-            do {                                                   \
-                erl::common::LoggingNoFmt::Debug(                  \
-                    __FILE__,                                      \
-                    ":",                                           \
-                    __LINE__,                                      \
-                    ": ",                                          \
-                    erl::common::detail::FormatArgs(__VA_ARGS__)); \
-            } while (false)
         #define ERL_NO_FMT_DEBUG_ASSERT(expr, ...) ERL_NO_FMT_ASSERTM(expr, __VA_ARGS__)
     #else
-        #define ERL_NO_FMT_DEBUG(...)              ((void) 0)
         #define ERL_NO_FMT_DEBUG_ASSERT(expr, ...) (void) 0
     #endif
 #endif

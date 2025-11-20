@@ -46,6 +46,15 @@ namespace erl::common {
     }
 
     template<typename T>
+    std::vector<std::vector<T>>
+    LoadAndCastCsvFile(
+        const std::string &path,
+        std::function<T(const std::string &)> cast_func,
+        char delimiter = ',') {
+        return LoadAndCastCsvFile<T>(path.c_str(), cast_func, delimiter);
+    }
+
+    template<typename T>
     void
     SaveCsvFile(
         const char *path,

@@ -50,49 +50,49 @@ namespace erl::common {
             [[nodiscard]] explicit
             operator std::string() const;
 
-            AxisOpt&
+            AxisOpt &
             DrawAxis(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawBottomLeftEdge(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawTopRightEdge(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawDatetimeLabel(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             UseFixedPointNumeric(bool fixed_point = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawGridMajor(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawGridMinor(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             InvertTickMarkers(bool invert = true);
 
-            AxisOpt&
+            AxisOpt &
             LogScale(bool log = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawTopRightTickLabels(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawBottomLeftTickLabels(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             UseCustomLabelingFunction(bool use = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawTickMinor(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawTickMajor(bool draw = true);
 
-            AxisOpt&
+            AxisOpt &
             DrawPerpendicularTickLabels(bool draw = true);
         };
 
@@ -115,10 +115,10 @@ namespace erl::common {
         [[nodiscard]] int
         Height() const;
 
-        PlplotFig&
+        PlplotFig &
         Clear(double r = 1, double g = 1, double b = 1, double a = 1);
 
-        PlplotFig&
+        PlplotFig &
         DrawArc(
             double center_x,
             double center_y,
@@ -141,7 +141,7 @@ namespace erl::common {
          * @param axis_opt_y y-axis options
          * @return
          */
-        PlplotFig&
+        PlplotFig &
         DrawAxes(
             double origin_x,
             double origin_y,
@@ -149,8 +149,8 @@ namespace erl::common {
             double tick_interval_y = 0.0,
             int num_subticks_x = 0,
             int num_subticks_y = 0,
-            const std::optional<AxisOpt>& axis_opt_x = std::nullopt,
-            const std::optional<AxisOpt>& axis_opt_y = std::nullopt);
+            const std::optional<AxisOpt> &axis_opt_x = std::nullopt,
+            const std::optional<AxisOpt> &axis_opt_y = std::nullopt);
 
         /**
          * Draw axes with box in 2D
@@ -162,23 +162,23 @@ namespace erl::common {
          * @param num_subticks_y number of sub-ticks on y-axis, 0 for auto
          * @return
          */
-        PlplotFig&
+        PlplotFig &
         DrawAxesBox(
-            const std::optional<AxisOpt>& axis_opt_x = std::nullopt,
-            const std::optional<AxisOpt>& axis_opt_y = std::nullopt,
+            const std::optional<AxisOpt> &axis_opt_x = std::nullopt,
+            const std::optional<AxisOpt> &axis_opt_y = std::nullopt,
             double tick_interval_x = 0.0,
             double tick_interval_y = 0.0,
             int num_subticks_x = 0,
             int num_subticks_y = 0);
 
-        PlplotFig&
+        PlplotFig &
         DrawAxesBox3(
-            const std::optional<AxisOpt>& axis_opt_x = std::nullopt,
-            const std::optional<AxisOpt>& axis_opt_y = std::nullopt,
-            const std::optional<AxisOpt>& axis_opt_z = std::nullopt,
-            const char* axis_label_x = "",
-            const char* axis_label_y = "",
-            const char* axis_label_z = "",
+            const std::optional<AxisOpt> &axis_opt_x = std::nullopt,
+            const std::optional<AxisOpt> &axis_opt_y = std::nullopt,
+            const std::optional<AxisOpt> &axis_opt_z = std::nullopt,
+            const char *axis_label_x = "",
+            const char *axis_label_y = "",
+            const char *axis_label_z = "",
             double tick_interval_x = 0.0,
             double tick_interval_y = 0.0,
             double tick_interval_z = 0.0,
@@ -214,7 +214,7 @@ namespace erl::common {
          * @return
          * @note 17.13
          */
-        PlplotFig&
+        PlplotFig &
         SetCurrentColor(Color0 color);
 
         struct ColorBarOpt {
@@ -249,8 +249,8 @@ namespace erl::common {
             // PL_COLORBAR_LABEL_LEFT, PL_COLORBAR_LABEL_RIGHT, PL_COLORBAR_LABEL_TOP,
             // PL_COLORBAR_LABEL_BOTTOM
             std::vector<int> label_opts;
-            std::vector<const char*> label_texts;  // text of each label
-            int n_axes = 1;                        // number of axes, which must be >= 1
+            std::vector<const char *> label_texts;  // text of each label
+            int n_axes = 1;                         // number of axes, which must be >= 1
 
             // axis options
             std::vector<AxisOpt> axis_opts = {AxisOpt()
@@ -265,90 +265,90 @@ namespace erl::common {
             // control values for each axis color map
             std::vector<std::vector<double>> cmap_values;
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetOptOrientation(int opt_orientation_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetOptBackground(bool opt_background_ = true);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetOptBoundingBox(bool opt_bounding_box_ = true);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetOptType(int opt_type_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetOptLabelPosition(int opt_label_position_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetOptCap(int opt_cap_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetPosition(int position_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetPositionOffsetX(double position_offset_x_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetPositionOffsetY(double position_offset_y_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetWidth(double width_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetHeight(double height_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetBgColor0(int bg_color0_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetBboxLineColor0(int bbox_line_color0_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetBboxLineStyle(int bbox_line_style_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetLowCapColor(double low_cap_color_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetHighCapColor(double high_cap_color_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetContourLineColor0(int contour_line_color0_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetContourLineWidth(double contour_line_width_);
 
-            ColorBarOpt&
-            SetLabelOpts(const std::vector<int>& label_opts_);
+            ColorBarOpt &
+            SetLabelOpts(const std::vector<int> &label_opts_);
 
-            ColorBarOpt&
-            SetLabelTexts(const std::vector<const char*>& label_texts_);
+            ColorBarOpt &
+            SetLabelTexts(const std::vector<const char *> &label_texts_);
 
-            ColorBarOpt&
+            ColorBarOpt &
             SetNumAxes(int n_axes_);
 
-            ColorBarOpt&
-            SetAxisOpts(const std::vector<AxisOpt>& axis_opts_);
+            ColorBarOpt &
+            SetAxisOpts(const std::vector<AxisOpt> &axis_opts_);
 
-            ColorBarOpt&
-            SetAxisTickIntervals(const std::vector<double>& axis_tick_intervals_);
+            ColorBarOpt &
+            SetAxisTickIntervals(const std::vector<double> &axis_tick_intervals_);
 
-            ColorBarOpt&
-            SetAxisNumSubticks(const std::vector<int>& axis_num_subticks_);
+            ColorBarOpt &
+            SetAxisNumSubticks(const std::vector<int> &axis_num_subticks_);
 
-            ColorBarOpt&
-            SetColorMapValues(const std::vector<std::vector<double>>& cmap_values_);
+            ColorBarOpt &
+            SetColorMapValues(const std::vector<std::vector<double>> &cmap_values_);
 
-            ColorBarOpt&
-            AddColorMap(int idx, const std::vector<double>& cmap_values_, int stride = 1);
+            ColorBarOpt &
+            AddColorMap(int idx, const std::vector<double> &cmap_values_, int stride = 1);
         };
 
-        PlplotFig&
-        ColorBar(double& width_out, double& height_out, ColorBarOpt& opt);
+        PlplotFig &
+        ColorBar(double &width_out, double &height_out, ColorBarOpt &opt);
 
-        PlplotFig&
-        ColorBar(ColorBarOpt& opt);
+        PlplotFig &
+        ColorBar(ColorBarOpt &opt);
 
         struct HistOpt {
             bool scale_axis = true;        // scale the existing axes to fit the histogram
@@ -358,16 +358,16 @@ namespace erl::common {
 
             HistOpt() = default;
 
-            HistOpt&
+            HistOpt &
             ScaleAxis(bool scale_axis_ = true);
 
-            HistOpt&
+            HistOpt &
             IgnoreOutliers(bool ignore_outliers_ = true);
 
-            HistOpt&
+            HistOpt &
             NoExpand(bool no_expand_ = true);
 
-            HistOpt&
+            HistOpt &
             NoEmpty(bool no_empty_ = true);
 
             explicit
@@ -381,18 +381,18 @@ namespace erl::common {
             }
         };
 
-        PlplotFig&
+        PlplotFig &
         DrawHist(
-            const double* data,
+            const double *data,
             int n_data,
             double min_val,
             double max_val,
             int n_bins,
-            const HistOpt& hist_opt);
+            const HistOpt &hist_opt);
 
-        PlplotFig&
+        PlplotFig &
         DrawContour(
-            const double* data,
+            const double *data,
             int nx,
             int ny,
             double min_x,
@@ -400,7 +400,7 @@ namespace erl::common {
             double min_y,
             double max_y,
             bool col_major,
-            const std::vector<double>& levels);
+            const std::vector<double> &levels);
 
         /**
          *
@@ -413,7 +413,7 @@ namespace erl::common {
          * @return
          * @note 17.74, 17.155
          */
-        PlplotFig&
+        PlplotFig &
         SetLineStyle(
             int line_style,
             std::optional<int> line_nms = std::nullopt,
@@ -428,12 +428,12 @@ namespace erl::common {
          * @return
          * @note 17.69
          */
-        PlplotFig&
-        SetLabels(const char* x_label, const char* y_label, const char* title);
+        PlplotFig &
+        SetLabels(const char *x_label, const char *y_label, const char *title);
 
         struct LegendOpt {
             int n_legend;                       // number of legend entries
-            std::vector<const char*> texts;     // legend text of each entry
+            std::vector<const char *> texts;    // legend text of each entry
             std::vector<int> text_colors = {};  // legend text color of each entry
 
             // legend style of each entry, PL_LEGEND_COLOR_BOX | PL_LEGEND_LINE | PL_LEGEND_SYMBOL
@@ -441,7 +441,7 @@ namespace erl::common {
             std::vector<int> line_colors;       // legend line color of each entry
             std::vector<int> line_styles;       // legend line style of each entry
             std::vector<double> line_widths;    // legend line width of each entry
-            std::vector<const char*> symbols;   // legend symbol of each entry
+            std::vector<const char *> symbols;  // legend symbol of each entry
             std::vector<int> symbol_colors;     // legend symbol color of each entry
             std::vector<double> symbol_scales;  // legend symbol scale of each entry
             std::vector<int> symbol_sizes;      // legend symbol size of each entry
@@ -475,93 +475,93 @@ namespace erl::common {
             // text justification, 0: left, 0.5: center, 1: right
             double text_justification = 1.0;
 
-            LegendOpt(int n_legend_, std::vector<const char*> texts_);
+            LegendOpt(int n_legend_, std::vector<const char *> texts_);
 
-            LegendOpt&
+            LegendOpt &
             SetNumLegend(int n_legend_);
 
-            LegendOpt&
-            SetTexts(std::vector<const char*> texts_);
+            LegendOpt &
+            SetTexts(std::vector<const char *> texts_);
 
-            LegendOpt&
+            LegendOpt &
             SetTextColors(std::vector<int> text_colors_);
 
-            LegendOpt&
+            LegendOpt &
             SetStyles(std::vector<int> styles_);
 
-            LegendOpt&
+            LegendOpt &
             SetLineColors(std::vector<int> line_colors_);
 
-            LegendOpt&
+            LegendOpt &
             SetLineStyles(std::vector<int> line_styles_);
 
-            LegendOpt&
+            LegendOpt &
             SetLineWidths(std::vector<double> line_widths_);
 
-            LegendOpt&
-            SetSymbols(std::vector<const char*> symbols_);
+            LegendOpt &
+            SetSymbols(std::vector<const char *> symbols_);
 
-            LegendOpt&
+            LegendOpt &
             SetSymbolColors(std::vector<int> symbol_colors_);
 
-            LegendOpt&
+            LegendOpt &
             SetSymbolScales(std::vector<double> symbol_scales_);
 
-            LegendOpt&
+            LegendOpt &
             SetSymbolSizes(std::vector<int> symbol_sizes_);
 
-            LegendOpt&
+            LegendOpt &
             SetBoxColors(std::vector<int> box_colors_);
 
-            LegendOpt&
+            LegendOpt &
             SetBoxFillPatterns(std::vector<int> box_fill_patterns_);
 
-            LegendOpt&
+            LegendOpt &
             SetBoxScales(std::vector<double> box_scales_);
 
-            LegendOpt&
+            LegendOpt &
             SetBoxFillLineWidths(std::vector<double> box_fill_line_widths_);
 
-            LegendOpt&
+            LegendOpt &
             SetBoxStyle(int box_style_);
 
-            LegendOpt&
+            LegendOpt &
             SetPosition(int position_);
 
-            LegendOpt&
+            LegendOpt &
             SetPositionOffsetX(double position_offset_x_);
 
-            LegendOpt&
+            LegendOpt &
             SetPositionOffsetY(double position_offset_y_);
 
-            LegendOpt&
+            LegendOpt &
             SetWidth(double width_);
 
-            LegendOpt&
+            LegendOpt &
             SetBgColor0(int bg_color0_);
 
-            LegendOpt&
+            LegendOpt &
             SetLegendBoxLineColor0(int legend_box_line_color0_);
 
-            LegendOpt&
+            LegendOpt &
             SetLegendBoxLineStyle(int legend_box_line_style_);
 
-            LegendOpt&
+            LegendOpt &
             SetNumRows(int n_row_);
 
-            LegendOpt&
+            LegendOpt &
             SetNumCols(int n_col_);
 
-            LegendOpt&
+            LegendOpt &
             SetTextOffset(double text_offset_);
 
-            LegendOpt&
+            LegendOpt &
             SetTextScale(double text_scale_);
 
-            LegendOpt&
+            LegendOpt &
             SetTextSpacing(double text_spacing_);
 
-            LegendOpt&
+            LegendOpt &
             SetTextJustification(double text_justification_);
         };
 
@@ -572,11 +572,11 @@ namespace erl::common {
          * @return
          * @note 17.70
          */
-        PlplotFig&
-        Legend(double& width_out, double& height_out, const LegendOpt& opt);
+        PlplotFig &
+        Legend(double &width_out, double &height_out, const LegendOpt &opt);
 
-        PlplotFig&
-        Legend(const LegendOpt& opt);
+        PlplotFig &
+        Legend(const LegendOpt &opt);
 
         /**
          * Draw a line in 2D.
@@ -586,8 +586,8 @@ namespace erl::common {
          * @return
          * @note 17.72
          */
-        PlplotFig&
-        DrawLine(int num_points, const double* xs, const double* ys);
+        PlplotFig &
+        DrawLine(int num_points, const double *xs, const double *ys);
 
         /**
          * Draw a line in 3D.
@@ -598,11 +598,11 @@ namespace erl::common {
          * @return
          * @note 17.73
          */
-        PlplotFig&
-        DrawLine3(int num_points, const double* xs, const double* ys, const double* zs);
+        PlplotFig &
+        DrawLine3(int num_points, const double *xs, const double *ys, const double *zs);
 
-        PlplotFig&
-        SetTitle(const char* title, double displacement = 2.0, double pos = 0.5, double just = 0.5);
+        PlplotFig &
+        SetTitle(const char *title, double displacement = 2.0, double pos = 0.5, double just = 0.5);
 
         /**
          * Place x-axis label
@@ -618,9 +618,9 @@ namespace erl::common {
          * @return
          * @note 17.84
          */
-        PlplotFig&
+        PlplotFig &
         SetAxisLabelX(
-            const char* text,
+            const char *text,
             bool top = false,
             bool perpendicular = false,
             double displacement = 3.2,
@@ -641,9 +641,9 @@ namespace erl::common {
          * @return
          * @note 17.84
          */
-        PlplotFig&
+        PlplotFig &
         SetAxisLabelY(
-            const char* text,
+            const char *text,
             bool right = false,
             bool perpendicular = false,
             double displacement = 5.0,
@@ -664,9 +664,9 @@ namespace erl::common {
          * @return
          * @note 17.85
          */
-        PlplotFig&
+        PlplotFig &
         SetAxis3LabelX(
-            const char* text,
+            const char *text,
             bool opposite = false,
             bool perpendicular = false,
             double displacement = 5.0,
@@ -687,9 +687,9 @@ namespace erl::common {
          * @return
          * @note 17.85
          */
-        PlplotFig&
+        PlplotFig &
         SetAxis3LabelY(
-            const char* text,
+            const char *text,
             bool opposite = false,
             bool perpendicular = false,
             double displacement = 5.0,
@@ -710,9 +710,9 @@ namespace erl::common {
          * @return
          * @note 17.85
          */
-        PlplotFig&
+        PlplotFig &
         SetAxis3LabelZ(
-            const char* text,
+            const char *text,
             bool opposite = false,
             bool perpendicular = false,
             double displacement = 5.0,
@@ -731,7 +731,7 @@ namespace erl::common {
             CrossLines = 8,
         };
 
-        PlplotFig&
+        PlplotFig &
         SetAreaFillPattern(AreaFillPattern pattern);
 
         /**
@@ -747,9 +747,9 @@ namespace erl::common {
          * @return
          * @note 17.97
          */
-        PlplotFig&
+        PlplotFig &
         PutText(
-            const char* text,
+            const char *text,
             double x,
             double y,
             double dx = 0,
@@ -776,9 +776,9 @@ namespace erl::common {
          * @return
          * @note 17.98
          */
-        PlplotFig&
+        PlplotFig &
         PutText3(
-            const char* text,
+            const char *text,
             double wx,
             double wy,
             double wz,
@@ -798,7 +798,7 @@ namespace erl::common {
             JetReversed = 3,
         };
 
-        PlplotFig&
+        PlplotFig &
         SetColorMap(int map_index, ColorMap cmap = Default0);
 
         /**
@@ -808,7 +808,7 @@ namespace erl::common {
          * @return
          * @note 17.102
          */
-        PlplotFig&
+        PlplotFig &
         SetFontSize(double height_mm = 0.0, double scale = 1.0);
 
         /**
@@ -821,7 +821,7 @@ namespace erl::common {
          * @return
          * @note 17.113
          */
-        PlplotFig&
+        PlplotFig &
         SetCurrentColor0(int index, int r, int g, int b, double alpha);
 
         /**
@@ -832,7 +832,7 @@ namespace erl::common {
          * @return
          * @note 17.131
          */
-        PlplotFig&
+        PlplotFig &
         SetFont(int family = PL_FCI_SANS, int style = PL_FCI_UPRIGHT, int weight = PL_FCI_MEDIUM);
 
         struct ShadesOpt {
@@ -852,54 +852,54 @@ namespace erl::common {
             PLTRANSFORM_callback transform_callback = nullptr;  // transform data to the viewport
             PLPointer transform_data = nullptr;
 
-            ShadesOpt&
+            ShadesOpt &
             SetDefinedCallback(PLDEFINED_callback defined_callback_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetXMin(double x_min_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetXMax(double x_max_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetYMin(double y_min_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetYMax(double y_max_);
 
-            ShadesOpt&
-            SetColorLevels(const std::vector<double>& color_levels_);
+            ShadesOpt &
+            SetColorLevels(const std::vector<double> &color_levels_);
 
-            ShadesOpt&
-            SetColorLevels(const double* z, int n_rows, int n_cols, int n_levels);
+            ShadesOpt &
+            SetColorLevels(const double *z, int n_rows, int n_cols, int n_levels);
 
-            ShadesOpt&
+            ShadesOpt &
             SetColorLevels(double z_min, double z_max, int n_levels);
 
-            ShadesOpt&
+            ShadesOpt &
             SetFillWidth(double fill_width_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetContourColor0(int contour_color0_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetContourLineWidth(double contour_line_width_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetFillCallback(PLFILL_callback fill_callback_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetRectangular(bool rectangular_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetTransformCallback(PLTRANSFORM_callback transform_callback_);
 
-            ShadesOpt&
+            ShadesOpt &
             SetTransformData(PLPointer transform_data_);
         };
 
-        PlplotFig&
-        Shades(const double* z, int nx, int ny, bool col_major, const ShadesOpt& opt);
+        PlplotFig &
+        Shades(const double *z, int nx, int ny, bool col_major, const ShadesOpt &opt);
 
         /**
          * Split the window into subplots (subpages).
@@ -908,7 +908,7 @@ namespace erl::common {
          * @return
          * @note 17.145
          */
-        PlplotFig&
+        PlplotFig &
         Subplots(int num_cols, int num_rows);
 
         /**
@@ -920,12 +920,12 @@ namespace erl::common {
          * @return
          * @note 17.150
          */
-        PlplotFig&
+        PlplotFig &
         Scatter(
             int num_points,
-            const double* xs,
-            const double* ys,
-            const char* marker_utf8 = "#(728)");
+            const double *xs,
+            const double *ys,
+            const char *marker_utf8 = "#(728)");
 
         /**
          * Draw a scatter plot (glyph) in 3D.
@@ -937,13 +937,13 @@ namespace erl::common {
          * @return
          * @note 17.151
          */
-        PlplotFig&
+        PlplotFig &
         Scatter3D(
             int num_points,
-            const double* xs,
-            const double* ys,
-            const double* zs,
-            const char* marker_utf8 = "#(728)");
+            const double *xs,
+            const double *ys,
+            const double *zs,
+            const char *marker_utf8 = "#(728)");
 
         /**
          * Set the margin of the plot.
@@ -954,7 +954,7 @@ namespace erl::common {
          * @return
          * @note 17.169
          */
-        PlplotFig&
+        PlplotFig &
         SetMargin(double left, double right, double bottom, double top);
 
         /**
@@ -962,7 +962,7 @@ namespace erl::common {
          * @return
          * @note 17.170
          */
-        PlplotFig&
+        PlplotFig &
         SetDefaultMargin();
 
         /**
@@ -971,7 +971,7 @@ namespace erl::common {
          * @return
          * @note 17.172
          */
-        PlplotFig&
+        PlplotFig &
         SetPenWidth(int width);
 
         /**
@@ -983,13 +983,13 @@ namespace erl::common {
          * @return
          * @note 17.173
          */
-        PlplotFig&
+        PlplotFig &
         SetAxisLimits(double x_min, double x_max, double y_min, double y_max);
 
-        PlplotFig&
+        PlplotFig &
         VectorField(
-            const double* u,
-            const double* v,
+            const double *u,
+            const double *v,
             int nx,
             int ny,
             double min_x,
@@ -999,12 +999,12 @@ namespace erl::common {
             bool col_major,
             double scale);
 
-        PlplotFig&
+        PlplotFig &
         VectorField(
-            const double* x,
-            const double* y,
-            const double* u,
-            const double* v,
+            const double *x,
+            const double *y,
+            const double *u,
+            const double *v,
             int n,
             double scale);
 
@@ -1019,11 +1019,11 @@ namespace erl::common {
                 double max_x,
                 double min_y,
                 double max_y,
-                double** xg,
-                double** yg);
+                double **xg,
+                double **yg);
 
             static void
-            FillGrid(int nx, int ny, const double* x, const double* y, double** xg, double** yg);
+            FillGrid(int nx, int ny, const double *x, const double *y, double **xg, double **yg);
         };
 
         class Grid {
@@ -1059,21 +1059,21 @@ namespace erl::common {
                 double min_y,
                 double max_y);
 
-            Grid2(std::shared_ptr<plstream> pls, const double* x, const double* y, int n);
+            Grid2(std::shared_ptr<plstream> pls, const double *x, const double *y, int n);
 
             ~Grid2();
         };
 
         template<typename T>
-        class ColMajorPointers : std::vector<T*> {
-            const T* m_data_;
+        class ColMajorPointers : std::vector<const T *> {
+            const T *m_data_;
             Eigen::MatrixX<T> m_matrix_;
 
         public:
-            ColMajorPointers(const T* data, int n_rows, int n_cols, bool col_major);
+            ColMajorPointers(const T *data, int n_rows, int n_cols, bool col_major);
 
-            using std::vector<T*>::operator[];
-            using std::vector<T*>::data;
+            using std::vector<const T *>::operator[];
+            using std::vector<const T *>::data;
         };
     };
 

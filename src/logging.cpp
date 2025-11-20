@@ -2,7 +2,11 @@
     #include "erl_common/logging.hpp"
 
 namespace erl::common {
+    #ifndef NDEBUG
+    LoggingLevel Logging::s_level_ = kDebug;
+    #else
     LoggingLevel Logging::s_level_ = kInfo;
+    #endif
     std::mutex Logging::g_print_mutex;
 
     void

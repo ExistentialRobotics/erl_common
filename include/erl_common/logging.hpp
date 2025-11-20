@@ -295,18 +295,18 @@ namespace erl::common {
                     fmt::format(__VA_ARGS__)); \
             } while (false)
 
+        #define ERL_DEBUG(...)                 \
+            do {                               \
+                erl::common::Logging::Debug(   \
+                    "{}:{}: {}",               \
+                    __FILE__,                  \
+                    __LINE__,                  \
+                    fmt::format(__VA_ARGS__)); \
+            } while (false)
+
         #ifndef NDEBUG
-            #define ERL_DEBUG(...)                 \
-                do {                               \
-                    erl::common::Logging::Debug(   \
-                        "{}:{}: {}",               \
-                        __FILE__,                  \
-                        __LINE__,                  \
-                        fmt::format(__VA_ARGS__)); \
-                } while (false)
             #define ERL_DEBUG_ASSERT(expr, ...) ERL_ASSERTM(expr, __VA_ARGS__)
         #else
-            #define ERL_DEBUG(...)              ((void) 0)
             #define ERL_DEBUG_ASSERT(expr, ...) (void) 0
         #endif
     #endif

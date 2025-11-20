@@ -11,9 +11,10 @@ erl_config_openmp() # OpenMP support
 erl_config_eigen() # Eigen3 library
 erl_config_absl()  # Abseil library
 
-# file format libraries
+# file libraries
 erl_config_json()
 erl_config_yaml()
+erl_config_libzip()
 
 # image processing, visualization libraries
 erl_config_opencv()
