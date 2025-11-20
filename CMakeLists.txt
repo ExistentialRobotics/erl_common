@@ -32,7 +32,7 @@ erl_collect_targets(LIBRARIES ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC
                            $<BUILD_INTERFACE:${${PROJECT_NAME}_INCLUDE_DIR}>
                            $<INSTALL_INTERFACE:${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}>)
-target_include_directories(${PROJECT_NAME} PUBLIC ${YAML_CPP_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${YAML_CPP_INCLUDE_DIR} ${OpenMP_INCLUDE_DIRS})
 target_link_directories(${PROJECT_NAME} PUBLIC ${YAML_CPP_LIBRARY_DIR})
 erl_target_dependencies(
     ${PROJECT_NAME} PUBLIC

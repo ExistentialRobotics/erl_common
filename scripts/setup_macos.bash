@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/zsh
 
 brew install \
     cmake \
