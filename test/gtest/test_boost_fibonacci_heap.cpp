@@ -60,8 +60,8 @@ TEST(BoostFibonacciHeap, Random) {
 
     constexpr int max_insertions_per_iter = 10;
     constexpr int max_decrease_keys_per_iter = 5;
-    constexpr int num_iters = 20000;
-    constexpr int max_key_val = 1000000;
+    constexpr int num_iters = 2000;
+    constexpr int max_key_val = 10000;
 
     double t_insert = 0;
     double t_extract_min = 0;

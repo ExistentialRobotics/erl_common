@@ -12,9 +12,17 @@ namespace erl::common {
         : m_alpha_enabled_(alpha_enabled), m_pls_(std::make_shared<plstream>()) {
 
         if (alpha_enabled) {
+    #if CAIROMM_VERSION >= 116
+            m_cairo_img_ = Cairo::ImageSurface::create(Cairo::Surface::Format::ARGB32, width, height);
+    #else
             m_cairo_img_ = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, height);
+    #endif
         } else {
+    #if CAIROMM_VERSION >= 116
+            m_cairo_img_ = Cairo::ImageSurface::create(Cairo::Surface::Format::RGB24, width, height);
+    #else
             m_cairo_img_ = Cairo::ImageSurface::create(Cairo::FORMAT_RGB24, width, height);
+    #endif
         }
         m_cairo_ctx_ = Cairo::Context::create(m_cairo_img_);
 

@@ -1,6 +1,4 @@
 #pragma once
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
 #ifndef FMT_HEADER_ONLY
     #define FMT_HEADER_ONLY
 #endif
@@ -16,7 +14,6 @@
 #if FMT_VERSION >= 90000
     #include <fmt/std.h>
 #endif
-#pragma GCC diagnostic pop
 
 // Eigen support for fmt library
 

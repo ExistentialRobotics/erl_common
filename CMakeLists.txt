@@ -32,12 +32,18 @@ erl_collect_targets(LIBRARIES ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC
                            $<BUILD_INTERFACE:${${PROJECT_NAME}_INCLUDE_DIR}>
                            $<INSTALL_INTERFACE:${${PROJECT_NAME}_INSTALL_INCLUDE_DIR}>)
+target_include_directories(${PROJECT_NAME} PUBLIC ${YAML_CPP_INCLUDE_DIR})
+target_link_directories(${PROJECT_NAME} PUBLIC ${YAML_CPP_LIBRARY_DIR})
 erl_target_dependencies(
     ${PROJECT_NAME} PUBLIC
-    fmt::fmt-header-only yaml-cpp nlohmann_json::nlohmann_json
+    fmt::fmt-header-only 
+    nlohmann_json::nlohmann_json
+    ${YAML_CPP_LIBRARIES}
     Boost::boost Boost::program_options Boost::graph
-    Eigen3::Eigen ${OpenMP_LIBRARIES}
-    ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
+    Eigen3::Eigen 
+    ${OpenMP_LIBRARIES}
+    ${BLAS_LIBRARIES} 
+    ${LAPACK_LIBRARIES}
     ${OpenCV_LIBRARIES} absl::hash)
 if (ERL_USE_INTEL_MKL)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MKL_INCLUDE_DIRS})
@@ -46,8 +52,8 @@ if (ERL_USE_PANGOLIN)
     target_link_libraries(${PROJECT_NAME} PUBLIC ${Pangolin_LIBRARIES})
 endif ()
 if (ERL_USE_PLPLOT)
-    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${cairomm-1.0_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PUBLIC PLPLOT::plplot PLPLOT::plplotcxx ${cairomm-1.0_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${cairomm_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC PLPLOT::plplot PLPLOT::plplotcxx ${cairomm_LIBRARIES})
 endif ()
 if (ERL_USE_LIBZIP)
     target_link_libraries(${PROJECT_NAME} PUBLIC libzip::zip)

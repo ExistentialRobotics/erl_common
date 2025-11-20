@@ -22,7 +22,7 @@ TEST(PlplotFig, Demo04) {
 
     // page 1
 
-    fig.Clear(0.0, 0.0, 0.0)  //
+    fig.Clear(0.0, 0.0, 0.0)
         .SetMargin(0.15, 0.85, 0.15, 0.9)
         .SetAxisLimits(-2.0, 3.0, -80.0, 0.0)
         .SetCurrentColor(PlplotFig::Color0::Red)
@@ -73,7 +73,7 @@ TEST(PlplotFig, Demo04) {
     cv::waitKey(2000);
 
     // page 2
-    fig.Clear()  //
+    fig.Clear(0.0, 0.0, 0.0)
         .SetMargin(0.15, 0.85, 0.15, 0.9)
         .SetAxisLimits(-2.0, 3.0, -80.0, 0.0)
         .SetCurrentColor(PlplotFig::Color0::Red)
@@ -130,7 +130,7 @@ TEST(PlplotFig, Demo16) {
     PlplotFig fig(640, 480, true);
     PlplotFig::ShadesOpt shades_opt;
     shades_opt.SetColorLevels(z.data(), nx, ny, ns).SetContourColor0(15).SetContourLineWidth(1.0);
-    fig.Clear()
+    fig.Clear(0.0, 0.0, 0.0)
         .SetMargin(0.15, 0.85, 0.15, 0.85)
         .SetAxisLimits(-1.0, 1.0, -1.0, 1.0)
         .SetCurrentColor(PlplotFig::Color0::White)

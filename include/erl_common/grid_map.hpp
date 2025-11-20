@@ -5,6 +5,8 @@
 #include "template_helper.hpp"
 #include "tensor.hpp"
 
+#include <omp.h>
+
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
