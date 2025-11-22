@@ -38,7 +38,7 @@ namespace erl::common {
         std::shuffle(indices.begin(), indices.end(), g_random_engine);
         ERL_ASSERTM(ratio > 0.0 && ratio <= 1.0, "ratio must be in (0.0, 1.0]");
         if (ratio < 1.0) {
-            num_samples =
+            num_samples =  // static_cast from positive real to unsigned integer is fine.
                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_samples) * ratio));
             indices.resize(num_samples);
         }

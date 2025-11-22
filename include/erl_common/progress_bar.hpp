@@ -266,7 +266,7 @@ namespace erl::common {
             std::string symbol_buffer = m_setting_->GetSymbolBuffer();
             std::size_t n = symbol_buffer.size() / 2;
             std::size_t bar_width = n - count_str.size() - time_str.size();
-            std::size_t offset =
+            std::size_t offset =  // static_cast from positive real to unsigned integer is fine.
                 n - static_cast<std::size_t>(static_cast<double>(bar_width) * m_fraction_);
 
             std::stringstream ss_bar;
