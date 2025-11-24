@@ -14,4 +14,5 @@ brew install \
     opencv \
     cairomm \
     plplot \
-    pybind11
+    pybind11 \
+    libzip

@@ -24,7 +24,14 @@ namespace erl::common::ros_params {
                 qos_preset == "system_default") {
                 m_qos_ = rclcpp::SystemDefaultsQoS();
             } else if (qos_preset == "best_available") {
+    #if ROS_DISTRO == humble
+                ERL_WARN(
+                    "rclcpp::BestAvailableQoS is not available in ROS Humble, using "
+                    "SystemDefaultsQoS instead.");
+                m_qos_ = rclcpp::SystemDefaultsQoS();
+    #else
                 m_qos_ = rclcpp::BestAvailableQoS();
+    #endif
             } else {
                 ERL_ERROR("Unknown qos_preset: {}", qos_preset);
                 return false;
@@ -50,7 +57,13 @@ namespace erl::common::ros_params {
             } else if (qos_reliability == "best_effort") {
                 m_qos_.best_effort();
             } else if (qos_reliability == "best_available") {
+    #if ROS_DISTRO == humble
+                ERL_WARN(
+                    "best_available is not available in ROS Humble, using reliable instead.");
+                m_qos_.reliable();
+    #else
                 m_qos_.reliability_best_available();
+    #endif
             } else if (qos_reliability == "system_default") {
                 m_qos_.reliability(rclcpp::ReliabilityPolicy::SystemDefault);
             } else {
@@ -65,7 +78,13 @@ namespace erl::common::ros_params {
             } else if (qos_durability == "transient_local") {
                 m_qos_.transient_local();
             } else if (qos_durability == "best_available") {
+    #if ROS_DISTRO == humble
+                ERL_WARN(
+                    "durability best_available is not available in ROS Humble, using volatile instead.");
+                m_qos_.durability_volatile();
+    #else
                 m_qos_.durability_best_available();
+    #endif
             } else if (qos_durability == "system_default") {
                 m_qos_.durability(rclcpp::DurabilityPolicy::SystemDefault);
             } else {
@@ -90,7 +109,13 @@ namespace erl::common::ros_params {
             } else if (qos_liveliness == "manual_by_topic") {
                 m_qos_.liveliness(rclcpp::LivelinessPolicy::ManualByTopic);
             } else if (qos_liveliness == "best_available") {
+    #if ROS_DISTRO == humble
+                ERL_WARN(
+                    "liveliness best_available is not available in ROS Humble, using automatic instead.");
+                m_qos_.liveliness(rclcpp::LivelinessPolicy::Automatic);
+    #else
                 m_qos_.liveliness(rclcpp::LivelinessPolicy::BestAvailable);
+    #endif
             } else if (qos_liveliness == "system_default") {
                 m_qos_.liveliness(rclcpp::LivelinessPolicy::SystemDefault);
             } else {

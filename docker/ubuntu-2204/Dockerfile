@@ -59,7 +59,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     libyaml-cpp-dev \
     pybind11-dev \
     libgtest-dev \
-    libabsl-dev
+    libabsl-dev \
+    libzip-dev \
+    zipcmp \
+    zipmerge \
+    ziptool
 
 RUN PYTHON_VERSION=$(python3 -c "import sys;print(sys.version_info.major,sys.version_info.minor,sep='')") && \
     ln -s /usr/lib/python3/dist-packages/_Pltk_init.cpython-${PYTHON_VERSION}-x86_64-linux-gnu.so /usr/lib/python3/dist-packages/_Pltk_init.so && \

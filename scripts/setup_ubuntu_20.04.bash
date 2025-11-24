@@ -35,7 +35,11 @@ sudo apt install -y \
     libcairomm-1.0-dev \
     libyaml-cpp-dev \
     pybind11-dev \
-    libgtest-dev
+    libgtest-dev \
+    libzip-dev \
+    zipcmp \
+    zipmerge \
+    ziptool
 
 # install abseil-cpp
 git clone --recursive https://github.com/abseil/abseil-cpp.git && cd abseil-cpp && \

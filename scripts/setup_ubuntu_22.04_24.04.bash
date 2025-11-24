@@ -41,7 +41,12 @@ sudo apt install -y \
     libcairomm-1.0-dev \
     libyaml-cpp-dev \
     pybind11-dev \
-    libgtest-dev
+    libgtest-dev \
+    libabsl-dev \
+    libzip-dev \
+    zipcmp \
+    zipmerge \
+    ziptool
 
 # patch
 sudo touch /usr/lib/python3/dist-packages/_Pltk_init.so

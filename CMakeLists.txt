@@ -56,7 +56,7 @@ if (ERL_USE_PLPLOT)
     target_link_libraries(${PROJECT_NAME} PUBLIC PLPLOT::plplot PLPLOT::plplotcxx ${cairomm_LIBRARIES})
 endif ()
 if (ERL_USE_LIBZIP)
-    target_link_libraries(${PROJECT_NAME} PUBLIC libzip::zip)
+    target_link_libraries(${PROJECT_NAME} PUBLIC zip)
 endif ()
 erl_dump_compile_definitions(include/${PROJECT_NAME}/compile_definitions.hpp)
 
