@@ -3,6 +3,7 @@
 #include <any>
 #include <fstream>
 #include <stack>
+#include <string>
 
 namespace erl::common {
 
@@ -148,44 +149,59 @@ namespace erl::common {
     bool
     YamlableBase::FromCommandLine(const int argc, const char *argv[]) {
 #ifdef ERL_USE_BOOST
-        program_options::ProgramOptionsData po_data;
+        program_options::ProgramOptionsData po_data(
+            fmt::format("Options for {}", type_name(*this)),
+            120);
 
         namespace po = boost::program_options;
 
         std::string config_file;
         po_data.desc.add_options()           //
             ("help,h", "Show help message")  //
-            ("config", po::value<std::string>(&config_file), "Path to YAML config file");
+            ("config",
+             po::value<std::string>(&config_file)->value_name("CONFIG"),
+             "Path to YAML config file");
         auto parsed =
             po::command_line_parser(argc, argv).options(po_data.desc).allow_unregistered().run();
         po::store(parsed, po_data.vm);
         po::notify(po_data.vm);
-        const bool print_help = po_data.vm.count("help") > 0;
+        po_data.print_help = po_data.vm.count("help") > 0;
 
         if (!config_file.empty()) {
             ERL_ASSERTM(
-                std::filesystem::exists(config_file),
+                po_data.print_help || std::filesystem::exists(config_file),
                 "Config file does not exist: {}",
                 config_file);
-            ERL_ASSERTM(FromYamlFile(config_file), "Failed to load config file: {}", config_file);
+            ERL_ASSERTM(
+                po_data.print_help || FromYamlFile(config_file),
+                "Failed to load config file: {}",
+                config_file);
         }
 
         po_data.args = po::collect_unrecognized(parsed.options, po::include_positional);
         po_data.vm.clear();
 
-        if (!FromCommandLineImpl(po_data, "")) { return false; }
+        FromCommandLineImpl(po_data, "");
 
         if (!po_data.args.empty()) {
             ERL_ERROR("Unrecognized arguments: {}", po_data.args);
             exit(EXIT_FAILURE);
         }
 
-        if (print_help) {
+        if (po_data.print_help) {
             std::cout << "Usage: " << argv[0] << " [options]" << std::endl
                       << po_data.desc << std::endl;
             exit(EXIT_SUCCESS);
         }
-        return true;
+
+        if (!po_data.Successful()) {
+            ERL_WARN(
+                "Failed to parse command line arguments, errors:\n{}",
+                fmt::join(po_data.error_msgs.begin(), po_data.error_msgs.end(), "\n"));
+            return false;
+        }
+
+        return this->PostDeserialization();  // call post deserialization hook
 #else
         (void) argc;
         (void) argv;

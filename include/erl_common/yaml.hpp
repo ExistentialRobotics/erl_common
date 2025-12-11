@@ -45,7 +45,20 @@ namespace erl::common {
     struct YamlableBase {
         using Factory = FactoryPattern<YamlableBase>;
 
+        YamlableBase() = default;
+        YamlableBase(const YamlableBase &) = default;
+        YamlableBase &
+        operator=(const YamlableBase &) = default;
+        YamlableBase(YamlableBase &&) = default;
+        YamlableBase &
+        operator=(YamlableBase &&) = default;
+
         virtual ~YamlableBase() = default;
+
+        static constexpr std::size_t
+        GetSchemaSize() {
+            return 0;
+        }
 
         template<typename Derived>
         static bool
@@ -128,12 +141,10 @@ namespace erl::common {
 
 #ifdef ERL_USE_BOOST
 
-        virtual bool
+        virtual void
         FromCommandLineImpl(
             program_options::ProgramOptionsData & /*po_data*/,
-            const std::string & /*prefix*/) {
-            return true;
-        }
+            const std::string & /*prefix*/) {}
 
 #endif
 
@@ -397,7 +408,7 @@ namespace erl::common {
         // and can't be used directly in a fold *expression*.
         template<typename T_Class, typename T_MemberInfo>
         bool
-        DecodeMemberDispatch(const YAML::Node &node, T_Class &obj, T_MemberInfo &&info) {
+        DecodeMemberDispatch(const YAML::Node &node, T_Class &obj, T_MemberInfo &info) {
             if (!node[info.name]) {
                 ERL_WARN("{} not found in YAML node during decoding.", info.name);
                 return false;
@@ -431,11 +442,10 @@ namespace erl::common {
         // decoding smart pointers to YamlableBase derived types
         template<typename M>
         static std::enable_if_t<
-            is_smart_ptr<M>::value && std::is_base_of_v<YamlableBase, typename M::element_type>,
-            bool>
+            is_smart_ptr<M>::value && std::is_base_of_v<YamlableBase, typename M::element_type>>
         LoadMemberFromCommandLine(
             program_options::ProgramOptionsData &po_data,
-            std::string option_name,
+            const std::string &option_name,
             M &member,
             const std::string &type,
             const bool poly) {
@@ -445,99 +455,81 @@ namespace erl::common {
             } else {
                 NoPolymorphism<M>::run(member, "");
             }
-            return member->FromCommandLineImpl(po_data, option_name);
+            member->FromCommandLineImpl(po_data, option_name);
         }
 
         // decoding smart pointers to non-YamlableBase types
         template<typename M>
         std::enable_if_t<
-            is_smart_ptr_v<M> && !std::is_base_of_v<YamlableBase, typename M::element_type>,
-            bool>
+            is_smart_ptr_v<M> && !std::is_base_of_v<YamlableBase, typename M::element_type>>
         LoadMemberFromCommandLine(
             program_options::ProgramOptionsData &po_data,
-            std::string option_name,
+            const std::string &option_name,
             M &member,
             const std::string & /*type*/,
             const bool /*poly*/) {
             using ElementType = typename M::element_type;
             member = std::make_shared<ElementType>();
             try {
-                po_data.GetOptionParser<M>(option_name)->Run(po_data, option_name, *member);
-            } catch (std::exception &e) {
-                ERL_WARN("Failed to load member {} from command line: {}", option_name, e.what());
-                return false;
-            }
-            return true;
+                po_data.GetOptionParser<ElementType>(option_name, member.get())->Run();
+            } catch (std::exception &e) { po_data.RecordError(option_name, e.what()); }
         }
 
         // decoding YamlableBase derived types
         template<typename M>
-        std::enable_if_t<std::is_base_of_v<YamlableBase, M>, bool>
+        std::enable_if_t<std::is_base_of_v<YamlableBase, M>>
         LoadMemberFromCommandLine(
             program_options::ProgramOptionsData &po_data,
-            std::string option_name,
+            const std::string &option_name,
             M &member,
             const std::string & /*type*/,
             const bool /*poly*/) {
-            return member.FromCommandLineImpl(po_data, option_name);
+            member.FromCommandLineImpl(po_data, option_name);
         }
 
         // decoding other types
         template<typename M>
         std::enable_if_t<
-            !is_smart_ptr_v<M> &&                     // not a smart pointer
-                !is_weak_ptr_v<M> &&                  // not a weak pointer
-                !std::is_pointer_v<M> &&              // not a raw pointer
-                !std::is_base_of_v<YamlableBase, M>,  // not YamlableBase derived
-            bool>
+            !is_smart_ptr_v<M> &&                 // not a smart pointer
+            !is_weak_ptr_v<M> &&                  // not a weak pointer
+            !std::is_pointer_v<M> &&              // not a raw pointer
+            !std::is_base_of_v<YamlableBase, M>>  // not YamlableBase derived
         LoadMemberFromCommandLine(
             program_options::ProgramOptionsData &po_data,
-            std::string option_name,
+            const std::string &option_name,
             M &member,
             const std::string & /*type*/,
             const bool /*poly*/) {
             try {
-                po_data.GetOptionParser<M>(option_name)->Run(po_data, option_name, member);
-            } catch (std::exception &e) {
-                ERL_WARN("Failed to load member {} from command line: {}", option_name, e.what());
-                return false;
-            }
-            return true;
+                auto parser = po_data.GetOptionParser<M>(option_name, &member);
+                parser->Run();
+            } catch (std::exception &e) { po_data.RecordError(option_name, e.what()); }
         }
 
         template<typename T_Class, typename T_MemberInfo>
-        bool
+        void
         LoadMemberFromCommandLineDispatch(
             program_options::ProgramOptionsData &po_data,
             const std::string &prefix,
             T_Class &obj,
-            T_MemberInfo &&info) {
+            T_MemberInfo &info) {
 
             // Get the type of the member (e.g., int, std::string)
             using M = std::remove_const_t<std::remove_reference_t<decltype(obj.*(info.ptr))>>;
 
-            try {
-                std::string &&option_name = program_options::GetBoostOptionName(prefix, info.name);
-                if (info.type_ptr == nullptr) {
-                    return LoadMemberFromCommandLine<M>(
-                        po_data,
-                        option_name,
-                        obj.*(info.ptr),
-                        "",
-                        false);
-                }
-
-                // decode the member
-                return LoadMemberFromCommandLine<M>(
-                    po_data,
-                    option_name,
-                    obj.*(info.ptr),
-                    obj.*(info.type_ptr),
-                    true);
-            } catch (std::exception &e) {
-                ERL_WARN("Failed to load member {} from command line: {}", info.name, e.what());
-                return false;
+            std::string option_name = program_options::GetBoostOptionName(prefix, info.name);
+            if (info.type_ptr == nullptr) {
+                LoadMemberFromCommandLine<M>(po_data, option_name, obj.*(info.ptr), "", false);
+                return;
             }
+
+            // decode the member
+            LoadMemberFromCommandLine<M>(
+                po_data,
+                option_name,
+                obj.*(info.ptr),
+                obj.*(info.type_ptr),
+                true);
         }
 
 #endif
@@ -766,6 +758,14 @@ namespace erl::common {
             return YAML::convert<T>::encode(*static_cast<const T *>(this));
         }
 
+        static constexpr std::size_t
+        GetSchemaSize() {
+            if (std::is_base_of_v<YamlableBase, Base> && !std::is_same_v<YamlableBase, Base>) {
+                return schema_size_v<T> + Base::GetSchemaSize();
+            }
+            return schema_size_v<T>;
+        }
+
         /**
          * Template specialization for YAML conversion of erl::common::Yamlable types.
          */
@@ -809,31 +809,28 @@ namespace erl::common {
         };
 
 #ifdef ERL_USE_BOOST
-        bool
+        void
         FromCommandLineImpl(program_options::ProgramOptionsData &po_data, const std::string &prefix)
             override {
 
             // add options from base class first
             if (std::is_base_of_v<YamlableBase, Base> && !std::is_same_v<YamlableBase, Base>) {
-                if (!Base::FromCommandLineImpl(po_data, prefix)) { return false; }
+                Base::FromCommandLineImpl(po_data, prefix);
+                if (!po_data.Successful()) { return; }
             }
 
             using namespace yaml_helper;
 
-            bool success = true;
             std::apply(
                 [&](const auto &...member_info) {
-                    success &=
-                        ((LoadMemberFromCommandLineDispatch(
-                             po_data,
-                             prefix,
-                             *reinterpret_cast<T *>(this),
-                             member_info)) &&
-                         ...);
+                    (LoadMemberFromCommandLineDispatch(
+                         po_data,
+                         prefix,
+                         *dynamic_cast<T *>(this),
+                         member_info),
+                     ...);
                 },
                 T::Schema);
-            success &= this->PostDeserialization();  // call post deserialization hook
-            return success;
         }
 #endif
 
@@ -1028,8 +1025,12 @@ struct YAML::convert : public T::ConvertImpl {};
  *     ERL_REFLECT_ENUM_MEMBER("red", Color::kRed),
  *     ERL_REFLECT_ENUM_MEMBER("blue", Color::kBlue));
  *
+ * ERL_PARSE_ENUM(T, N) can be used to define the conversion with YAML, Boost Program Options, fmt
+ * and ROS param.
+ *
  * @param T The enum type.
  * @param N Number of enum members.
+ * @relatedalso ERL_PARSE_ENUM
  */
 #define ERL_ENUM_YAML_CONVERT(T, N)                                       \
     template<>                                                            \
@@ -1081,7 +1082,7 @@ namespace YAML {
                     "expecting cols: {}, get node[0].size(): {}",
                     cols,
                     node[i].size());
-                auto &row_node = node[i];
+                const auto &row_node = node[i];
                 for (int j = 0; j < cols; ++j) { rhs(i, j) = row_node[j].as<Scalar_>(); }
             }
 

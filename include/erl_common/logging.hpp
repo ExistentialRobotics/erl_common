@@ -40,8 +40,8 @@ namespace erl::common {
         Info(Args... args) {
             if (s_level_ > kInfo) { return; }
             // https://fmt.dev/latest/syntax.html
-            std::lock_guard lock(g_print_mutex);
-            time_t now = std::time(nullptr);
+            const std::scoped_lock lock(g_print_mutex);
+            const time_t now = std::time(nullptr);
     #if FMT_VERSION >= 110200
             auto time = *std::localtime(&now);
     #else
@@ -60,8 +60,8 @@ namespace erl::common {
         static void
         Debug(Args... args) {
             if (s_level_ > kDebug) { return; }
-            std::lock_guard lock(g_print_mutex);
-            time_t now = std::time(nullptr);
+            const std::scoped_lock lock(g_print_mutex);
+            const time_t now = std::time(nullptr);
     #if FMT_VERSION >= 110200
             auto time = *std::localtime(&now);
     #else
@@ -80,8 +80,8 @@ namespace erl::common {
         static void
         Warn(Args... args) {
             if (s_level_ > kWarn) { return; }
-            std::lock_guard lock(g_print_mutex);
-            time_t now = std::time(nullptr);
+            const std::scoped_lock lock(g_print_mutex);
+            const time_t now = std::time(nullptr);
     #if FMT_VERSION >= 110200
             auto time = *std::localtime(&now);
     #else
@@ -106,8 +106,8 @@ namespace erl::common {
         static void
         Error(Args... args) {
             if (s_level_ > kError) { return; }
-            std::lock_guard lock(g_print_mutex);
-            time_t now = std::time(nullptr);
+            const std::scoped_lock lock(g_print_mutex);
+            const time_t now = std::time(nullptr);
     #if FMT_VERSION >= 110200
             auto time = *std::localtime(&now);
     #else
@@ -130,8 +130,8 @@ namespace erl::common {
         template<typename... Args>
         static void
         Fatal(Args... args) {
-            std::lock_guard lock(g_print_mutex);
-            time_t now = std::time(nullptr);
+            const std::scoped_lock lock(g_print_mutex);
+            const time_t now = std::time(nullptr);
     #if FMT_VERSION >= 110200
             auto time = *std::localtime(&now);
     #else
@@ -154,8 +154,8 @@ namespace erl::common {
         template<typename... Args>
         static void
         Success(Args... args) {
-            std::lock_guard lock(g_print_mutex);
-            time_t now = std::time(nullptr);
+            const std::scoped_lock lock(g_print_mutex);
+            const time_t now = std::time(nullptr);
     #if FMT_VERSION >= 110200
             auto time = *std::localtime(&now);
     #else
@@ -179,8 +179,8 @@ namespace erl::common {
         template<typename... Args>
         static std::string
         Failure(Args... args) {
-            std::lock_guard lock(g_print_mutex);
-            time_t now = std::time(nullptr);
+            const std::scoped_lock lock(g_print_mutex);
+            const time_t now = std::time(nullptr);
     #if FMT_VERSION >= 110200
             auto time = *std::localtime(&now);
     #else
@@ -198,7 +198,7 @@ namespace erl::common {
 
         static void
         Write(const std::string &msg) {
-            std::lock_guard lock(g_print_mutex);
+            const std::scoped_lock lock(g_print_mutex);
             ProgressBar::Write(msg);
         }
     };
@@ -207,7 +207,7 @@ namespace erl::common {
     #define LOGGING_LABELS           fmt::format("{}:{}", __FILE__, __LINE__)
     #define LOGGING_LABELED_MSG(msg) fmt::format("{}:{}: {}", __FILE__, __LINE__, msg)
 
-    #if defined(ERL_ROS_VERSION_1)
+    #ifdef ERL_ROS_VERSION_1
         #include <ros/assert.h>
         #include <ros/console.h>
         #define ERL_FATAL(...)     ROS_FATAL(fmt::format(__VA_ARGS__).c_str())
@@ -330,17 +330,17 @@ namespace erl::common {
         } while (false)
 
     #ifndef ERL_ASSERTM
-        #define ERL_ASSERTM(expr, ...)                                       \
-            do {                                                             \
-                if (!(expr)) {                                               \
-                    std::string failure_msg = erl::common::Logging::Failure( \
-                        "assertion ({}) at {}:{}: {}",                       \
-                        #expr,                                               \
-                        __FILE__,                                            \
-                        __LINE__,                                            \
-                        fmt::format(__VA_ARGS__));                           \
-                    throw std::runtime_error(failure_msg);                   \
-                }                                                            \
+        #define ERL_ASSERTM(expr, ...)                                             \
+            do {                                                                   \
+                if (!(expr)) {                                                     \
+                    const std::string failure_msg = erl::common::Logging::Failure( \
+                        "assertion ({}) at {}:{}: {}",                             \
+                        #expr,                                                     \
+                        __FILE__,                                                  \
+                        __LINE__,                                                  \
+                        fmt::format(__VA_ARGS__));                                 \
+                    throw std::runtime_error(failure_msg);                         \
+                }                                                                  \
             } while (false)
     #endif
 
