@@ -521,4 +521,35 @@ namespace erl::common {
         ss << matrix.format(GetEigenTextFormat(EigenTextFormat::kCsvFmt));
         return ss.str();
     }
+
+    template<typename IndexType, int Dim>
+    std::enable_if_t<Dim == 2 || Dim == 3, Eigen::Matrix<IndexType, Dim, Eigen::Dynamic>>
+    GetGridNeighborOffsets(bool include_diagonal) {
+        Eigen::Matrix<IndexType, Dim, Eigen::Dynamic> offsets;
+        if (!include_diagonal) {
+            offsets.setZero(Dim, Dim << 1);
+            for (int i = 0; i < Dim; ++i) {
+                int j = i << 1;
+                offsets(i, j) = 1;
+                offsets(i, j + 1) = -1;
+            }
+            return offsets;
+        }
+
+        const int num_neighbors = std::pow(3, Dim) - 1;
+        offsets.setZero(Dim, num_neighbors);
+        int idx = 0;
+        for (int i = 0; i < num_neighbors + 1; ++i) {
+            int j = i;
+            IndexType *p = offsets.col(idx).data();
+            bool is_zero_offset = true;
+            for (int k = 0; k < Dim; ++k) {
+                p[k] = static_cast<IndexType>(j % 3) - 1;
+                if (p[k] != 0) { is_zero_offset = false; }
+                j /= 3;
+            }
+            if (!is_zero_offset) { ++idx; }
+        }
+        return offsets;
+    }
 }  // namespace erl::common

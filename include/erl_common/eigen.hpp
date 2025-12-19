@@ -312,6 +312,10 @@ namespace erl::common {
     template<typename Matrix>
     std::string
     EigenToCsvFmtString(const Matrix &matrix);
+
+    template<typename IndexType, int Dim>
+    std::enable_if_t<Dim == 2 || Dim == 3, Eigen::Matrix<IndexType, Dim, Eigen::Dynamic>>
+    GetGridNeighborOffsets(bool include_diagonal);
 }  // namespace erl::common
 
 #include "eigen.tpp"

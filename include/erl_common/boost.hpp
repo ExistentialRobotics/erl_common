@@ -69,11 +69,11 @@ namespace erl::common::program_options {
     struct ParseOption;
 
     struct ProgramOptionsData {
-        std::vector<std::string> args;        // remaining args to be parsed
-        po::options_description desc;         // description of program options
-        po::variables_map vm;                 // map of parsed variables
-        bool print_help = false;              // whether to print help message
-        std::vector<std::string> error_msgs;  // error messages
+        std::vector<std::string> args;  // remaining args to be parsed
+        po::options_description desc;   // description of program options
+        po::variables_map vm;           // map of parsed variables
+        bool print_help = false;        // whether to print help message
+        std::string error_msgs;         // error messages
 
         // Map from option name to its parser.
         // This is used to keep the option parsers alive across multiple Parse() calls.
@@ -121,9 +121,8 @@ namespace erl::common::program_options {
 
         void
         RecordError(const std::string &option_name, const std::string &message) {
-            std::string full_message =
-                fmt::format("Error parsing option {}: {}", option_name, message);
-            error_msgs.push_back(std::move(full_message));
+            if (!error_msgs.empty()) { return; }  // only record the first error
+            error_msgs = fmt::format("Error parsing option {}: {}", option_name, message);
         }
 
         [[nodiscard]] bool
@@ -314,8 +313,6 @@ namespace erl::common::program_options {
 
         void
         Run() override {
-
-            std::cout << "Parsing Eigen matrix option: " << option_name << std::endl;
 
             Mat &member = *static_cast<Mat *>(member_ptr);
 

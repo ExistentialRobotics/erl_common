@@ -9,7 +9,7 @@ namespace erl::common {
 
     Eigen::IOFormat
     GetEigenTextFormat(EigenTextFormat format) {
-        static const Eigen::IOFormat kFormats[] = {
+        static const std::array<Eigen::IOFormat, 6> kFormats = {
             Eigen::IOFormat(),         // kDefaultFmt
             Eigen::IOFormat(           // kCommaInitFmt
                 Eigen::FullPrecision,  // precision

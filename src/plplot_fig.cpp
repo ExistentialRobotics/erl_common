@@ -13,13 +13,15 @@ namespace erl::common {
 
         if (alpha_enabled) {
     #if CAIROMM_VERSION >= 116
-            m_cairo_img_ = Cairo::ImageSurface::create(Cairo::Surface::Format::ARGB32, width, height);
+            m_cairo_img_ =
+                Cairo::ImageSurface::create(Cairo::Surface::Format::ARGB32, width, height);
     #else
             m_cairo_img_ = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, height);
     #endif
         } else {
     #if CAIROMM_VERSION >= 116
-            m_cairo_img_ = Cairo::ImageSurface::create(Cairo::Surface::Format::RGB24, width, height);
+            m_cairo_img_ =
+                Cairo::ImageSurface::create(Cairo::Surface::Format::RGB24, width, height);
     #else
             m_cairo_img_ = Cairo::ImageSurface::create(Cairo::FORMAT_RGB24, width, height);
     #endif
@@ -1396,7 +1398,7 @@ namespace erl::common {
         const T *data,
         int n_rows,
         int n_cols,
-        bool col_major) {
+        const bool col_major) {
         if (col_major) {
             m_data_ = data;
         } else {

@@ -11,6 +11,8 @@
     #include <opencv2/highgui.hpp>
     #include <opencv2/imgproc.hpp>
 
+    #include <algorithm>
+
 namespace erl::common {
 
     template<typename T, int Channels = 1>
@@ -470,12 +472,12 @@ namespace erl::common {
                 if (value > max) { max = value; }
             }
         }
-        if (nan_value < min) { min = nan_value; }
-        if (nan_value > max) { max = nan_value; }
-        if (inf_value < min) { min = inf_value; }
-        if (inf_value > max) { max = inf_value; }
+        min = std::min(nan_value, min);
+        max = std::max(nan_value, max);
+        min = std::min(inf_value, min);
+        max = std::max(inf_value, max);
 
-        double value_range = (max - min) / 255.;
+        const double value_range = (max - min) / 255.;
         nan_value = (nan_value - min) / value_range;
         inf_value = (inf_value - min) / value_range;
 
@@ -491,7 +493,7 @@ namespace erl::common {
                 }
             }
         }
-        Eigen::MatrixXi normalized_mat_int = normalized_mat.cast<int>();
+        const Eigen::MatrixXi normalized_mat_int = normalized_mat.cast<int>();
         cv::Mat cv_mat;
         cv::eigen2cv(normalized_mat_int, cv_mat);
         cv_mat = ColorGrayCustom(cv_mat);

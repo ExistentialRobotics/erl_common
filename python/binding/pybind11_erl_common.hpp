@@ -124,45 +124,45 @@ namespace erl::common {
                 .def("squeeze", &Self::Squeeze, py::arg("dim"))
                 .def_property_readonly("dims", &Self::Dims)
                 .def_property_readonly("shape", py::overload_cast<>(&Self::Shape, py::const_))
-                .def("shape_at", py::overload_cast<int>(&Self::Shape, py::const_), py::arg("dim"))
+                .def("shape_at", py::overload_cast<long>(&Self::Shape, py::const_), py::arg("dim"))
                 .def_property_readonly("size", &Self::Size)
                 .def_property_readonly("height", &Self::Height)
                 .def_property_readonly("width", &Self::Width)
                 .def_property_readonly("length", &Self::Length)
                 .def_property_readonly("min", py::overload_cast<>(&Self::Min, py::const_))
-                .def("min_at", py::overload_cast<int>(&Self::Min, py::const_), py::arg("dim"))
+                .def("min_at", py::overload_cast<long>(&Self::Min, py::const_), py::arg("dim"))
                 .def_property_readonly("max", py::overload_cast<>(&Self::Max, py::const_))
-                .def("max_at", py::overload_cast<int>(&Self::Max, py::const_), py::arg("dim"))
+                .def("max_at", py::overload_cast<long>(&Self::Max, py::const_), py::arg("dim"))
                 .def_property_readonly(
                     "resolution",
                     py::overload_cast<>(&Self::Resolution, py::const_))
                 .def(
                     "resolution_at",
-                    py::overload_cast<int>(&Self::Resolution, py::const_),
+                    py::overload_cast<long>(&Self::Resolution, py::const_),
                     py::arg("dim"))
                 .def_property_readonly("center", &Self::Center)
                 .def_property_readonly("center_grid", &Self::CenterGrid)
                 .def("get_dim_lin_space", &Self::GetDimLinSpace, py::arg("dim"))
                 .def(
                     "grid_to_meter_at_dim",
-                    py::overload_cast<int, int>(&Self::GridToMeterAtDim, py::const_),
+                    py::overload_cast<int, long>(&Self::GridToMeterAtDim, py::const_),
                     py::arg("grid_value"),
                     py::arg("dim"))
                 .def(
                     "grid_to_meter_at_dim",
-                    py::overload_cast<const Eigen::Ref<const Eigen::VectorXi> &, int>(
+                    py::overload_cast<const Eigen::Ref<const Eigen::VectorXi> &, long>(
                         &Self::GridToMeterAtDim,
                         py::const_),
                     py::arg("grid_values"),
                     py::arg("dim"))
                 .def(
                     "meter_to_grid_at_dim",
-                    py::overload_cast<Dtype, int>(&Self::MeterToGridAtDim, py::const_),
+                    py::overload_cast<Dtype, long>(&Self::MeterToGridAtDim, py::const_),
                     py::arg("meter_value"),
                     py::arg("dim"))
                 .def(
                     "meter_to_grid_at_dim",
-                    py::overload_cast<const Eigen::Ref<const Eigen::VectorX<Dtype>> &, int>(
+                    py::overload_cast<const Eigen::Ref<const Eigen::VectorX<Dtype>> &, long>(
                         &Self::MeterToGridAtDim,
                         py::const_),
                     py::arg("meter_values"),

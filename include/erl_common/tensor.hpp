@@ -193,6 +193,31 @@ namespace erl::common {
 
             T &
             operator[](const SliceShape &coords) {
+                const ShapeType org_coords = GetOrgCoords(coords);
+                return m_tensor_[org_coords];
+            }
+
+            [[nodiscard]] const T &
+            operator[](const SliceShape &coords) const {
+                const ShapeType org_coords = GetOrgCoords(coords);
+                return m_tensor_[org_coords];
+            }
+
+            T &
+            operator[](const IndexType index) {
+                const SliceShape org_coords = IndexToCoordsWithStrides(m_strides_, index, RowMajor);
+                return operator[](org_coords);
+            }
+
+            [[nodiscard]] const T &
+            operator[](const IndexType index) const {
+                const SliceShape org_coords = IndexToCoordsWithStrides(m_strides_, index, RowMajor);
+                return operator[](org_coords);
+            }
+
+        private:
+            ShapeType
+            GetOrgCoords(const SliceShape &coords) const {
                 ShapeType org_coords = ShapeType::Zero(m_tensor_.Dims());
                 IndexType coord_idx = 0;
                 for (IndexType i = 0; i < m_tensor_.Dims(); ++i) {
@@ -214,23 +239,7 @@ namespace erl::common {
                         indices.size());
                     org_coords[i] = indices[coords[coord_idx++]];
                 }
-                return m_tensor_[org_coords];
-            }
-
-            [[nodiscard]] const T &
-            operator[](const SliceShape &coords) const {
-                return const_cast<Slice *>(this)->operator[](coords);
-            }
-
-            T &
-            operator[](const IndexType index) {
-                const SliceShape org_coords = IndexToCoordsWithStrides(m_strides_, index, RowMajor);
-                return operator[](org_coords);
-            }
-
-            [[nodiscard]] const T &
-            operator[](const IndexType index) const {
-                return const_cast<Slice *>(this)->operator[](index);
+                return org_coords;
             }
         };
 

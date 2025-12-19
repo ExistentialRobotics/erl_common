@@ -20,16 +20,6 @@ TEST(EigenTest, MatrixCreation) {
     std::cout << matrix << std::endl;
 }
 
-// TEST(EigenTest, Equality) {
-//     // what happen if we compare two matrices with different sizes?
-//     Eigen::MatrixXd mat1 = Eigen::MatrixXd::Random(3, 4);
-//     Eigen::MatrixXd mat2 = Eigen::MatrixXd::Random(3, 5);
-//     bool equal = mat1 == mat2;  // a size-mismatch error will occur here!
-//     bool not_equal = mat1 != mat2;
-//     std::cout << "mat1 == mat2: " << equal << std::endl;
-//     std::cout << "mat1 != mat2: " << not_equal << std::endl;
-// }
-
 TEST(EigenTest, FormatToString) {
     Eigen::Matrix3d matrix;
 
@@ -52,9 +42,6 @@ TEST(EigenTest, SaveAndLoadText) {
     SaveEigenMatrixToTextFile<double>("matrix.txt", matrix);
 
     Eigen::Matrix4d matrix_load = LoadEigenMatrixFromTextFile<double, 4, 4>("matrix.txt");
-
-    // std::cout << "matrix: " << std::endl << matrix << std::endl;
-    // std::cout << "matrix_load: " << std::endl << matrix_load << std::endl;
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) { ASSERT_NEAR(matrix(i, j), matrix_load(i, j), 1e-6); }
@@ -206,7 +193,7 @@ TEST(EigenTest, Solve) {
     Eigen::Matrix3d A = Eigen::Matrix3d::Random();
     A = (A + A.transpose()).eval();  // make it symmetric
     A = A * A.transpose();           // make it positive definite
-    Eigen::Matrix3d B = Eigen::Matrix3d::Random();
+    const Eigen::Matrix3d B = Eigen::Matrix3d::Random();
     Eigen::Matrix3d L = A.llt().matrixL();
     Eigen::Matrix3d X = L.triangularView<Eigen::Lower>().solve(B);
     L.transpose().triangularView<Eigen::Upper>().solveInPlace(X);
@@ -224,4 +211,16 @@ TEST(EigenTest, AbslHash) {
     set1.insert({-2, -2, -2});
     absl::flat_hash_set<Eigen::Vector3i> set2;
     set2.insert(Eigen::Vector3i(-2, -2, -2));
+}
+
+TEST(EigenTest, GridNeighborOffsets) {
+    using namespace erl::common;
+    std::cout << "2D without diagonal:" << std::endl
+              << GetGridNeighborOffsets<int, 2>(false) << std::endl;
+    std::cout << "2D with diagonal:" << std::endl
+              << GetGridNeighborOffsets<int, 2>(true) << std::endl;
+    std::cout << "3D without diagonal:" << std::endl
+              << GetGridNeighborOffsets<int, 3>(false) << std::endl;
+    std::cout << "3D with diagonal:" << std::endl
+              << GetGridNeighborOffsets<int, 3>(true) << std::endl;
 }

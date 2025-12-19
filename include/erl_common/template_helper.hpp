@@ -3,6 +3,7 @@
 #include "logging.hpp"
 #include "string_utils.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <type_traits>
 
@@ -49,6 +50,12 @@ NotNull(T ptr, const bool fatal, const std::string &msg, Args &&...args) {
     }
     return ptr;
 }
+
+#ifndef NDEBUG
+    #define CHECKED_AT(t, index) t.at(index)
+#else
+    #define CHECKED_AT(t, index) t[index]  // NOLINT(*-pro-bounds-constant-array-index)
+#endif
 
 template<typename T>
 bool
@@ -104,7 +111,7 @@ struct Zip {
         const Iterator &
         operator++() {  // prefix increment, i.e. ++it
             ++m_index_;
-            if (m_index_ >= m_zip_->m_size_) { m_index_ = m_zip_->m_size_; }
+            m_index_ = std::min(m_index_, m_zip_->m_size_);
             return *this;
         }
 

@@ -36,7 +36,7 @@ namespace erl::common {
     }
 
     static void
-    FromYamlFileRecursive(
+    FromYamlFileRecursive( // NOLINT(*-no-recursion)
         const std::string &yaml_file,
         const std::string &base_field,
         YAML::Node &node) {
@@ -123,7 +123,7 @@ namespace erl::common {
     bool
     YamlableBase::Read(std::istream &s) {
         if (!s.good()) { return false; }
-        std::streamsize len;
+        std::streamsize len = 0;
         s.read(reinterpret_cast<char *>(&len), sizeof(len));
         std::string yaml_str(len, '\0');
         s.read(yaml_str.data(), len);
@@ -182,24 +182,27 @@ namespace erl::common {
         po_data.vm.clear();
 
         FromCommandLineImpl(po_data, "");
-
-        if (!po_data.args.empty()) {
-            ERL_ERROR("Unrecognized arguments: {}", po_data.args);
-            exit(EXIT_FAILURE);
-        }
-
         if (po_data.print_help) {
             std::cout << "Usage: " << argv[0] << " [options]" << std::endl
                       << po_data.desc << std::endl;
             exit(EXIT_SUCCESS);
         }
 
+        bool success = true;
+
+        if (!po_data.args.empty()) {
+            ERL_ERROR("Unrecognized arguments: {}", po_data.args);
+            success = false;
+        }
+
         if (!po_data.Successful()) {
             ERL_WARN(
                 "Failed to parse command line arguments, errors:\n{}",
                 fmt::join(po_data.error_msgs.begin(), po_data.error_msgs.end(), "\n"));
-            return false;
+            success = false;
         }
+
+        if (!success) { return false; }
 
         return this->PostDeserialization();  // call post deserialization hook
 #else
@@ -246,7 +249,7 @@ namespace erl::common {
                 }
 
                 if (src_value.IsMap()) {
-                    YAML::Node dst_value = current_dst[key];
+                    const YAML::Node dst_value = current_dst[key];
                     ERL_ASSERTM(
                         dst_value.IsMap(),
                         "Destination node must be a map for key: {}",

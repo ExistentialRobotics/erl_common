@@ -48,6 +48,8 @@ namespace erl::common {
             Iterator &
             operator=(Iterator &&other) = default;
 
+            ~Iterator() = default;
+
             [[nodiscard]] bool
             operator==(const Iterator &other) const {
                 if (m_manager_ != other.m_manager_) { return false; }
@@ -123,6 +125,8 @@ namespace erl::common {
             ConstIterator &
             operator=(ConstIterator &&other) = default;
 
+            ~ConstIterator() = default;
+
             [[nodiscard]] bool
             operator==(const ConstIterator &other) const {
                 if (m_manager_ != other.m_manager_) { return false; }
@@ -177,6 +181,8 @@ namespace erl::common {
         DataBufferManager(DataBufferManager &&) = default;
         DataBufferManager &
         operator=(DataBufferManager &&) = default;
+
+        ~DataBufferManager() = default;
 
         [[nodiscard]] std::size_t
         Size() const {
