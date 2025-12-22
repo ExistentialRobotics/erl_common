@@ -87,8 +87,8 @@ namespace erl::common {
      * @tparam GridCoords whether to compute grid coordinates or vertex coordinates. If true, grid
      * coordinates will be computed; otherwise, vertex coordinates will be computed.
      * @param grid_shape shape of the grid map.
-     * @param map_min min vertex coordinate of the grid map in meters.
-     * @param map_max max vertex coordinate of the grid map in meters.
+     * @param grid_min min vertex coordinate of the grid map in meters.
+     * @param grid_max max vertex coordinate of the grid map in meters.
      * @param resolution grid resolution in meters.
      * @return meter coordinates of all grid points in the grid map. The size is (Dim, N), where
      * N is the number of grid points.
@@ -97,8 +97,8 @@ namespace erl::common {
     Eigen::Matrix<Dtype, Dim, Eigen::Dynamic>
     CalculateMeterCoordinates(
         Eigen::Vector<Index, Dim> grid_shape,
-        const Eigen::Vector<Dtype, Dim> &map_min,
-        const Eigen::Vector<Dtype, Dim> &map_max,
+        const Eigen::Vector<Dtype, Dim> &grid_min,
+        const Eigen::Vector<Dtype, Dim> &grid_max,
         const Eigen::Vector<Dtype, Dim> &resolution) {
 
         Index size = grid_shape.prod();
@@ -127,8 +127,8 @@ namespace erl::common {
             const Index stride = strides[i];
             const Index dim_size = grid_shape[i];
             const Index n_copies = size / dim_size;
-            Dtype min = map_min[i];
-            Dtype max = map_max[i];
+            Dtype min = grid_min[i];
+            Dtype max = grid_max[i];
             if constexpr (GridCoords) {
                 const Dtype half_res = 0.5f * resolution[i];
                 min += half_res;
@@ -631,6 +631,15 @@ namespace erl::common {
         }
 
         template<int D = Dim>
+        [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2<Dtype>>
+        SubPixelToGridForPoint(const Eigen::Ref<const Eigen::Vector2<Dtype>> &pixel_point) const {
+            Eigen::Vector2<Dtype> grid;
+            grid[0] = pixel_point[0];
+            grid[1] = m_map_shape_[1] - pixel_point[1];
+            return grid;
+        }
+
+        template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Matrix2X<Index>>
         PixelToGridForPoints(const Eigen::Ref<const Eigen::Matrix2X<Index>> &pixel_points) const {
             return GridToPixelForPoints(pixel_points);
@@ -638,8 +647,8 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2<Index>>
-        MeterToPixelForPoint(const Eigen::Ref<const Eigen::Vector2<Dtype>> &meter_points) const {
-            return GridToPixelForPoint(MeterToGridForPoint(meter_points));
+        MeterToPixelForPoint(const Eigen::Ref<const Eigen::Vector2<Dtype>> &meter_point) const {
+            return GridToPixelForPoint(MeterToGridForPoint(meter_point));
         }
 
         template<int D = Dim>
@@ -650,8 +659,17 @@ namespace erl::common {
 
         template<int D = Dim>
         [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2<Dtype>>
-        PixelToMeterForPoint(const Eigen::Ref<const Eigen::Vector2<Index>> &pixel_points) const {
-            return GridToMeterForPoint(PixelToGridForPoint(pixel_points));
+        PixelToMeterForPoint(const Eigen::Ref<const Eigen::Vector2<Index>> &pixel_point) const {
+            return GridToMeterForPoint(PixelToGridForPoint(pixel_point));
+        }
+
+        template<int D = Dim>
+        [[nodiscard]] std::enable_if_t<D == 2 || D == Eigen::Dynamic, Eigen::Vector2<Dtype>>
+        SubPixelToMeterForPoint(const Eigen::Ref<const Eigen::Vector2<Dtype>> &pixel_point) const {
+            Eigen::Vector2<Dtype> meter;
+            meter[0] = pixel_point[0] * m_resolution_[0] + m_min_[0];
+            meter[1] = (m_map_shape_[1] - pixel_point[1]) * m_resolution_[1] + m_min_[1];
+            return meter;
         }
 
         template<int D = Dim>

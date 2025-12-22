@@ -196,9 +196,7 @@ namespace erl::common {
         }
 
         if (!po_data.Successful()) {
-            ERL_WARN(
-                "Failed to parse command line arguments, errors:\n{}",
-                fmt::join(po_data.error_msgs.begin(), po_data.error_msgs.end(), "\n"));
+            ERL_WARN("Failed to parse command line arguments, errors:\n" + po_data.error_msgs);
             success = false;
         }
 
