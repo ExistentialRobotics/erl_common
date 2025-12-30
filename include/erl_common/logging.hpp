@@ -416,3 +416,17 @@ namespace erl::common {
     ERL_DEBUG_ASSERT((a) <= 0 || (a) > (b), "{} > {} failed", (a), (b))
 #define ERL_DEBUG_ASSERT_POS_GE(a, b) \
     ERL_DEBUG_ASSERT((a) <= 0 || (a) >= (b), "{} >= {} failed", (a), (b))
+
+/**
+ * Assert expression and return a value if the assertion fails.
+ * @param expr Expression to assert.
+ * @param retval Return value if the assertion fails.
+ * @param ... Message format and arguments.
+ */
+#define ERL_ASSERTM_RETURN(expr, retval, ...) \
+    do {                                      \
+        if (!(expr)) {                        \
+            ERL_ERROR(__VA_ARGS__);           \
+            return retval;                    \
+        }                                     \
+    } while (false)
