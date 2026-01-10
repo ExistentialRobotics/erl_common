@@ -261,6 +261,7 @@ namespace erl::common::program_options {
         : ParseOptionBase {
         using Mat = Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>;
 
+        std::string arg_str;
         std::vector<Scalar_> values;
         long n_rows = Rows_;
         long n_cols = Cols_;
@@ -277,10 +278,19 @@ namespace erl::common::program_options {
                 for (long i = 0; i < member.size(); ++i) { values.push_back(member.data()[i]); }
             }
 
-            docs = member.IsRowMajor ? "Values of the Eigen matrix, the order should be row-major"
-                                     : "Values of the Eigen matrix, the order should be col-major";
+            if ((member.IsRowMajor && Rows_ == 1) || (!member.IsRowMajor && Cols_ == 1)) {
+                docs = member.IsRowMajor ? "Values of the Eigen vector, separated by ','. The "
+                                           "order should be row-major"
+                                         : "Values of the Eigen vector, separated by ','. The "
+                                           "order should be col-major";
+            } else {
+                docs = member.IsRowMajor ? "Values of the Eigen matrix, separated by ','. The "
+                                           "order should be row-major"
+                                         : "Values of the Eigen matrix, separated by ','. The "
+                                           "order should be col-major";
+            }
             if (!values.empty()) {
-                docs += ", default: ";
+                docs += ". Default: ";
                 // single line YAML output
                 YAML::Emitter emitter;
                 emitter.SetIndent(0);
@@ -292,7 +302,7 @@ namespace erl::common::program_options {
 
             options(
                 option_name.c_str(),
-                po::value<std::vector<Scalar_>>(&values)->multitoken()->value_name(value_name),
+                po::value<std::string>(&arg_str)->value_name(value_name),
                 docs.c_str());
 
             if (Rows_ == Eigen::Dynamic) {
@@ -318,6 +328,16 @@ namespace erl::common::program_options {
 
             // parse options
             po_data->Parse();
+
+            const std::vector<std::string> element_strs = SplitString(arg_str, ',');
+            if (element_strs.empty()) { return; }
+
+            values.clear();
+            values.reserve(element_strs.size());
+            for (const std::string &s: element_strs) {
+                if (s.empty()) { continue; }
+                values.push_back(YAML::Load(s).template as<Scalar_>());
+            }
 
             if (values.empty()) { return; }
 

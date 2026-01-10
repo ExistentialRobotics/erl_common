@@ -5,6 +5,7 @@
 #include "logging.hpp"
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <Eigen/Sparse>
 
 #ifdef ERL_USE_ABSL
