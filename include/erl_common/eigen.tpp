@@ -260,7 +260,6 @@ namespace erl::common {
         s.read(reinterpret_cast<char *>(&matrix_size), sizeof(long));
         if (matrix_size == 0) {
             if constexpr (Rows == Eigen::Dynamic || Cols == Eigen::Dynamic) {
-                // ERL_WARN("Reading empty matrix from stream.");
                 if (Rows != Eigen::Dynamic) {
                     matrix.resize(Rows, 0);
                 } else {
