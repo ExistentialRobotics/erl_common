@@ -3,6 +3,8 @@
 #include "logging.hpp"
 
 #include <filesystem>
+#include <unordered_map>
+#include <vector>
 
 #ifdef ERL_USE_OPENCV
     #include <opencv2/core.hpp>
@@ -25,51 +27,37 @@ namespace erl::common::ros_params {
         }
     }
 
+    // Type trait for types natively supported by ROS1 nh.param<T>().
+    // These are passed directly to nh.param<T>().
+    // All other types fall back to YAML string serialization.
+    template<typename T>
+    inline constexpr bool is_ros1_native_param_v =
+        std::is_same_v<T, bool> ||
+        std::is_same_v<T, int> ||
+        std::is_same_v<T, double> ||
+        std::is_same_v<T, std::string> ||
+        std::is_same_v<T, std::vector<bool>> ||
+        std::is_same_v<T, std::vector<int>> ||
+        std::is_same_v<T, std::vector<double>> ||
+        std::is_same_v<T, std::vector<std::string>>;
+
     template<typename T>
     struct LoadRos1Param {
         static void
         Run(ros::NodeHandle &nh, const std::string &param_name, T &member) {
-            nh.param<T>(param_name, member, member);
-        }
-    };
-
-    template<>
-    struct LoadRos1Param<long> {
-        static void
-        Run(ros::NodeHandle &nh, const std::string &param_name, long &member) {
-            std::string value_str = std::to_string(member);
-            if (!nh.param<std::string>(param_name, value_str, value_str)) { return; }
-            member = std::stol(value_str);
-        }
-    };
-
-    template<>
-    struct LoadRos1Param<uint32_t> {
-        static void
-        Run(ros::NodeHandle &nh, const std::string &param_name, uint32_t &member) {
-            std::string value_str = std::to_string(member);
-            if (!nh.param<std::string>(param_name, value_str, value_str)) { return; }
-            long temp = std::stol(value_str);
-            if (temp < 0) {  // print warning but still assign the value
-                ERL_WARN("Parameter {} has negative value {} for type uint32_t", param_name, temp);
+            if constexpr (is_ros1_native_param_v<T>) {
+                nh.param<T>(param_name, member, member);
+            } else {
+                // YAML fallback: serialize as a YAML string
+                using yaml_convert = YAML::convert<T>;
+                std::string value_str = yaml_convert::encode(member).template as<std::string>();
+                if (!nh.param<std::string>(param_name, value_str, value_str)) { return; }
+                ERL_ASSERT(yaml_convert::decode(YAML::Node(value_str), member));
             }
-            member = static_cast<uint32_t>(temp);
         }
     };
 
-    template<>
-    struct LoadRos1Param<uint64_t> {
-        static void
-        Run(ros::NodeHandle &nh, const std::string &param_name, uint64_t &member) {
-            std::string value_str = std::to_string(member);
-            if (!nh.param<std::string>(param_name, value_str, value_str)) { return; }
-            long long temp = std::stoll(value_str);
-            if (temp < 0) {  // print warning but still assign the value
-                ERL_WARN("Parameter {} has negative value {} for type uint64_t", param_name, temp);
-            }
-            member = static_cast<uint64_t>(temp);
-        }
-    };
+    // Keep specializations that map to different native ROS1 types for better introspection.
 
     template<>
     struct LoadRos1Param<float> {
@@ -89,48 +77,6 @@ namespace erl::common::ros_params {
     };
 
     template<>
-    struct LoadRos1Param<std::filesystem::path> {
-        static void
-        Run(ros::NodeHandle &nh, const std::string &param_name, std::filesystem::path &member) {
-            std::string path_str = member.string();
-            if (!nh.param<std::string>(param_name, path_str, path_str)) { return; }
-            member = std::filesystem::path(path_str);
-        }
-    };
-
-    template<>
-    struct LoadRos1Param<std::vector<long>> {
-        static void
-        Run(ros::NodeHandle &nh, const std::string &param_name, std::vector<long> &member) {
-            std::vector<std::string> temp;
-            temp.reserve(member.size());
-            std::transform(member.begin(), member.end(), temp.begin(), [](long v) {
-                return std::to_string(v);
-            });
-            if (!nh.param<std::vector<std::string>>(param_name, temp, temp)) { return; }
-            member.resize(temp.size());
-            for (std::size_t i = 0; i < temp.size(); ++i) { member[i] = std::stol(temp[i]); }
-        }
-    };
-
-    template<>
-    struct LoadRos1Param<std::vector<uint64_t>> {
-        static void
-        Run(ros::NodeHandle &nh, const std::string &param_name, std::vector<uint64_t> &member) {
-            std::vector<std::string> temp;
-            temp.reserve(member.size());
-            std::transform(member.begin(), member.end(), temp.begin(), [](uint64_t v) {
-                return std::to_string(v);
-            });
-            if (!nh.param<std::vector<std::string>>(param_name, temp, temp)) { return; }
-            member.resize(temp.size());
-            for (std::size_t i = 0; i < temp.size(); ++i) {
-                member[i] = static_cast<uint64_t>(std::stoull(temp[i]));
-            }
-        }
-    };
-
-    template<>
     struct LoadRos1Param<std::vector<float>> {
         static void
         Run(ros::NodeHandle &nh, const std::string &param_name, std::vector<float> &member) {
@@ -144,18 +90,6 @@ namespace erl::common::ros_params {
             for (std::size_t i = 0; i < temp.size(); ++i) {
                 member[i] = static_cast<float>(temp[i]);
             }
-        }
-    };
-
-    template<typename T1, typename T2>
-    struct LoadRos1Param<std::pair<T1, T2>> {
-        static void
-        Run(ros::NodeHandle &nh, const std::string &param_name, std::pair<T1, T2> &member) {
-            using namespace erl::common::ros_params;
-            std::string first_param = GetRos1ParamPath(param_name, "first");
-            std::string second_param = GetRos1ParamPath(param_name, "second");
-            LoadRos1Param<T1>::Run(nh, first_param, member.first);
-            LoadRos1Param<T2>::Run(nh, second_param, member.second);
         }
     };
 
@@ -266,19 +200,6 @@ namespace erl::common::ros_params {
 
 }  // namespace erl::common::ros_params
 
-    #define ERL_LOAD_ROS1_PARAM_ENUM(T)                                                   \
-        template<>                                                                        \
-        struct erl::common::ros_params::LoadRos1Param<T> {                                \
-            static void                                                                   \
-            Run(ros::NodeHandle &nh, const std::string &param_name, T &member) {          \
-                using yaml_convert = YAML::convert<T>;                                    \
-                std::string value_str = yaml_convert::encode(member).as<std::string>();   \
-                if (!nh.param<std::string>(param_name, value_str, value_str)) { return; } \
-                ERL_ASSERT(yaml_convert::decode(YAML::Node(value_str), member));          \
-            }                                                                             \
-        }
-#else
-    #define ERL_LOAD_ROS1_PARAM_ENUM(T)
 #endif
 
 #ifdef ERL_ROS_VERSION_2
@@ -293,55 +214,40 @@ namespace erl::common::ros_params {
         return prefix + "." + name;
     }
 
+    // Type trait for types natively supported by rclcpp parameters.
+    // These are passed directly to declare_parameter<T>/get_parameter<T>.
+    // All other types fall back to YAML string serialization.
+    template<typename T>
+    inline constexpr bool is_ros2_native_param_v =
+        std::is_same_v<T, bool> ||
+        std::is_same_v<T, int64_t> ||
+        std::is_same_v<T, double> ||
+        std::is_same_v<T, std::string> ||
+        std::is_same_v<T, std::vector<uint8_t>> ||
+        std::is_same_v<T, std::vector<bool>> ||
+        std::is_same_v<T, std::vector<int64_t>> ||
+        std::is_same_v<T, std::vector<double>> ||
+        std::is_same_v<T, std::vector<std::string>>;
+
     template<typename T>
     struct LoadRos2Param {
         static void
         Run(rclcpp::Node *node, const std::string &param_name, T &member) {
-            node->declare_parameter<T>(param_name, member);
-            node->get_parameter<T>(param_name, member);
-        }
-    };
-
-    template<>
-    struct LoadRos2Param<uint32_t> {
-        static void
-        Run(rclcpp::Node *node, const std::string &param_name, uint32_t &member) {
-            std::string value_str = std::to_string(member);
-            node->declare_parameter<std::string>(param_name, value_str);
-            if (!node->get_parameter(param_name, value_str)) { return; }
-            long temp = std::stol(value_str);
-            if (temp < 0) {  // print warning but still assign the value
-                ERL_WARN("Parameter {} has negative value {} for type uint32_t", param_name, temp);
+            if constexpr (is_ros2_native_param_v<T>) {
+                node->declare_parameter<T>(param_name, member);
+                node->get_parameter<T>(param_name, member);
+            } else {
+                // YAML fallback: serialize as a YAML string
+                using yaml_convert = YAML::convert<T>;
+                std::string value_str = yaml_convert::encode(member).template as<std::string>();
+                node->declare_parameter<std::string>(param_name, value_str);
+                if (!node->get_parameter<std::string>(param_name, value_str)) { return; }
+                ERL_ASSERT(yaml_convert::decode(YAML::Node(value_str), member));
             }
-            member = static_cast<uint32_t>(temp);
         }
     };
 
-    template<>
-    struct LoadRos2Param<uint64_t> {
-        static void
-        Run(rclcpp::Node *node, const std::string &param_name, uint64_t &member) {
-            std::string value_str = std::to_string(member);
-            node->declare_parameter<std::string>(param_name, value_str);
-            if (!node->get_parameter(param_name, value_str)) { return; }
-            long long temp = std::stoll(value_str);
-            if (temp < 0) {  // print warning but still assign the value
-                ERL_WARN("Parameter {} has negative value {} for type uint64_t", param_name, temp);
-            }
-            member = static_cast<uint64_t>(temp);
-        }
-    };
-
-    template<>
-    struct LoadRos2Param<std::filesystem::path> {
-        static void
-        Run(rclcpp::Node *node, const std::string &param_name, std::filesystem::path &member) {
-            std::string path_str = member.string();
-            node->declare_parameter<std::string>(param_name, path_str);
-            if (!node->get_parameter(param_name, path_str)) { return; }
-            member = std::filesystem::path(path_str);
-        }
-    };
+    // Keep specializations that map to different native ROS2 types for better introspection.
 
     template<>
     struct LoadRos2Param<std::vector<float>> {
@@ -361,15 +267,19 @@ namespace erl::common::ros_params {
         }
     };
 
-    template<typename T1, typename T2>
-    struct LoadRos2Param<std::pair<T1, T2>> {
+    template<>
+    struct LoadRos2Param<std::vector<int>> {
         static void
-        Run(rclcpp::Node *node, const std::string &param_name, std::pair<T1, T2> &member) {
-            using namespace erl::common::ros_params;
-            std::string first_param = GetRos2ParamPath(param_name, "first");
-            std::string second_param = GetRos2ParamPath(param_name, "second");
-            LoadRos2Param<T1>::Run(node, first_param, member.first);
-            LoadRos2Param<T2>::Run(node, second_param, member.second);
+        Run(rclcpp::Node *node, const std::string &param_name, std::vector<int> &member) {
+            std::vector<long> temp;
+            temp.reserve(member.size());
+            std::transform(member.begin(), member.end(), temp.begin(), [](int v) {
+                return static_cast<long>(v);
+            });
+            node->declare_parameter<std::vector<long>>(param_name, temp);
+            if (!node->get_parameter(param_name, temp)) { return; }
+            member.resize(temp.size());
+            for (std::size_t i = 0; i < temp.size(); ++i) { member[i] = static_cast<int>(temp[i]); }
         }
     };
 
@@ -481,18 +391,4 @@ namespace erl::common::ros_params {
 
 }  // namespace erl::common::ros_params
 
-    #define ERL_LOAD_ROS2_PARAM_ENUM(T)                                                   \
-        template<>                                                                        \
-        struct erl::common::ros_params::LoadRos2Param<T> {                                \
-            static void                                                                   \
-            Run(rclcpp::Node *node, const std::string &param_name, T &member) {           \
-                using yaml_convert = YAML::convert<T>;                                    \
-                std::string value_str = yaml_convert::encode(member).as<std::string>();   \
-                node->declare_parameter<std::string>(param_name, value_str);              \
-                if (!node->get_parameter<std::string>(param_name, value_str)) { return; } \
-                ERL_ASSERT(yaml_convert::decode(YAML::Node(value_str), member));          \
-            }                                                                             \
-        }
-#else
-    #define ERL_LOAD_ROS2_PARAM_ENUM(T)
 #endif
