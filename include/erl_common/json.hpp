@@ -13,7 +13,7 @@ namespace nlohmann {
         int Order = Eigen::ColMajor>
     struct ConvertEigenMatrix {
         static void
-        to_json(json& array, const Eigen::Matrix<T, Rows, Cols, Order>& mat) {
+        to_json(json &array, const Eigen::Matrix<T, Rows, Cols, Order> &mat) {
             array = json::array();
             const int rows = Rows == Eigen::Dynamic ? mat.rows() : Rows;
             const int cols = Cols == Eigen::Dynamic ? mat.cols() : Cols;
@@ -34,7 +34,7 @@ namespace nlohmann {
         }
 
         static void
-        from_json(const json& array, Eigen::Matrix<T, Rows, Cols, Order>& mat) {
+        from_json(const json &array, Eigen::Matrix<T, Rows, Cols, Order> &mat) {
             if (!array.is_array()) {
                 throw std::invalid_argument("The json type must be an array.");
             }
@@ -49,7 +49,7 @@ namespace nlohmann {
                 mat.resize(rows, cols);
 
                 for (int i = 0; i < rows; ++i) {
-                    auto& row_array = array[i];
+                    auto &row_array = array[i];
                     for (int j = 0; j < cols; ++j) { row_array.at(j).get_to(mat(i, j)); }
                 }
             } else {
@@ -58,7 +58,7 @@ namespace nlohmann {
                 mat.resize(rows, cols);
 
                 for (int j = 0; j < cols; ++j) {
-                    auto& col_array = array[j];
+                    auto &col_array = array[j];
                     for (int i = 0; i < rows; ++i) { col_array.at(i).get_to(mat(i, j)); }
                 }
             }
@@ -158,13 +158,13 @@ namespace nlohmann {
     template<typename T, int Size = Eigen::Dynamic>
     struct ConvertEigenVector {
         static void
-        to_json(json& array, const Eigen::Matrix<T, Size, 1>& vec) {
+        to_json(json &array, const Eigen::Matrix<T, Size, 1> &vec) {
             array = json::array();
             for (int i = 0; i < Size; ++i) { array.push_back(vec(i)); }
         }
 
         static void
-        from_json(const json& array, Eigen::Matrix<T, Size, 1>& vec) {
+        from_json(const json &array, Eigen::Matrix<T, Size, 1> &vec) {
             if (!array.is_array()) {
                 throw std::invalid_argument("The json type must be an array.");
             }

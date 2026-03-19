@@ -18,11 +18,12 @@ namespace erl::common {
 
         explicit GridMapDrawer2D(const std::shared_ptr<Info> &grid_map_info)
             : grid_map_info(grid_map_info),
-              image(cv::Mat(
-                  grid_map_info->Height(),
-                  grid_map_info->Width(),
-                  CV_8UC3,
-                  cv::Scalar(0, 0, 0))) {}
+              image(
+                  cv::Mat(
+                      grid_map_info->Height(),
+                      grid_map_info->Width(),
+                      CV_8UC3,
+                      cv::Scalar(0, 0, 0))) {}
 
         void
         ResetImage() {

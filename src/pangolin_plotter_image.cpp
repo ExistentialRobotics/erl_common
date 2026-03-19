@@ -17,14 +17,15 @@ namespace erl::common {
                   0,
                   1.0,
                   static_cast<float>(image_width) / static_cast<float>(image_height)))),
-          m_image_texture_(std::make_shared<pangolin::GlTexture>(
-              image_width,
-              image_height,
-              format,
-              false,
-              0,
-              format,
-              dtype)) {}
+          m_image_texture_(
+              std::make_shared<pangolin::GlTexture>(
+                  image_width,
+                  image_height,
+                  format,
+                  false,
+                  0,
+                  format,
+                  dtype)) {}
 
     void
     PangolinPlotterImage::Update(const cv::Mat &image) const {

@@ -33,19 +33,19 @@ namespace erl::common {
         }
 
         [[nodiscard]] bool
-        Contains(const KeyType& key) const {
+        Contains(const KeyType &key) const {
             if (m_use_vector_) { return true; }
             return m_map_.contains(key);
         }
 
-        ValueType&
-        operator[](const KeyType& key) {
+        ValueType &
+        operator[](const KeyType &key) {
             if (m_use_vector_) { return m_vector_[key]; }
             return m_map_[key];
         }
 
-        const ValueType&
-        operator[](const KeyType& key) const {
+        const ValueType &
+        operator[](const KeyType &key) const {
             if (m_use_vector_) { return m_vector_[key]; }
             return m_map_.at(key);
         }

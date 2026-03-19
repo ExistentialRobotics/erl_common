@@ -58,8 +58,7 @@ namespace erl::common::ros_params {
                 m_qos_.best_effort();
             } else if (qos_reliability == "best_available") {
     #ifdef ROS_HUMBLE
-                ERL_WARN(
-                    "best_available is not available in ROS Humble, using reliable instead.");
+                ERL_WARN("best_available is not available in ROS Humble, using reliable instead.");
                 m_qos_.reliable();
     #else
                 m_qos_.reliability_best_available();
@@ -80,7 +79,8 @@ namespace erl::common::ros_params {
             } else if (qos_durability == "best_available") {
     #ifdef ROS_HUMBLE
                 ERL_WARN(
-                    "durability best_available is not available in ROS Humble, using volatile instead.");
+                    "durability best_available is not available in ROS Humble, using volatile "
+                    "instead.");
                 m_qos_.durability_volatile();
     #else
                 m_qos_.durability_best_available();
@@ -111,7 +111,8 @@ namespace erl::common::ros_params {
             } else if (qos_liveliness == "best_available") {
     #ifdef ROS_HUMBLE
                 ERL_WARN(
-                    "liveliness best_available is not available in ROS Humble, using automatic instead.");
+                    "liveliness best_available is not available in ROS Humble, using automatic "
+                    "instead.");
                 m_qos_.liveliness(rclcpp::LivelinessPolicy::Automatic);
     #else
                 m_qos_.liveliness(rclcpp::LivelinessPolicy::BestAvailable);

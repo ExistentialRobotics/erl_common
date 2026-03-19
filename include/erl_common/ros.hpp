@@ -31,15 +31,14 @@ namespace erl::common::ros_params {
     // These are passed directly to nh.param<T>().
     // All other types fall back to YAML string serialization.
     template<typename T>
-    inline constexpr bool is_ros1_native_param_v =
-        std::is_same_v<T, bool> ||
-        std::is_same_v<T, int> ||
-        std::is_same_v<T, double> ||
-        std::is_same_v<T, std::string> ||
-        std::is_same_v<T, std::vector<bool>> ||
-        std::is_same_v<T, std::vector<int>> ||
-        std::is_same_v<T, std::vector<double>> ||
-        std::is_same_v<T, std::vector<std::string>>;
+    inline constexpr bool is_ros1_native_param_v = std::is_same_v<T, bool> ||                 //
+                                                   std::is_same_v<T, int> ||                  //
+                                                   std::is_same_v<T, double> ||               //
+                                                   std::is_same_v<T, std::string> ||          //
+                                                   std::is_same_v<T, std::vector<bool>> ||    //
+                                                   std::is_same_v<T, std::vector<int>> ||     //
+                                                   std::is_same_v<T, std::vector<double>> ||  //
+                                                   std::is_same_v<T, std::vector<std::string>>;
 
     template<typename T>
     struct LoadRos1Param {
@@ -218,16 +217,15 @@ namespace erl::common::ros_params {
     // These are passed directly to declare_parameter<T>/get_parameter<T>.
     // All other types fall back to YAML string serialization.
     template<typename T>
-    inline constexpr bool is_ros2_native_param_v =
-        std::is_same_v<T, bool> ||
-        std::is_same_v<T, int64_t> ||
-        std::is_same_v<T, double> ||
-        std::is_same_v<T, std::string> ||
-        std::is_same_v<T, std::vector<uint8_t>> ||
-        std::is_same_v<T, std::vector<bool>> ||
-        std::is_same_v<T, std::vector<int64_t>> ||
-        std::is_same_v<T, std::vector<double>> ||
-        std::is_same_v<T, std::vector<std::string>>;
+    inline constexpr bool is_ros2_native_param_v = std::is_same_v<T, bool> ||                  //
+                                                   std::is_same_v<T, int64_t> ||               //
+                                                   std::is_same_v<T, double> ||                //
+                                                   std::is_same_v<T, std::string> ||           //
+                                                   std::is_same_v<T, std::vector<uint8_t>> ||  //
+                                                   std::is_same_v<T, std::vector<bool>> ||     //
+                                                   std::is_same_v<T, std::vector<int64_t>> ||  //
+                                                   std::is_same_v<T, std::vector<double>> ||   //
+                                                   std::is_same_v<T, std::vector<std::string>>;
 
     template<typename T>
     struct LoadRos2Param {

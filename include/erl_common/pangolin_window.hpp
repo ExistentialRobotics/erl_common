@@ -12,12 +12,12 @@ namespace erl::common {
 
     class PangolinWindow {
         std::string m_window_name_;
-        pangolin::WindowInterface& m_window_;
-        std::unordered_map<std::string, pangolin::View*> m_displays_;
+        pangolin::WindowInterface &m_window_;
+        std::unordered_map<std::string, pangolin::View *> m_displays_;
 
     public:
         PangolinWindow(
-            const std::string& window_name,
+            const std::string &window_name,
             int window_width,
             int window_height,
             int window_x = -1,
@@ -38,28 +38,28 @@ namespace erl::common {
             m_window_.RemoveCurrent();
         }
 
-        [[nodiscard]] pangolin::WindowInterface&
+        [[nodiscard]] pangolin::WindowInterface &
         GetWindow() const {
             return m_window_;
         }
 
-        pangolin::View&
-        AddDisplay(const std::string& display_name, pangolin::View& display) {
+        pangolin::View &
+        AddDisplay(const std::string &display_name, pangolin::View &display) {
             m_displays_[display_name] = &m_displays_["main"]->AddDisplay(display);
             return *m_displays_[display_name];
         }
 
-        pangolin::View&
+        pangolin::View &
         AddDisplay(
-            const std::string& display_name,
-            pangolin::View& display,
-            pangolin::View& display_parent) {
+            const std::string &display_name,
+            pangolin::View &display,
+            pangolin::View &display_parent) {
             m_displays_[display_name] = &display_parent.AddDisplay(display);
             return *m_displays_[display_name];
         }
 
-        [[nodiscard]] pangolin::View&
-        GetDisplay(const std::string& display_name) const {
+        [[nodiscard]] pangolin::View &
+        GetDisplay(const std::string &display_name) const {
             return *m_displays_.at(display_name);
         }
     };

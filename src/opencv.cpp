@@ -73,10 +73,8 @@ namespace erl::common {
         cv::multiply(alpha_bg, alpha_background, alpha_background);
 
         cv::Mat out_image(alpha_foreground.size(), alpha_foreground.type());
-        cv::add(  // it seems only the first 3 channels are modified
-            alpha_foreground,
-            alpha_background,
-            out_image);
+        // it seems only the first 3 channels are modified
+        cv::add(alpha_foreground, alpha_background, out_image);
 
         out_image.convertTo(out_image, CV_8UC4);
         cv::split(out_image, channels);
