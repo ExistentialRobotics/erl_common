@@ -890,7 +890,20 @@ namespace erl::common {
                 // if at the top level, check for config_file first
                 std::string config_file;
                 std::string param_path = GetRos2ParamPath(prefix, "config_file");
-                node->declare_parameter<std::string>(param_path, config_file);
+                try {
+                    node->declare_parameter<std::string>(param_path, config_file);
+                } catch (const std::exception &e) {
+                    RCLCPP_WARN(
+                        node->get_logger(),
+                        "Failed to declare parameter %s: %s. Multiple Yamlable objects may be "
+                        "sharing the same parameter namespace.",
+                        param_path.c_str(),
+                        e.what());
+                    // if the parameter is already declared by another Yamlable object, just get the
+                    // parameter value without declaring it again.
+                    return true;
+                }
+
                 node->get_parameter_or<std::string>(param_path, config_file, config_file);
 
                 try {
