@@ -311,6 +311,11 @@ namespace erl::common {
         #endif
     #endif
 
+    #define ERL_INFO_COND(condition, ...)             \
+        do {                                          \
+            if (condition) { ERL_INFO(__VA_ARGS__); } \
+        } while (false)
+
     #define ERL_INFO_ONCE(...)          \
         do {                            \
             static bool infoed = false; \
