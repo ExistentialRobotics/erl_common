@@ -56,7 +56,7 @@ namespace erl::common {
                    << std::setw(15) << record.total << std::right << std::setw(10) << record.count
                    << "\n";
             }
-            erl::common::Logging::Info("{}", ss.str());
+            ERL_INFO("{}", ss.str());
         }
     };
 

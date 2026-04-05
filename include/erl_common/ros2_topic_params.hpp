@@ -10,16 +10,16 @@ namespace erl::common::ros_params {
         std::string path;
         std::string qos_preset;  // defined in /opt/ros/<distro>/include/rclcpp/rclcpp/qos.hpp
         std::string qos_history;
-        int qos_depth = 10;
+        int64_t qos_depth = 10;
         std::string qos_reliability;
         std::string qos_durability;
-        int32_t qos_deadline_sec = 0;
-        uint32_t qos_deadline_nanosec = 0;
-        int32_t qos_lifespan_sec = 0;
-        uint32_t qos_lifespan_nanosec = 0;
+        int64_t qos_deadline_sec = 0;
+        int64_t qos_deadline_nanosec = 0;
+        int64_t qos_lifespan_sec = 0;
+        int64_t qos_lifespan_nanosec = 0;
         std::string qos_liveliness;
-        int32_t qos_liveliness_lease_duration_sec = 0;
-        uint32_t qos_liveliness_lease_duration_nanosec = 0;
+        int64_t qos_liveliness_lease_duration_sec = 0;
+        int64_t qos_liveliness_lease_duration_nanosec = 0;
         bool avoid_ros_namespace_conventions = false;
 
         ERL_REFLECT_SCHEMA(
