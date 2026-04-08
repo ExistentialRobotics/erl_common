@@ -164,9 +164,10 @@ namespace erl::common {
 
 #ifdef ERL_ROS_VERSION_2
         [[nodiscard]] virtual bool
-        LoadFromRos2(rclcpp::Node *node, const std::string &prefix) {
+        LoadFromRos2(rclcpp::Node *node, const std::string &prefix, bool top_level = true) {
             (void) node;
             (void) prefix;
+            (void) top_level;
             return true;
         }
 #endif
@@ -882,26 +883,17 @@ namespace erl::common {
 
 #ifdef ERL_ROS_VERSION_2
         [[nodiscard]] bool
-        LoadFromRos2(rclcpp::Node *node, const std::string &prefix) override {
+        LoadFromRos2(rclcpp::Node *node, const std::string &prefix, bool top_level = true)
+            override {
             using namespace yaml_helper;
             using namespace erl::common::ros_params;
 
             if (prefix.empty() && std::is_same_v<YamlableBase, Base>) {
-                // if at the top level, check for config_file first
+                // if at the YamlableBase level, check for config_file first
                 std::string config_file;
                 std::string param_path = GetRos2ParamPath(prefix, "config_file");
-                try {
+                if (!node->has_parameter(param_path)) {
                     node->declare_parameter<std::string>(param_path, config_file);
-                } catch (const std::exception &e) {
-                    RCLCPP_WARN(
-                        node->get_logger(),
-                        "Failed to declare parameter %s: %s. Multiple Yamlable objects may be "
-                        "sharing the same parameter namespace.",
-                        param_path.c_str(),
-                        e.what());
-                    // if the parameter is already declared by another Yamlable object, just get the
-                    // parameter value without declaring it again.
-                    return true;
                 }
 
                 node->get_parameter_or<std::string>(param_path, config_file, config_file);
@@ -928,7 +920,7 @@ namespace erl::common {
 
             // if Base is not YamlableBase, load its parameters from ROS2 first
             if (std::is_base_of_v<YamlableBase, Base> && !std::is_same_v<YamlableBase, Base>) {
-                if (!Base::LoadFromRos2(node, prefix)) { return false; }
+                if (!Base::LoadFromRos2(node, prefix, false)) { return false; }
             }
 
             bool success = true;
@@ -944,7 +936,11 @@ namespace erl::common {
                          ...);
                 },
                 T::Schema);
-            success &= this->PostDeserialization();  // call post deserialization hook
+            // Call post deserialization hook. Only call it at the top level to make sure all the
+            // members are loaded before calling the hook. If we call the hook at the base class
+            // level, the derived class members may not be loaded yet, which may cause issues if the
+            // hook accesses those members.
+            if (top_level) { success &= this->PostDeserialization(); }
             return success;
         }
 #endif

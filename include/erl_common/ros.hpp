@@ -232,13 +232,22 @@ namespace erl::common::ros_params {
         static void
         Run(rclcpp::Node *node, const std::string &param_name, T &member) {
             if constexpr (is_ros2_native_param_v<T>) {
-                node->declare_parameter<T>(param_name, member);
+                // LoadRos2Param may be called multiple times. For example, it can be called first
+                // in a base node class to load some parameters, and then called again in a derived
+                // node class to load more parameters. In that case, we should not declare the same
+                // parameter again, because rclcpp will throw an exception if we try to declare a
+                // parameter that already exists.
+                if (!node->has_parameter(param_name)) {
+                    node->declare_parameter<T>(param_name, member);
+                }
                 node->get_parameter<T>(param_name, member);
             } else {
                 // YAML fallback: serialize as a YAML string
                 using yaml_convert = YAML::convert<T>;
                 std::string value_str = yaml_convert::encode(member).template as<std::string>();
-                node->declare_parameter<std::string>(param_name, value_str);
+                if (!node->has_parameter(param_name)) {
+                    node->declare_parameter<std::string>(param_name, value_str);
+                }
                 if (!node->get_parameter<std::string>(param_name, value_str)) { return; }
                 ERL_ASSERT(yaml_convert::decode(YAML::Node(value_str), member));
             }
@@ -256,7 +265,9 @@ namespace erl::common::ros_params {
             std::transform(member.begin(), member.end(), temp.begin(), [](float v) {
                 return static_cast<double>(v);
             });
-            node->declare_parameter<std::vector<double>>(param_name, temp);
+            if (!node->has_parameter(param_name)) {
+                node->declare_parameter<std::vector<double>>(param_name, temp);
+            }
             if (!node->get_parameter(param_name, temp)) { return; }
             member.resize(temp.size());
             for (std::size_t i = 0; i < temp.size(); ++i) {
@@ -274,7 +285,9 @@ namespace erl::common::ros_params {
             std::transform(member.begin(), member.end(), temp.begin(), [](int v) {
                 return static_cast<long>(v);
             });
-            node->declare_parameter<std::vector<long>>(param_name, temp);
+            if (!node->has_parameter(param_name)) {
+                node->declare_parameter<std::vector<long>>(param_name, temp);
+            }
             if (!node->get_parameter(param_name, temp)) { return; }
             member.resize(temp.size());
             for (std::size_t i = 0; i < temp.size(); ++i) { member[i] = static_cast<int>(temp[i]); }
@@ -373,7 +386,9 @@ namespace erl::common::ros_params {
         static void
         Run(rclcpp::Node *node, const std::string &param_name, cv::Scalar &member) {
             std::vector<double> values;
-            node->declare_parameter<std::vector<double>>(param_name, values);
+            if (!node->has_parameter(param_name)) {
+                node->declare_parameter<std::vector<double>>(param_name, values);
+            }
             if (!node->get_parameter<std::vector<double>>(param_name, values)) { return; }
             if (values.empty()) { return; }
             ERL_ASSERTM(
