@@ -140,6 +140,8 @@ namespace erl::common::serialization {
     template<typename T>
     struct Serialization {
 
+        // ---- filename overloads: open the file, then delegate to the stream overloads ----
+
         [[nodiscard]] static bool
         Write(const std::string &filename, const std::shared_ptr<T> &data) {
             return Write(filename, data.get());
@@ -161,21 +163,10 @@ namespace erl::common::serialization {
 
         [[nodiscard]] static bool
         Write(const std::string &filename, const T *data) {
-            std::string type_str = type_name(*data);
-            ERL_INFO("Writing {} to {}.", type_str, filename);
-            std::filesystem::path folder = std::filesystem::absolute(filename).parent_path();
-            std::filesystem::create_directories(folder);
-            std::ofstream ofs(filename, std::ios_base::out | std::ios_base::binary);
-            if (!ofs.is_open()) {
-                ERL_WARN("Failed to open file {} for writing.", filename);
-                return false;
-            }
-            ofs << "# " << type_str
-                << "\n# (feel free to add / change comments, but leave the first line as it is!)\n";
-            const bool success = data->Write(ofs);
-            ofs << "end_of_" << type_str << '\n';  // write end token
-            ofs.close();
-            return success;
+            ERL_INFO("Writing {} to {}.", type_name(*data), filename);
+            std::ofstream ofs;
+            if (!OpenForWrite(filename, ofs)) { return false; }
+            return Write(ofs, data);
         }
 
         [[nodiscard]] static bool
@@ -189,81 +180,156 @@ namespace erl::common::serialization {
 
         [[nodiscard]] static bool
         Read(const std::string &filename, T *data) {
-            std::string type_str = type_name(*data);
-            ERL_INFO("Reading {} from {}.", type_str, filename);
-            std::ifstream ifs(filename, std::ios_base::in | std::ios_base::binary);
-            if (!ifs.is_open()) {
-                ERL_WARN("Failed to open file {} for reading.", filename);
-                return false;
-            }
-            std::string line;
-            std::getline(ifs, line);
-            if (std::string file_header = "# " + type_str;
-                line != file_header) {  // check if the first line is valid
-                ERL_WARN("Header does not start with \"{}\"", file_header);
-                return false;
-            }
-            bool success = data->Read(ifs);
-            if (!success) {
-                ERL_WARN("Failed to read {} from file.", type_str);
-                return false;
-            }
-            std::getline(ifs, line);
-            if (line != "end_of_" + type_str) {  // check if the last line is valid
-                ERL_WARN("Last line does not end with \"end_of_{}\" but \"{}\"", type_str, line);
-                return false;
-            }
-            return success;
+            ERL_INFO("Reading {} from {}.", type_name(*data), filename);
+            std::ifstream ifs;
+            if (!OpenForRead(filename, ifs)) { return false; }
+            return Read(ifs, data);
         }
 
         template<typename Func>
         [[nodiscard]] static bool
         Write(const std::string &filename, Func func) {
-            std::string type_str = type_name<T>();
-            ERL_INFO("Writing {} to {}.", type_str, filename);
-            const std::filesystem::path folder = std::filesystem::absolute(filename).parent_path();
-            std::filesystem::create_directories(folder);
-            std::ofstream ofs(filename, std::ios_base::out | std::ios_base::binary);
-            if (!ofs.is_open()) {
-                ERL_WARN("Failed to open file {} for writing.", filename);
-                return false;
-            }
-            ofs << "# " << type_str
-                << "\n# (feel free to add / change comments, but leave the first line as it is!)\n";
-            const bool success = func(ofs);
-            ofs << "end_of_" << type_str << '\n';  // write end token
-            ofs.close();
-            return success;
+            ERL_INFO("Writing {} to {}.", type_name<T>(), filename);
+            std::ofstream ofs;
+            if (!OpenForWrite(filename, ofs)) { return false; }
+            return Write(ofs, std::move(func));
         }
 
         template<typename Func>
         [[nodiscard]] static bool
         Read(const std::string &filename, Func func) {
-            std::string type_str = type_name<T>();
-            ERL_INFO("Reading {} from {}.", type_str, filename);
-            std::ifstream ifs(filename, std::ios_base::in | std::ios_base::binary);
+            ERL_INFO("Reading {} from {}.", type_name<T>(), filename);
+            std::ifstream ifs;
+            if (!OpenForRead(filename, ifs)) { return false; }
+            return Read(ifs, std::move(func));
+        }
+
+        // ---- stream overloads: own the header / body / footer protocol ----
+
+        [[nodiscard]] static bool
+        Write(std::ostream &ofs, const std::shared_ptr<T> &data) {
+            return Write(ofs, data.get());
+        }
+
+        [[nodiscard]] static bool
+        Write(std::ostream &ofs, const std::shared_ptr<const T> &data) {
+            if (data == nullptr) {
+                ERL_WARN("Data is nullptr.");
+                return false;
+            }
+            return Write(ofs, data.get());
+        }
+
+        [[nodiscard]] static bool
+        Write(std::ostream &ofs, T *data) {
+            return Write(ofs, static_cast<const T *>(data));
+        }
+
+        [[nodiscard]] static bool
+        Write(std::ostream &ofs, const T *data) {
+            const std::string type_str = type_name(*data);
+            WriteHeader(ofs, type_str);
+            const bool success = data->Write(ofs);
+            WriteFooter(ofs, type_str);
+            return success;
+        }
+
+        [[nodiscard]] static bool
+        Read(std::istream &ifs, const std::shared_ptr<T> &data) {
+            if (data == nullptr) {
+                ERL_WARN("Data is nullptr.");
+                return false;
+            }
+            return Read(ifs, data.get());
+        }
+
+        [[nodiscard]] static bool
+        Read(std::istream &ifs, T *data) {
+            const std::string type_str = type_name(*data);
+            if (!ReadHeader(ifs, type_str)) { return false; }
+            if (!data->Read(ifs)) {
+                ERL_WARN("Failed to read {} from stream.", type_str);
+                return false;
+            }
+            return ReadFooter(ifs, type_str);
+        }
+
+        template<typename Func>
+        [[nodiscard]] static bool
+        Write(std::ostream &ofs, Func func) {
+            const std::string type_str = type_name<T>();
+            WriteHeader(ofs, type_str);
+            const bool success = func(ofs);
+            WriteFooter(ofs, type_str);
+            return success;
+        }
+
+        template<typename Func>
+        [[nodiscard]] static bool
+        Read(std::istream &ifs, Func func) {
+            const std::string type_str = type_name<T>();
+            if (!ReadHeader(ifs, type_str)) { return false; }
+            if (!func(ifs)) {
+                ERL_WARN("Failed to read {} from stream.", type_str);
+                return false;
+            }
+            return ReadFooter(ifs, type_str);
+        }
+
+    private:
+        static bool
+        OpenForWrite(const std::string &filename, std::ofstream &ofs) {
+            const std::filesystem::path folder = std::filesystem::absolute(filename).parent_path();
+            std::filesystem::create_directories(folder);
+            ofs.open(filename, std::ios_base::out | std::ios_base::binary);
+            if (!ofs.is_open()) {
+                ERL_WARN("Failed to open file {} for writing.", filename);
+                return false;
+            }
+            return true;
+        }
+
+        static bool
+        OpenForRead(const std::string &filename, std::ifstream &ifs) {
+            ifs.open(filename, std::ios_base::in | std::ios_base::binary);
             if (!ifs.is_open()) {
                 ERL_WARN("Failed to open file {} for reading.", filename);
                 return false;
             }
+            return true;
+        }
+
+        static void
+        WriteHeader(std::ostream &os, const std::string &type_str) {
+            os << "# " << type_str
+               << "\n# (feel free to add / change comments, but leave the first line as it is!)\n";
+        }
+
+        static void
+        WriteFooter(std::ostream &os, const std::string &type_str) {
+            os << "end_of_" << type_str << '\n';
+        }
+
+        static bool
+        ReadHeader(std::istream &is, const std::string &type_str) {
             std::string line;
-            std::getline(ifs, line);
-            if (std::string file_header = "# " + type_str;
-                line != file_header) {  // check if the first line is valid
+            std::getline(is, line);
+            if (const std::string file_header = "# " + type_str; line != file_header) {
                 ERL_WARN("Header does not start with \"{}\"", file_header);
                 return false;
             }
-            bool success = func(ifs);
-            if (!success) {
-                ERL_WARN("Failed to read {} from file.", type_str);
-                return false;
-            }
-            std::getline(ifs, line);
-            if (line != "end_of_" + type_str) {  // check if the last line is valid
+            return true;
+        }
+
+        static bool
+        ReadFooter(std::istream &is, const std::string &type_str) {
+            std::string line;
+            std::getline(is, line);
+            if (const std::string end_token = "end_of_" + type_str; line != end_token) {
                 ERL_WARN("Last line does not end with \"end_of_{}\" but \"{}\"", type_str, line);
                 return false;
             }
-            return success;
+            return true;
         }
     };
 
