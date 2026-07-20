@@ -53,7 +53,7 @@ and some utility functions and data structures like
 ```bash
 cd <your_workspace>
 mkdir -p src
-vcs import --input https://raw.githubusercontent.com/ExistentialRobotics/erl_common/refs/head/main/erl_common.repos src
+vcs import --input https://raw.githubusercontent.com/ExistentialRobotics/erl_common/refs/heads/main/erl_common.repos src
 ```
 
 ### Install Dependencies

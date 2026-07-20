@@ -22,7 +22,13 @@ namespace erl::common::detail {
     template<typename... Args>
     inline std::string
     Format(std::string_view fmt_str, Args &&...args) {
+    #if FMT_VERSION >= 80000
         return fmt::vformat(fmt_str, fmt::make_format_args(args...));
+    #else
+        // fmt < 8 (e.g. Ubuntu 20.04's 6.1.2) accepts a runtime format string via
+        // fmt::format directly and lacks the make_format_args/vformat overload above.
+        return fmt::format(fmt_str, args...);
+    #endif
     }
 
 }  // namespace erl::common::detail
